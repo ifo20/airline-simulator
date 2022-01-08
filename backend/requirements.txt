@@ -1,0 +1,4 @@
+flask
+tinydb
+tinydb-serialization
+ black-but-with-tabs-instead-of-spaces

@@ -1,0 +1,246 @@
+* {
+    margin: 0;
+    padding: 0;
+    font-family: "system-ui";
+    color: darkslategrey;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    background-image: url("https://upload.wikimedia.org/wikipedia/commons/7/73/Cloudy_sky_(26171935906).jpg");
+    -webkit-animation: loader 60s steps(1000) infinite;
+    -moz-animation: loader 60s steps(1000) infinite;
+    -ms-animation: loader 60s steps(1000) infinite;
+    -o-animation: loader 60s steps(1000) infinite;
+    animation: loader 60s steps(1000) infinite;
+}
+p {
+    margin:1rem;
+}
+@-webkit-keyframes loader {
+    from {
+        background-position: 0;
+    }
+
+    to {
+        background-position: -1600px 0;
+    }
+}
+
+@-moz-keyframes loader {
+    from {
+        background-position: 0;
+    }
+
+    to {
+        background-position: -1600px 0;
+    }
+}
+
+@-ms-keyframes loader {
+    from {
+        background-position: 0;
+    }
+
+    to {
+        background-position: -1600px 0;
+    }
+}
+
+@-o-keyframes loader {
+    from {
+        background-position: 0;
+    }
+
+    to {
+        background-position: -1600px 0;
+    }
+}
+
+@keyframes loader {
+    from {
+        background-position: 0;
+    }
+
+    to {
+        background-position: -1600px 0;
+    }
+}
+
+.fade-in {
+    animation: 300ms fadeIn;
+}
+
+.fade-out {
+    animation: 1s fadeOut;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+        transform: translate(0px, -100px)
+    }
+}
+#main > * {
+    background-color: #ffffffaa;
+}
+.bg-light {
+    background-color: ivory;
+}
+.border-box {
+    border: thin solid grey;
+    padding: 0.3rem;
+    display: inline-block;
+}
+.flex {
+    display: flex;
+}
+
+.flex-column {
+    flex-direction: column;
+}
+
+.flex-start {
+    justify-content: start;
+}
+
+.flex-grow {
+    flex-grow: 1;
+}
+
+.justify-content-center {
+    justify-content: center;
+}
+
+.justify-content-between {
+    justify-content: space-between;
+}
+
+.checked {
+    color: orange;
+}
+
+h1 {
+    padding: 1rem;
+    text-align: center;
+    background-color: #ededffdd;
+    color: #03038a;
+    border-top: medium solid #03038a;
+    border-bottom: medium solid #03038a;
+}
+h2 strong {
+    display: block;
+    font-size: 75%;
+    opacity: 0.75;
+}
+
+input,
+select,
+option,
+label {
+    font-size: 16px;
+    padding: 0.2rem;
+    margin: 0.1rem 1rem;
+}
+
+input {
+    background-color: #ffffff77;
+}
+
+label {
+    font-weight: bold;
+}
+
+form {
+    max-width: 400px;
+    margin: 0.6rem auto;
+    font-size: larger;
+}
+
+form>div {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+button {
+    padding: 1rem 0.5rem;
+}
+
+dl {
+    display: grid;
+    grid-template-columns: max-content auto;
+    padding: 0.1rem;
+}
+
+dt,
+dd {
+    margin: 0.1rem;
+}
+
+dt {
+    grid-column-start: 1;
+    text-align: left;
+    margin-right: 1rem;
+}
+
+dd {
+    grid-column-start: 2;
+    text-align: right;
+}
+
+#info, #error {
+    position: absolute;
+    width: 50%;
+    left: 50%;
+    top: 0;
+    text-align: center;
+    transform: translate(-50%, 0px);
+}
+
+#info>span,
+#error>span {
+    font-size: larger;
+    padding: 0.5rem;
+}
+
+#info>span {
+    background-color: #1351de;
+    color: #fff;
+}
+
+#error>span {
+    background-color: #ffffff;
+    color: #f33;
+}
+
+#airlineStats {
+    padding-right: 1rem;
+}
+
+.primary {
+    font-size: large;
+    font-weight: bold;
+    padding: 1rem;
+    margin: 1rem;
+}
+.inflight {
+    background-color: crimson;
+}

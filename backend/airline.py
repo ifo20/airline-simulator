@@ -1,0 +1,39 @@
+from datetime import datetime
+
+from airport import Airport
+
+
+class Airline:
+	def __init__(
+		self,
+		name: str,
+		hub: Airport,
+		joined=None,
+		last_login=None,
+		cash=1000000,
+		popularity=50,
+	):
+		self.name = name
+		self.hub = hub
+		self.joined = joined or datetime.now()
+		self.last_login = last_login or datetime.now()
+		self.cash = cash
+		self.popularity = popularity
+		self.planes = []
+		self.routes = []
+		self.transactions = []
+		self.incidents = []
+
+	@classmethod
+	def from_db(cls, db_dict):
+		return cls(**db_dict)
+
+	def db_dict(self):
+		return {
+			"name": self.name,
+			"hub": self.hub.code,
+			"joined": self.joined,
+			"last_login": self.last_login,
+			"cash": self.cash,
+			"popularity": self.popularity,
+		}

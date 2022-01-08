@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en-gb">
+
+<head>
+	<title>JAS: Justin's Airline Simulator</title>
+	<meta charset="utf-8">
+	<meta name="viewport"
+		content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale-1, user-scalable-0" />
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	<script src="static/index.js"></script>
+	<link rel="stylesheet" href="static/index.css">
+</head>
+
+<body>
+	<header class="flex flex-column justify-content-center" style="text-align: center;background-color:#ffffffdd;">
+		<div id="brand">
+			<h2>
+				Welcome to JAS
+				<strong>Justin's Airline Simulator</strong>
+			</h2>
+		</div>
+		<div class="flex-grow">
+			<div id="airlineTitle">
+				
+			</div>
+			<div id="info" class="flex flex-column">
+				<!-- Normal game update messages go in here -->
+			</div>
+			<div id="error" class="flex flex-column justify-content-center">
+				<!-- Error messages (for example, "you can't afford that" go in here -->
+			</div>
+		</div>
+		<div id="airlineStats" class="flex"></div>
+		<form id="playForm" class="flex flex-column">
+			<span class="spinner">loading...</span>
+		</form>
+	</header>
+	<div id="container" class="flex flex-start flex-grow">
+		<div id="sidemenu" class="flex flex-column">
+				<!-- Menu buttons go in here -->
+		</div>
+		<div class="flex flex-column flex-grow">
+			<div id="main" class="flex flex-column flex-grow">
+				<!-- Main game content goes in here -->
+			</div>
+		</div>
+	</div>
+</body>
+
+</html>
