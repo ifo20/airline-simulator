@@ -37,6 +37,13 @@ def jsonify(data):
 	return json.dumps(data, default=default)
 
 
+@app.errorhandler(Exception)
+def handle_exception(e):
+	if isinstance(e, AssertionError):
+		return str(e), 400
+	# below is for local use only
+	return repr(e), 500
+
 @app.route("/static/<path:filename>")
 def serve_static(filename):
 	return send_from_directory(WEBSITE_ROOT, filename)
@@ -93,6 +100,7 @@ def list_routes():
 		for airport in AIRPORTS.values()
 		if airport.code != airline.hub.code
 		and airport.code not in existing_route_destinations
+		and airport.distance_from(airline.hub) > 100
 	]
 	all_destinations.sort(key=lambda airport: airport.distance_from(airline.hub))
 	return jsonify(
@@ -141,6 +149,35 @@ def purchase_plane():
 	planes_db.insert(plane.db_dict(airline))
 	return jsonify({"plane": plane, "cash": airline.cash,})
 
+@app.route("/run-route", methods=["POST"])
+def run_route():
+	airline = AIRLINES[request.form["businessName"]]
+	for route in airline.routes:
+		if route.origin.code == request.form["origin"] and route.destination.code == request.form["destination"]:
+			route.run()
+			routes_db.insert(route.db_dict(airline))
+
+			return {
+				"last_run": route.last_run,
+				"next_available": route.next_available,
+			}
+
+@app.route("/collect", methods=["POST"])
+def collect_route():
+	airline = AIRLINES[request.form["businessName"]]
+	logging.info("Customer %s collecting route results: %s", airline, request.form["route"])
+	origin, destination = request.form["route"].split("-")
+	for route in airline.routes:
+		if route.origin.code == origin and route.destination.code == destination:
+			msg, incident = route.collect(airline)
+			return {
+				"msg": msg,
+				"cash": airline.cash,
+				"popularity": airline.popularity,
+				"incident": incident,
+			}
+	raise RuntimeError(
+		f"Airline does not have route {origin} <-> {destination}, does have {'...'.join(f'{r.origin.code}<->{r.destination.code}' for r in airline.routes)}")
 
 if __name__ == "__main__":
 	for db_airport in airports_db:
@@ -159,8 +196,7 @@ if __name__ == "__main__":
 		plane = Plane(
 			db_plane["id"], db_plane["name"], db_plane["max_distance"], db_plane["purchase_cost"]
 		)
-		AIRLINES[db_plane["airline"]].planes.append(route)
+		AIRLINES[db_plane["airline"]].planes.append(plane)
 
-	logging.info("Loaded airports: %s", AIRPORTS)
-	logging.info("Loaded airlines: %s", AIRLINES)
+	logging.info("Loaded airlines: %s", [a.name for a in AIRLINES.values()])
 	app.run()

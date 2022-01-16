@@ -1,4 +1,7 @@
 //////// HELPING FUNCTIONS
+function errHandler(err) {
+	displayError(err.responseText)
+}
 function randomBusinessName(): string {
 	var adjectives: Array<string> = ["Blue", "Red", "Green", "Purple", "Orange", "White", "Trusty", "Speedy", "Enigmatic", "Fly", "Golden", "Sturdy", "Graceful", "Rapid", "Robust", "American", "British", "Asian", "European", "Indian", "Italian", "Australian", "Chinese", "Russian", "Nordic", "Southern", "Northern", "Southwest", "Express", "Paper", "Malaysia", "Thai"]
 	var nouns: Array<string> = ["Planes", "Airways", "Skies", "Air", "Airlines", "Flyers", "Jets", "Pilots", "Air Transport", "Helicopters", "Cargo"]
@@ -149,9 +152,7 @@ class OfferedRoute {
 					destination: this.toAirport.code,
 					popularity, 
 				},
-				error: function(err) {
-					displayError(String(err))
-				},
+				error: errHandler,
 				success: function(response) {
 					var route = new Route(JSON.parse(response))
 					airline.routes.push(route)
@@ -200,7 +201,7 @@ class Route {
 	plane?: Plane
 	constructor(data) {
 		const { distance, origin, destination, popularity, purchase_cost, last_run, last_result, next_available, plane } = data
-		this.identifier = [origin.code, destination.code].sort().join("-")
+		this.identifier = [origin.code, destination.code].join("-")
 		this.fromAirport = origin
 		this.toAirport = destination
 		this.distance = distance
@@ -211,17 +212,13 @@ class Route {
 		this.nextAvailableAt = next_available
 		this.plane = plane
 	}
-	flightDuration(): number {
-		return this.distance / 20
-	}
 	timeRemaining(): number {
-		var now = new Date()
-		if (this.lastRunAt) {
-			var secondsSinceLastRun = (+now - +this.lastRunAt) / 1000
-			var runTimeSeconds = this.flightDuration()
-			return Math.max(0, Math.floor((runTimeSeconds - secondsSinceLastRun)))
+		if (!this.nextAvailableAt) {
+			return 0
 		}
-		return 0
+		var now = new Date()
+		var secondsTilNextAvailable = Math.ceil((+this.nextAvailableAt + -now) / 1000)
+		return Math.max(0, secondsTilNextAvailable)
 	}
 	canRun(): boolean {
 		var plane = null
@@ -250,57 +247,51 @@ class Route {
 		if (!this.canRun()) {
 			return false
 		}
-		console.log("running route", this.lastRunAt, this.timeRemaining())
-		this.lastRunAt = new Date()
-		this.nextAvailableAt = new Date(new Date().getTime() + 60000 + 1000 * this.flightDuration())
 		var airline = <Airline>gameEngine.airline
-		airline.updateStats()
-		airline.getRoutesDisplay()
+		var route = this
+		console.log("running route", this.lastRunAt, this.timeRemaining())
+		$.ajax({
+			method: "POST",
+			url: "/run-route",
+			data: {
+				businessName: airline.name,
+				origin: this.fromAirport.code,
+				destination: this.toAirport.code,
+			},
+			error: errHandler,
+			success: function(response) {
+				route.lastRunAt = new Date(response.last_run)
+				route.nextAvailableAt = new Date(response.next_available)
+				airline.updateStats()
+				airline.getRoutesDisplay()
+			}
+		})
 		return true
 	}
 	getResults() {
-		this.lastResultedAt = new Date()
-		var numPassengers = this.dailyPassengers()
-		var income = 10 * numPassengers
-		var cost = 500 + Math.ceil(Math.random() * 500)
-		var profit = income - cost
-		displayInfo(`Route running with ${numPassengers} passengers earning ${prettyCashString(profit)} profit`)
 		var airline = <Airline>gameEngine.airline
-		airline.cash += profit
-		var eventCost = 0
-		var healthCost = 1
-		var popularityChange = 1
-		var incidentText, infoText = null
-		if (Math.random() < 0.1) {
-			eventCost = 2000 + Math.ceil(Math.random() * 2000)
-			popularityChange = 5
-			incidentText = `Engine fire costing ${prettyCashString(eventCost)} and ${popularityChange} reputation`
-			infoText = "There was an engine fire! See Accidents tab for details"
-			healthCost = 80
-		} else if (Math.random() < 0.1) {
-			eventCost = 100 + Math.ceil(Math.random() * 200)
-			popularityChange = 1
-			incidentText = `Smoke in cabin ${prettyCashString(eventCost)} and ${popularityChange} reputation`
-			infoText = "Smoke in cabin! See Accidents tab for details"
-			healthCost = 80
-		}
-		(<Plane>this.plane).health -= healthCost
-		airline.cash -= eventCost;
-
+		$.ajax({
+			method: "POST",
+			url: "/collect",
+			data: {
+				businessName: airline.name,
+				route: this.identifier,
+			},
+			error: errHandler,
+			success: function(response) {
+				// airline.cash = response.cash
+				displayInfo(response.msg)
+				if (response.incident) {
+					displayInfo(response.incident)
+				}
+				airline.popularity = response.popularity
+				airline.updateStats(response.cash)
+				airline.getRoutesDisplay()
+			}
+		})
+		this.lastResultedAt = new Date();
 		(<Plane>this.plane).flying = false
 		this.plane = undefined
-		airline.changePopularity( popularityChange)
-		airline.updateStats()
-		if (infoText) {
-			displayInfo(infoText)
-		}
-		if (incidentText) {
-			airline.incidents.push(`${new Date()} ${incidentText}`)
-		}
-		airline.getRoutesDisplay()
-	}
-	dailyPassengers(): number {
-		return Math.ceil(this.popularity * (10 + Math.random() * 10))
 	}
 
 	purchasedCardHtml(): HTMLDivElement {
@@ -485,24 +476,18 @@ class Airline {
 		this.incidents = incidents
 
 	}
-	changePopularity(amount: number): void {
-		this.popularity += amount
-		if (this.popularity <= 0) {
-			gameEngine.gameOver()
-		}
-	}
 	updateTitle(): void {
 		var div = <HTMLElement>document.getElementById("airlineTitle")
 		div.appendChild(this.titleHtml())
 
 	}
-	updateStats(): void {
+	updateStats(cash: number =null): void {
+		if (cash !== null ) {
+			this.cash = cash
+		}
 		const placeholder = <HTMLElement>document.getElementById("airlineStats")
 		placeholder.innerHTML = ""
 		placeholder.appendChild(this.statsHtml())
-	}
-	sparePlanes(): number {
-		return this.planes.length - this.routes.length
 	}
 	titleHtml(): HTMLElement {
 		return createTitle(
@@ -534,9 +519,7 @@ class Airline {
 			method: "GET",
 			url: "/planes",
 			data: {},
-			error: function(err) {
-				displayError(String(err))
-			},
+			error: errHandler,
 			success: function(response) {
 				JSON.parse(response).map(p => {
 					var plane = new Plane(p)
@@ -553,15 +536,13 @@ class Airline {
 								"businessName": airline.name,
 								"planeId": plane.id,
 							},
-							error: function(err) {
-								displayError(String(err))
-							},
+							error: errHandler,
 							success: function(response) {
 								var r = JSON.parse(response)
-								airline.cash = r.cash
+								// airline.cash = r.cash
 								airline.transactions.push(`${new Date()} ${prettyCashString(airline.cash)} Purchased plane for ${prettyCashString(airplaneCost)}`)
 								airline.planes.push(new Plane(r.plane))
-								airline.updateStats()
+								airline.updateStats(r.cash)
 								gameEngine.displayFleetTab()
 							}
 						})
@@ -656,10 +637,9 @@ class GameEngine {
 			var ge = this
 			$.ajax({
 				url: "/airports",
+				error: errHandler,
 				success: function(response) {
-					console.log("Got airports", response)
 					airs = JSON.parse(response).map(a => new Airport(a))
-					console.log(airs)
 					ge.airports = airs
 					loadHubSelect(airs)
 				}
@@ -693,6 +673,7 @@ class GameEngine {
 			data: {
 				businessName: airline.name,
 			},
+			error: errHandler,
 			success: function(response) {
 				console.log("Got offered routes", response)
 				var div = document.createElement("div")
@@ -720,28 +701,6 @@ class GameEngine {
 		main.innerHTML = ""
 		var airline = <Airline>this.airline
 		main.appendChild(airline.getAccidentsDisplay())
-	}
-	getAirport(code: string): Airport | void {
-		var airport;
-		this.airports.forEach(a => {
-			if (a.code === code) {
-				airport = a
-			}
-		})
-		console.log("searched airport", code, "returning", airport, "from", this.airports)
-		return airport
-	}
-	showAirports(): void {
-		const main = <HTMLElement>document.getElementById("main")
-		this.airports.forEach((a) => {
-			main.appendChild(a.cardHtml())
-		})
-	}
-	showRoutes(): void {
-		const main = <HTMLElement>document.getElementById("main")
-		this.routes.forEach(r => {
-			main.appendChild(r.cardHtml())
-		})
 	}
 	gameOver(): void {
 		const main = <HTMLElement>document.getElementById("main")
@@ -830,8 +789,8 @@ window.onload = () => {
 				"businessName": nameInput.value,
 				"hub": hubSelect.value,
 			},
+			error: errHandler,
 			success: function(response) {
-				console.log(response)
 				var airline = new Airline(JSON.parse(response))
 				displayInfo(airline.name + " joins the aviation industry!")
 				gameEngine.registerAirline(airline)
