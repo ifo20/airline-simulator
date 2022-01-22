@@ -150,17 +150,18 @@ class OfferedRoute {
 					purchaseCost,
 					origin: this.fromAirport.code,
 					destination: this.toAirport.code,
-					popularity, 
+					popularity,
 				},
 				error: errHandler,
 				success: function(response) {
-					var route = new Route(JSON.parse(response))
+					var jresponse = JSON.parse(response)
+					var route = new Route(jresponse.route)
 					airline.routes.push(route)
-					airline.cash -= purchaseCost
-					airline.transactions.push(`${new Date()} $${airline.cash} Purchased route ${identifier} for ${prettyCashString(purchaseCost)}`)
-					displayInfo("Route purchased!")
+					airline.cash = jresponse.cash
+					airline.addTransaction(jresponse.transaction)
+					displayInfo(jresponse.msg)
 					gameEngine.displayRoutesTab()
-					airline.updateStats()					
+					airline.updateStats()
 				}
 			})
 		})
@@ -207,9 +208,9 @@ class Route {
 		this.distance = distance
 		this.popularity = popularity
 		this.purchaseCost = purchase_cost
-		this.lastRunAt = last_run
-		this.lastResultedAt = last_result
-		this.nextAvailableAt = next_available
+		this.lastRunAt = last_run ? new Date(last_run) : null
+		this.lastResultedAt = last_result ? new Date(last_result): null
+		this.nextAvailableAt = next_available ? new Date(next_available) : null
 		this.plane = plane
 	}
 	timeRemaining(): number {
@@ -220,36 +221,9 @@ class Route {
 		var secondsTilNextAvailable = Math.ceil((+this.nextAvailableAt + -now) / 1000)
 		return Math.max(0, secondsTilNextAvailable)
 	}
-	canRun(): boolean {
-		var plane = null
-		gameEngine.airline?.planes.forEach(p => {
-			if (!p.flying && p.maxDistance >= this.distance) {
-				plane = p
-				console.log("picked plane",plane,this)
-			} else {
-				console.log("could not pick plane",p,p.flying,this)
-			}
-		})
-		if (plane) {
-			if (this.timeRemaining() <= 0) {
-				plane = <Plane>plane
-				plane.flying = true
-				this.plane = plane
-				return true
-			} else {
-				return false
-			}
-		}
-		displayError("No planes available to run route, go to the Fleet tab")
-		return false
-	}
 	run(): boolean {
-		if (!this.canRun()) {
-			return false
-		}
 		var airline = <Airline>gameEngine.airline
 		var route = this
-		console.log("running route", this.lastRunAt, this.timeRemaining())
 		$.ajax({
 			method: "POST",
 			url: "/run-route",
@@ -260,10 +234,14 @@ class Route {
 			},
 			error: errHandler,
 			success: function(response) {
-				route.lastRunAt = new Date(response.last_run)
-				route.nextAvailableAt = new Date(response.next_available)
+				var jresponse = JSON.parse(response)
+				route.lastRunAt = new Date(jresponse.last_run)
+				route.nextAvailableAt = new Date(jresponse.next_available)
+				airline.planes = jresponse.planes.map(p => new Plane(p))
 				airline.updateStats()
 				airline.getRoutesDisplay()
+				gameEngine.displayRoutesTab()
+
 			}
 		})
 		return true
@@ -279,19 +257,19 @@ class Route {
 			},
 			error: errHandler,
 			success: function(response) {
-				// airline.cash = response.cash
-				displayInfo(response.msg)
-				if (response.incident) {
-					displayInfo(response.incident)
+				var jresponse = JSON.parse(response)
+				displayInfo(jresponse.msg)
+				if (jresponse.incident) {
+					displayInfo(jresponse.incident)
 				}
-				airline.popularity = response.popularity
-				airline.updateStats(response.cash)
+				airline.planes = jresponse.planes.map(p => new Plane(p))
+				airline.popularity = jresponse.popularity
+				airline.updateStats(jresponse.cash)
 				airline.getRoutesDisplay()
+				gameEngine.displayRoutesTab()
+
 			}
 		})
-		this.lastResultedAt = new Date();
-		(<Plane>this.plane).flying = false
-		this.plane = undefined
 	}
 
 	purchasedCardHtml(): HTMLDivElement {
@@ -300,14 +278,16 @@ class Route {
 		div.appendChild(this.cardHtml())
 		var runbutton = document.createElement("button")
 		var collectbutton = document.createElement("button")
-		runbutton.innerHTML = "Run Route"
-		runbutton.addEventListener("click", () => {
-			if (this.run()) {
+		if (this.timeRemaining()) {
+			runbutton.setAttribute("disabled", "")
+			runbutton.innerHTML = `Current route running, ready in ${this.timeRemaining()} seconds`
+		} else {
+			runbutton.addEventListener("click", () => {
 				runbutton.setAttribute("disabled", "")
-				runbutton.innerHTML = `Current route running, ready in ${this.timeRemaining()} seconds ${this.plane?.name}`
-
-			}
-		})
+				this.run()
+			})
+			runbutton.innerHTML = "Run Route"
+		}
 		collectbutton.addEventListener("click", () => {
 			this.getResults()
 		})
@@ -331,7 +311,7 @@ class Route {
 				runbutton.setAttribute("disabled", "")
 				collectbutton.setAttribute("disabled", "")
 				hideElement(collectbutton)
-				runbutton.innerHTML = `Current route running, ready in ${this.timeRemaining()} seconds ${this.plane?.name}`
+				runbutton.innerHTML = `Current route running, ready in ${this.timeRemaining()} seconds`
 
 			}
 		}
@@ -368,15 +348,15 @@ class Route {
 class Plane {
 	id: number
 	name: string
-	flying: boolean
+	status: string
 	health: number
 	maxDistance: number
 	cost: number
 	constructor(data) {
-		const { id, name, flying, health, max_distance, purchase_cost } = data
+		const { id, name, status, health, max_distance, purchase_cost } = data
 		this.id = id
 		this.name = name
-		this.flying = flying
+		this.status = status
 		this.health = health
 		this.maxDistance = max_distance
 		this.cost = purchase_cost
@@ -386,7 +366,7 @@ class Plane {
 		div.className = "bg-light border-box"
 		var dl = dataLabels([
 			["Name", `${this.name}`],
-			["Flying", `${this.flying}`],
+			["Status", `${this.status}`],
 			["Maxdistance", `${this.maxDistance}`],
 			["health", this.health.toLocaleString("en-gb")],
 		])
@@ -394,20 +374,13 @@ class Plane {
 		card.innerHTML = `<h3>${this.name} </h3>`
 		card.appendChild(dl)
 		div.appendChild(card)
-		var status 
-		
-		if (!this.flying && this.health >= 30) {
-			status = "Available"
-		} else if (this.flying) {
-			status = "inflight"
-		} else {
-			status = "maintenance"
+		if (this.status.indexOf("aintenance") > -1) {
 			card.appendChild(this.maintenanceHtml())
 		}
-		card.className = `flex flex-column justify-content-between ${status}` 
-		card.appendChild(createParagraph(status))
+		card.className = `flex flex-column justify-content-between ${this.status}`
+		card.appendChild(createParagraph(this.status))
 		return div
-		
+
 	}
 	displayHtml(): HTMLElement {
 		var div = document.createElement("div")
@@ -421,34 +394,53 @@ class Plane {
 		return div
 	}
 	maintenanceHtml(): HTMLElement {
+		var airline = <Airline>gameEngine.airline
 		var div = this.displayHtml()
 		var btn = document.createElement("button")
 		btn.innerText = "Fix for $100,000"
 		div.appendChild(btn)
 		btn.addEventListener("click", () => {
-			var airline = <Airline>gameEngine.airline
-			if (airline.cash < 100000) {
-				displayError("You cannot afford this fix!")
-				return
-			}
-			airline.cash -= 100000
-			this.health = 100
-			airline.transactions.push(`${new Date()} $100,000 Fixed plane ${this.id}`)
-			displayInfo("Plane fixed!")
-			gameEngine.displayFleetTab()
-			airline.updateStats()
+			$.ajax({
+				method: "POST",
+				url: "/plane/fix",
+				data: {
+					businessName: airline.name,
+					planeId: this.id
+				},
+				error: errHandler,
+				success: function(response) {
+					var jresponse = JSON.parse(response)
+					airline.planes = jresponse.planes.map(p => new Plane(p))
+					airline.cash = jresponse.cash
+					airline.addTransaction(jresponse.transaction)
+					displayInfo(jresponse.msg)
+					gameEngine.displayFleetTab()
+					airline.updateStats()
+				}
+			})
 		})
 		var btn = document.createElement("button")
 		btn.innerText = "Sell to  Mojave scrapyard for $10,000"
 		div.appendChild(btn)
 		btn.addEventListener("click", () => {
-			var airline = <Airline>gameEngine.airline
-			airline.cash += 10000
-			airline.transactions.push(`${new Date()} +$10,000 Sold plane ${this.id} to scrapyard`)
-			displayInfo("Plane sold!")
-			airline.planes = airline.planes.filter(p => p.id !== this.id)
-			gameEngine.displayFleetTab()
-			airline.updateStats()
+			$.ajax({
+				method: "POST",
+				url: "/plane/fix",
+				data: {
+					businessName: airline.name,
+					planeId: this.id
+				},
+				error: errHandler,
+				success: function(response) {
+					var jresponse = JSON.parse(response)
+					airline.planes = jresponse.planes.map(p => new Plane(p))
+					airline.addTransaction(jresponse.transaction)
+					airline.cash = jresponse.cash
+					displayInfo(jresponse.msg)
+					gameEngine.displayFleetTab()
+					airline.updateStats()
+				}
+			})
 		})
 		return div
 	}
@@ -488,6 +480,9 @@ class Airline {
 		const placeholder = <HTMLElement>document.getElementById("airlineStats")
 		placeholder.innerHTML = ""
 		placeholder.appendChild(this.statsHtml())
+	}
+	addTransaction(msg: string): void {
+		this.transactions.push(`${new Date()} ${prettyCashString(this.cash)} ${msg}`)
 	}
 	titleHtml(): HTMLElement {
 		return createTitle(
@@ -540,7 +535,8 @@ class Airline {
 							success: function(response) {
 								var r = JSON.parse(response)
 								// airline.cash = r.cash
-								airline.transactions.push(`${new Date()} ${prettyCashString(airline.cash)} Purchased plane for ${prettyCashString(airplaneCost)}`)
+								displayInfo(r.msg)
+								airline.addTransaction(r.transaction)
 								airline.planes.push(new Plane(r.plane))
 								airline.updateStats(r.cash)
 								gameEngine.displayFleetTab()
@@ -675,12 +671,12 @@ class GameEngine {
 			},
 			error: errHandler,
 			success: function(response) {
-				console.log("Got offered routes", response)
+				// console.log("Got offered routes", response)
 				var div = document.createElement("div")
 				var routesToDisplay = JSON.parse(response).map(r => new OfferedRoute(r))
 				routesToDisplay.forEach(r => div.appendChild(r.buttonHtml()))
 				main.appendChild(div)
-				
+
 			}
 		})
 	}
@@ -791,7 +787,9 @@ window.onload = () => {
 			},
 			error: errHandler,
 			success: function(response) {
+				// console.log(response)
 				var airline = new Airline(JSON.parse(response))
+				console.log('Logged in, airline=', airline)
 				displayInfo(airline.name + " joins the aviation industry!")
 				gameEngine.registerAirline(airline)
 				const header = document.getElementsByTagName("header")[0]

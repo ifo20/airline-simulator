@@ -5,13 +5,13 @@ import os
 import pathlib
 
 from flask import request, send_from_directory, Flask
-from tinydb import Query
+from tinydb import Query, where
 
 from airline import Airline
 from airport import Airport, all_airports
 from db import initialise
 from plane import PlaneStore, Plane
-from route import OfferedRoute, PurchasedRoute
+from route import OfferedRoute, PurchasedRoute, RouteBase
 
 
 logging.basicConfig(level=logging.INFO)
@@ -28,13 +28,23 @@ PLANE_STORE = PlaneStore()
 airports_db, airlines_db, routes_db, planes_db = initialise()
 
 
-def jsonify(data):
-	def default(o):
-		if isinstance(o, datetime):
-			return o.isoformat()
-		return o.__dict__
+class ComplexEncoder(json.JSONEncoder):
+	def default(self, obj):
+		# logging.info("default: %s", obj)
+		if isinstance(obj, datetime):
+			return obj.isoformat()
+		if isinstance(obj, (Airport, Airline, RouteBase)):
+			return obj.__dict__
+		if isinstance(obj, Plane):
+			d = obj.__dict__.copy()
+			d.pop("route")
+			d["status"] = obj.status
+			return d
+		return json.JSONEncoder.default(self, obj)
 
-	return json.dumps(data, default=default)
+
+def jsonify(data):
+	return ComplexEncoder().encode(data)
 
 
 @app.errorhandler(Exception)
@@ -43,6 +53,7 @@ def handle_exception(e):
 		return str(e), 400
 	# below is for local use only
 	return repr(e), 500
+
 
 @app.route("/static/<path:filename>")
 def serve_static(filename):
@@ -81,7 +92,7 @@ def play():
 	hub = request.form["hub"]
 	if business_name in AIRLINES:
 		airline = AIRLINES[business_name]
-		airline.last_login = datetime.now()
+		airline.last_login = datetime.utcnow()
 		airlines_db.update({"last_login": airline.last_login}, Query().name == airline.name)
 	else:
 		airline = Airline(business_name, AIRPORTS[hub])
@@ -128,9 +139,17 @@ def purchase_route():
 	route = PurchasedRoute(origin, destination, popularity, purchase_cost)
 	routes_db.insert(route.db_dict(airline))
 	airline.routes.append(route)
+	logging.info("Added route for %s: %s", airline.name, route)
 	airline.cash -= purchase_cost
 	airlines_db.update({"cash": airline.cash}, Query().name == airline.name)
-	return jsonify(route)
+	return jsonify(
+		{
+			"route": route,
+			"cash": airline.cash,
+			"msg": f"Purchased route {route.identifier} for ${purchase_cost}!",
+			"transaction": f"Purchased route {route.identifier} for ${purchase_cost}!",
+		}
+	)
 
 
 @app.route("/planes", methods=["GET"])
@@ -147,37 +166,110 @@ def purchase_plane():
 	plane = PLANE_STORE.purchase_plane(int(request.form["planeId"]), airline)
 	airlines_db.update({"cash": airline.cash}, Query().name == airline.name)
 	planes_db.insert(plane.db_dict(airline))
-	return jsonify({"plane": plane, "cash": airline.cash,})
+	return jsonify(
+		{
+			"plane": plane,
+			"cash": airline.cash,
+			"msg": f"Purchased {plane.name}!",
+			"transaction": f"Purchased plane {plane.name} for ${plane.purchase_cost}",
+		}
+	)
+
+
+@app.route("/plane/fix", methods=["POST"])
+def fix_plane():
+	fix_cost = 100000
+	airline = AIRLINES[request.form["businessName"]]
+	assert airline.cash >= fix_cost, f"Airline cannot afford to fix - requires ${fix_cost}"
+	for plane in airline.planes:
+		if plane.id == int(request.form["planeId"]):
+			plane.health = 100
+			plane.save(planes_db, airline)
+			airline.cash -= fix_cost
+			airline.save(airlines_db)
+			return jsonify(
+				{
+					"planes": airline.planes,
+					"cash": airline.cash,
+					"msg": f"Plane {plane} fixed for $100,000!",
+					"transaction": f"Fixed plane {plane} for $100,000",
+				}
+			)
+	raise RuntimeError(f"Airline {airline} does not have plane {request.form['planeId']}")
+
+
+@app.route("/plane/scrap", methods=["POST"])
+def scrap_plane():
+	scrap_value = 10000
+	airline = AIRLINES[request.form["businessName"]]
+	plane_id = int(request.form["planeId"])
+	assert any(
+		p.id == plane_id for p in airline.planes
+	), f"Airline does not have that plane"
+	airline.planes = [p for p in airline.planes if p.id != plane_id]
+	airline.cash += scrap_value
+	planes_db.remove(where("id") == plane_id)
+	airline.save(airlines_db)
+	return jsonify(
+		{
+			"planes": airline.planes,
+			"cash": airline.cash,
+			"msg": f"Plane {plane} sold to Mojave scrapyard for $10,000!",
+			"transaction": f"Sold plane {plane} to scrapyard for $10,000",
+		}
+	)
+
 
 @app.route("/run-route", methods=["POST"])
 def run_route():
 	airline = AIRLINES[request.form["businessName"]]
 	for route in airline.routes:
-		if route.origin.code == request.form["origin"] and route.destination.code == request.form["destination"]:
-			route.run()
-			routes_db.insert(route.db_dict(airline))
+		if (
+			route.origin.code == request.form["origin"]
+			and route.destination.code == request.form["destination"]
+		):
+			plane = route.run(airline)
+			route.save(routes_db, airline)
+			plane.save(planes_db, airline)
+			airlines_db.insert(airline.db_dict())
 
-			return {
-				"last_run": route.last_run,
-				"next_available": route.next_available,
-			}
+			return jsonify(
+				{
+					"msg": f"Route {route.identifier} has taken off with {plane.name}",
+					"last_run": route.last_run,
+					"next_available": route.next_available,
+					"planes": airline.planes,
+				}
+			)
+
 
 @app.route("/collect", methods=["POST"])
 def collect_route():
 	airline = AIRLINES[request.form["businessName"]]
-	logging.info("Customer %s collecting route results: %s", airline, request.form["route"])
+	logging.info(
+		"Customer %s collecting route results: %s", airline, request.form["route"]
+	)
 	origin, destination = request.form["route"].split("-")
 	for route in airline.routes:
 		if route.origin.code == origin and route.destination.code == destination:
-			msg, incident = route.collect(airline)
-			return {
-				"msg": msg,
-				"cash": airline.cash,
-				"popularity": airline.popularity,
-				"incident": incident,
-			}
+			msg, incident, plane = route.collect(airline)
+			route.save(routes_db, airline)
+			plane.save(planes_db, airline)
+			airlines_db.insert(airline.db_dict())
+
+			return jsonify(
+				{
+					"msg": msg,
+					"cash": airline.cash,
+					"popularity": airline.popularity,
+					"incident": incident,
+					"planes": airline.planes,
+				}
+			)
 	raise RuntimeError(
-		f"Airline does not have route {origin} <-> {destination}, does have {'...'.join(f'{r.origin.code}<->{r.destination.code}' for r in airline.routes)}")
+		f"Airline does not have route {origin} <-> {destination}, does have {'...'.join(f'{r.origin.code}<->{r.destination.code}' for r in airline.routes)}"
+	)
+
 
 if __name__ == "__main__":
 	for db_airport in airports_db:

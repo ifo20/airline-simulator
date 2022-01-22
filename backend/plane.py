@@ -1,5 +1,9 @@
 import random
 
+from tinydb import Query
+
+from airline import Airline
+
 
 class PlaneBase:
 	def __init__(self, id, name, max_distance, purchase_cost):
@@ -34,8 +38,21 @@ def generate_name():
 class Plane(PlaneBase):
 	def __init__(self, id, name, max_distance, purchase_cost):
 		super().__init__(id, name, max_distance, purchase_cost)
-		self.flying = False
+		self.route = None
 		self.health = 100
+
+	@property
+	def status(self):
+		if self.route:
+			return f"Flying {self.route.origin.code} <-> {self.route.destination.code}"
+		if self.health < 30:
+			return "Requires maintenance"
+		return "Available"
+
+	def save(self, db, airline: Airline):
+		params = self.db_dict(airline)
+		airline_name = params.pop("airline")
+		db.update(params, Query().airline == airline_name)
 
 	def db_dict(self, airline):
 		return {
@@ -44,7 +61,17 @@ class Plane(PlaneBase):
 			"max_distance": self.max_distance,
 			"purchase_cost": self.purchase_cost,
 			"airline": airline.name,
+			"health": self.health,
 		}
+
+	def available_for_route(self, route):
+		return self.route is None and self.max_distance > route.distance
+
+	def reserve(self, route):
+		self.route = route
+
+	def free(self):
+		self.route = None
 
 
 class PlaneStore:
