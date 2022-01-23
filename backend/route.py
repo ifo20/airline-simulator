@@ -76,7 +76,7 @@ class PurchasedRoute(RouteBase):
 		), f"No plane available to run this route (distance required is {self.distance}km) planes: {airline.planes}"
 		plane_to_use.reserve(self)
 		self.last_run = datetime.utcnow()
-		self.next_available = self.last_run + timedelta(seconds=0 + self.distance / 2000)
+		self.next_available = self.last_run + timedelta(seconds=5 + self.distance / 20)
 		return plane_to_use
 
 	def collect(self, airline: Airline):
@@ -90,21 +90,21 @@ class PurchasedRoute(RouteBase):
 		num_passengers = random.randint(10, 500)
 		income = 100 * num_passengers
 		cost = random.randint(500, 1000)
-		plane_health_cost = random.randint(1, 10) + 30
+		plane_health_cost = random.randint(1, 10)
 		popularity_change = random.randint(0, 1)
 
 		if random.random() < 0.1:
-			plane_health_cost += 35
-			cost += 300
-			popularity_change -= 10
-			incident = "There was an engine fire! See Accidents tab for details"
-			# incidentText = `Engine fire costing ${prettyCashString(eventCost)} and ${popularityChange} reputation`
-		elif random.random() < 0.1:
-			plane_health_cost += 15
+			plane_health_cost += 5
 			cost += 100
 			popularity_change -= 2
 			incident = "Smoke in cabin! See Accidents tab for details"
 			# incidentText = `Smoke in cabin ${prettyCashString(eventCost)} and ${popularityChange} reputation`
+		elif random.random() < 0.1:
+			plane_health_cost += 25
+			cost += 300
+			popularity_change -= 10
+			incident = "There was an engine fire! See Accidents tab for details"
+			# incidentText = `Engine fire costing ${prettyCashString(eventCost)} and ${popularityChange} reputation`
 		else:
 			incident = None
 

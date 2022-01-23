@@ -141,7 +141,7 @@ def purchase_route():
 	airline.routes.append(route)
 	logging.info("Added route for %s: %s", airline.name, route)
 	airline.cash -= purchase_cost
-	airlines_db.update({"cash": airline.cash}, Query().name == airline.name)
+	airline.save(airlines_db)
 	return jsonify(
 		{
 			"route": route,
@@ -164,7 +164,7 @@ def list_planes():
 def purchase_plane():
 	airline = AIRLINES[request.form["businessName"]]
 	plane = PLANE_STORE.purchase_plane(int(request.form["planeId"]), airline)
-	airlines_db.update({"cash": airline.cash}, Query().name == airline.name)
+	airline.save(airlines_db)
 	planes_db.insert(plane.db_dict(airline))
 	return jsonify(
 		{
@@ -231,8 +231,7 @@ def run_route():
 			plane = route.run(airline)
 			route.save(routes_db, airline)
 			plane.save(planes_db, airline)
-			airlines_db.insert(airline.db_dict())
-
+			airline.save(airlines_db)
 			return jsonify(
 				{
 					"msg": f"Route {route.identifier} has taken off with {plane.name}",
@@ -255,7 +254,7 @@ def collect_route():
 			msg, incident, plane = route.collect(airline)
 			route.save(routes_db, airline)
 			plane.save(planes_db, airline)
-			airlines_db.insert(airline.db_dict())
+			airline.save(airlines_db)
 
 			return jsonify(
 				{
