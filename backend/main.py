@@ -32,7 +32,7 @@ class ComplexEncoder(json.JSONEncoder):
 	def default(self, obj):
 		# logging.info("default: %s", obj)
 		if isinstance(obj, datetime):
-			return obj.isoformat()
+			return obj.isoformat() + 'Z'
 		if isinstance(obj, (Airport, Airline, RouteBase)):
 			return obj.__dict__
 		if isinstance(obj, Plane):
@@ -59,6 +59,9 @@ def handle_exception(e):
 def serve_static(filename):
 	return send_from_directory(WEBSITE_ROOT, filename)
 
+@app.route('/favicon.ico')
+def fav():
+    return send_from_directory(WEBSITE_ROOT,'favicon.ico')
 
 @app.route("/debug")
 def debug():
@@ -76,7 +79,7 @@ def leaderboard():
 		AIRLINES.values(), key=lambda airline: airline.cash, reverse=True
 	)
 	return "<br/>".join(
-		f"{i}: {airline.name}: ${airline.cash}"
+		f"{i}: {airline.name}: ${airline.cash}: {len(airline.planes)} planes: {len(airline.routes)} routes"
 		for i, airline in enumerate(all_airlines, start=1)
 	)
 

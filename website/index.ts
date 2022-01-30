@@ -137,6 +137,7 @@ class OfferedRoute {
 	buttonHtml(): HTMLButtonElement {
 		var btn = document.createElement("button")
 		btn.setAttribute("style", "background-color:#ddcc44aa")
+		btn.setAttribute("class", "flex-grow")
 		btn.appendChild(this.cardHtml())
 		const { purchaseCost, popularity, identifier } = this
 		const route = this
@@ -241,7 +242,7 @@ class Route {
 				airline.updateStats()
 				airline.getRoutesDisplay()
 				gameEngine.displayRoutesTab()
-
+				displayInfo(jresponse.msg)
 			}
 		})
 		return true
@@ -261,6 +262,7 @@ class Route {
 				displayInfo(jresponse.msg)
 				if (jresponse.incident) {
 					displayInfo(jresponse.incident)
+					airline.incidents.push(jresponse.incident)
 				}
 				airline.planes = jresponse.planes.map(p => new Plane(p))
 				airline.popularity = jresponse.popularity
@@ -367,8 +369,8 @@ class Plane {
 		var dl = dataLabels([
 			["Name", `${this.name}`],
 			["Status", `${this.status}`],
-			["Maxdistance", `${this.maxDistance}`],
-			["health", this.health.toLocaleString("en-gb")],
+			["Max distance", `${this.maxDistance}`],
+			["Health", this.health.toLocaleString("en-gb")],
 		])
 		var card = document.createElement("div")
 		card.innerHTML = `<h3>${this.name} </h3>`
@@ -524,6 +526,10 @@ class Airline {
 					div.appendChild(createParagraph(`You can buy ${plane.name}, which flies up to ${plane.maxDistance.toLocaleString("en-gb", { maximumFractionDigits: 0 })}km plane for ${prettyCashString(airplaneCost)}`))
 					button.innerHTML = `Buy plane for ${prettyCashString(airplaneCost).toLocaleString()}`
 					button.addEventListener("click", () => {
+						var confirmed = confirm(`Are you sure you want to buy ${plane.name}?\nThis will cost ${prettyCashString(airplaneCost).toLocaleString()}`)
+						if (!confirmed) {
+							return
+						}
 						$.ajax({
 							method: "POST",
 							url: "/plane",
@@ -803,4 +809,10 @@ window.onload = () => {
 		})
 	})
 	gameEngine.loadAirports()
+	var logoImg = <HTMLImageElement>document.getElementById("logo")
+	logoImg.addEventListener("click", () => {
+		var oldSrc = logoImg.src
+		var newSrc = prompt("Enter URL of your logo", oldSrc)
+		logoImg.src = newSrc
+	})
 }
