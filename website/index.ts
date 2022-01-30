@@ -523,7 +523,7 @@ class Airline {
 					var button = document.createElement("button")
 					button.setAttribute("style", "margin: 0.5rem")
 					const airplaneCost = plane.cost
-					div.appendChild(createParagraph(`You can buy ${plane.name}, which flies up to ${plane.maxDistance.toLocaleString("en-gb", { maximumFractionDigits: 0 })}km plane for ${prettyCashString(airplaneCost)}`))
+					div.appendChild(createParagraph(`You can buy ${plane.name}, which flies up to ${plane.maxDistance.toLocaleString("en-gb", { maximumFractionDigits: 0 })}km, for ${prettyCashString(airplaneCost)}`))
 					button.innerHTML = `Buy plane for ${prettyCashString(airplaneCost).toLocaleString()}`
 					button.addEventListener("click", () => {
 						var confirmed = confirm(`Are you sure you want to buy ${plane.name}?\nThis will cost ${prettyCashString(airplaneCost).toLocaleString()}`)
@@ -710,25 +710,49 @@ class GameEngine {
 	}
 	createSideMenu(): void {
 		var sideMenu = <HTMLElement>document.getElementById("sidemenu")
-		var companyBtn = createElement("button", "viewCompany", "flex-grow", `Overview of ${(<Airline>this.airline).name}`)
-		var fleetBtn = createElement("button", "viewFleet", "flex-grow", `Overview of Fleet`)
-		var routesBtn = createElement("button", "viewRoutes", "flex-grow", `Overview of Routes`)
-		var reputationBtn = createElement("button", "viewReputation", "flex-grow", `Overview of Reputation`)
-		var financeBtn = createElement("button", "viewFinance", "flex-grow", `Overview of Finance`)
-		var accidentsBtn = createElement("button", "viewAccidents", "flex-grow", `Overview of Accidents`)
-		const main = <HTMLElement>document.getElementById("main")
-		companyBtn.addEventListener("click", () => gameEngine.displaySummaryTab())
-		fleetBtn.addEventListener("click", () => gameEngine.displayFleetTab())
-		routesBtn.addEventListener("click", () => gameEngine.displayRoutesTab())
-		reputationBtn.addEventListener("click", () => gameEngine.displayReputationTab())
-		financeBtn.addEventListener("click", () => gameEngine.displayFinanceTab())
-		accidentsBtn.addEventListener("click", () => gameEngine.displayAccidentsTab())
-		sideMenu.appendChild(companyBtn)
-		sideMenu.appendChild(fleetBtn)
-		sideMenu.appendChild(routesBtn)
-		sideMenu.appendChild(reputationBtn)
-		sideMenu.appendChild(financeBtn)
-		sideMenu.appendChild(accidentsBtn)
+		var buttons = [
+			createElement("button", "viewCompany", "flex-grow dark", `Overview of ${(<Airline>this.airline).name}`),
+			createElement("button", "viewFleet", "flex-grow dark", `Overview of Fleet`),
+			createElement("button", "viewRoutes", "flex-grow dark", `Overview of Routes`),
+			createElement("button", "viewReputation", "flex-grow dark", `Overview of Reputation`),
+			createElement("button", "viewFinance", "flex-grow dark", `Overview of Finance`),
+			createElement("button", "viewAccidents", "flex-grow dark", `Overview of Accidents`),
+		]
+		const setScreen = (buttonId: string) => {
+			buttons.forEach(b => {
+				if (b.id === buttonId) {
+					b.classList.add("light")
+				} else {
+					b.classList.remove("light")
+				}
+			})
+			switch (buttonId) {
+				case "viewCompany":
+					gameEngine.displaySummaryTab()
+					break;
+				case "viewFleet":
+					gameEngine.displayFleetTab()
+					break;
+				case "viewRoutes":
+					gameEngine.displayRoutesTab()
+					break;
+				case "viewReputation":
+					gameEngine.displayReputationTab()
+					break;
+				case "viewFinance":
+					gameEngine.displayFinanceTab()
+					break;
+				case "viewAccidents":
+					gameEngine.displayAccidentsTab()
+					break;
+				default:
+					console.error("Unexpected buttonId:", buttonId)
+			}
+		}
+		buttons.forEach(b => {
+			b.addEventListener("click", () => setScreen(b.id))
+			sideMenu.appendChild(b)
+		})
 	}
 }
 
@@ -805,6 +829,7 @@ window.onload = () => {
 				gameEngine.createSideMenu()
 				airline.updateTitle()
 				airline.updateStats()
+				$("#logo").show()
 			}
 		})
 	})
@@ -813,6 +838,8 @@ window.onload = () => {
 	logoImg.addEventListener("click", () => {
 		var oldSrc = logoImg.src
 		var newSrc = prompt("Enter URL of your logo", oldSrc)
-		logoImg.src = newSrc
+		if (newSrc) {
+			logoImg.src = newSrc
+		}
 	})
 }
