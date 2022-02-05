@@ -16,16 +16,19 @@ from route import OfferedRoute, PurchasedRoute, RouteBase
 
 logging.basicConfig(level=logging.INFO)
 
-
+logging.info("TEST LOG STARTING")
 WEBSITE_ROOT = os.path.join(pathlib.Path(__file__).resolve().parent.parent, "website")
 
 app = Flask(__name__, static_folder=WEBSITE_ROOT)
+logging.info("Created app")
 
 AIRLINES = {}
 AIRPORTS = {a.code: a for a in all_airports()}
 PLANE_STORE = PlaneStore()
+logging.info("Created PlaneStore")
 
 airports_db, airlines_db, routes_db, planes_db = initialise()
+logging.info("Initialised from db")
 
 
 class ComplexEncoder(json.JSONEncoder):
