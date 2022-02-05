@@ -15,10 +15,8 @@ from app.route import OfferedRoute, PurchasedRoute, RouteBase
 
 
 logging.basicConfig(level=logging.INFO)
-print("TEST PRINT")
-logging.info("TEST LOG STARTING")
-WEBSITE_ROOT = os.path.join(pathlib.Path(__file__).resolve().parent.parent, "website")
 
+WEBSITE_ROOT = os.path.join(pathlib.Path(__file__).resolve().parent.parent, "website")
 app = Flask(__name__, static_folder=WEBSITE_ROOT)
 logging.info("Created app, WEBSITE_ROOT=%s", WEBSITE_ROOT)
 
@@ -28,7 +26,7 @@ PLANE_STORE = PlaneStore()
 logging.info("Created PlaneStore")
 
 airports_db, airlines_db, routes_db, planes_db = initialise()
-logging.info("Initialised from app.db")
+logging.info("Initialised databases")
 
 
 class ComplexEncoder(json.JSONEncoder):
@@ -52,6 +50,7 @@ def jsonify(data):
 
 @app.errorhandler(Exception)
 def handle_exception(e):
+	logging.exception("Error handler called with %s", e)
 	if isinstance(e, AssertionError):
 		return str(e), 400
 	# below is for local use only
@@ -95,17 +94,21 @@ def list_airports():
 
 @app.route("/play", methods=["POST"])
 def play():
+	logging.info("play request: %s", request.form)
 	business_name = request.form["businessName"].strip()
 	hub = request.form["hub"]
 	if business_name in AIRLINES:
+		logging.info("Signing in airline %s", business_name)
 		airline = AIRLINES[business_name]
 		airline.last_login = datetime.utcnow()
 		airlines_db.update({"last_login": airline.last_login}, Query().name == airline.name)
 	else:
+		logging.info("Creating airline %s with hub %s", business_name, hub)
 		airline = Airline(business_name, AIRPORTS[hub])
 		airlines_db.insert(airline.db_dict())
 		AIRLINES[business_name] = airline
 
+	logging.info("play returning airline %s", airline)
 	return jsonify(airline)
 
 
@@ -128,6 +131,7 @@ def list_routes():
 
 @app.route("/route", methods=["POST"])
 def purchase_route():
+	logging.info("purchase_route request: %s", request.form)
 	try:
 		airline = AIRLINES[request.form["businessName"]]
 	except KeyError:
@@ -169,6 +173,7 @@ def list_planes():
 
 @app.route("/plane", methods=["POST"])
 def purchase_plane():
+	logging.info("purchase_plane request: %s", request.form)
 	airline = AIRLINES[request.form["businessName"]]
 	plane = PLANE_STORE.purchase_plane(int(request.form["planeId"]), airline)
 	airline.save(airlines_db)
@@ -278,8 +283,6 @@ def collect_route():
 
 
 if __name__ == "__main__":
-	print("MAIN PRINT")
-	logging.error("TEST LOG ERRORR IN MAIN")
 	for db_airport in airports_db:
 		AIRPORTS[db_airport["code"]] = Airport.from_db(db_airport)
 	for db_airline in airlines_db:
