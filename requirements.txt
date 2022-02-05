@@ -1,4 +1,5 @@
 flask
+gunicorn
 tinydb
 tinydb-serialization
- black-but-with-tabs-instead-of-spaces
+black-but-with-tabs-instead-of-spaces
