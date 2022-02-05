@@ -2,7 +2,7 @@ from datetime import datetime
 
 from tinydb import Query
 
-from airport import Airport
+from app.airport import Airport
 
 
 class Airline:

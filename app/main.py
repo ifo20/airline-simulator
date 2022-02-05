@@ -7,11 +7,11 @@ import pathlib
 from flask import request, send_from_directory, Flask
 from tinydb import Query, where
 
-from airline import Airline
-from airport import Airport, all_airports
-from db import initialise
-from plane import PlaneStore, Plane
-from route import OfferedRoute, PurchasedRoute, RouteBase
+from app.airline import Airline
+from app.airport import Airport, all_airports
+from app.db import initialise
+from app.plane import PlaneStore, Plane
+from app.route import OfferedRoute, PurchasedRoute, RouteBase
 
 
 logging.basicConfig(level=logging.INFO)
@@ -28,7 +28,7 @@ PLANE_STORE = PlaneStore()
 logging.info("Created PlaneStore")
 
 airports_db, airlines_db, routes_db, planes_db = initialise()
-logging.info("Initialised from db")
+logging.info("Initialised from app.db")
 
 
 class ComplexEncoder(json.JSONEncoder):

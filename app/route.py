@@ -3,8 +3,8 @@ import random
 
 from tinydb import Query
 
-from airport import Airport
-from airline import Airline
+from app.airport import Airport
+from app.airline import Airline
 
 
 class RouteBase:

@@ -2,7 +2,7 @@ import random
 
 from tinydb import Query
 
-from airline import Airline
+from app.airline import Airline
 
 
 class PlaneBase:

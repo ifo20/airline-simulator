@@ -5,7 +5,7 @@ from tinydb.storages import JSONStorage
 from tinydb_serialization import SerializationMiddleware, Serializer
 from tinydb_serialization.serializers import DateTimeSerializer
 
-from airport import all_airports, Airport
+from app.airport import all_airports, Airport
 
 
 class AirportSerializer(Serializer):
