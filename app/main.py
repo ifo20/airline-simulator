@@ -38,6 +38,8 @@ def get_airline(request):
 		return AIRLINES[name]
 	except KeyError:
 		record = airlines_db.get(where('name') == name)
+		if not record:
+			return None
 		record["hub"] = AIRPORTS[record["hub"]]
 		AIRLINES[name] = Airline.from_db(record)
 	return AIRLINES[name]
