@@ -26,7 +26,7 @@ DB = TinyDB("db.json", storage=serialization)
 
 def initialise():
 	airports = DB.table("airport")
-	airports.truncate()
+	# airports.truncate()
 	# for airport in all_airports():
 	# 	airports.insert(airport.db_dict())
 	airlines = DB.table("airline")
