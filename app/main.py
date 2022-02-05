@@ -20,7 +20,7 @@ logging.info("TEST LOG STARTING")
 WEBSITE_ROOT = os.path.join(pathlib.Path(__file__).resolve().parent.parent, "website")
 
 app = Flask(__name__, static_folder=WEBSITE_ROOT)
-logging.info("Created app")
+logging.info("Created app, WEBSITE_ROOT=%s", WEBSITE_ROOT)
 
 AIRLINES = {}
 AIRPORTS = {a.code: a for a in all_airports()}
@@ -60,6 +60,7 @@ def handle_exception(e):
 
 @app.route("/static/<path:filename>")
 def serve_static(filename):
+	logging.info("serve_static filename=%s ROOT=%s", filename, WEBSITE_ROOT)
 	return send_from_directory(WEBSITE_ROOT, filename)
 
 @app.route('/favicon.ico')
