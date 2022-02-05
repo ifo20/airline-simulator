@@ -29,6 +29,17 @@ airports_db, airlines_db, routes_db, planes_db = initialise()
 logging.info("Initialised databases")
 
 
+def get_airline(request):
+	try:
+		name = request.args["businessName"].strip()
+	except KeyError:
+		name = request.form["businessName"].strip()
+	try:
+		return AIRLINES[name]
+	except KeyError:
+		AIRLINES[name] = airlines_db.get(where('name') == name)
+	return AIRLINES[name]
+
 class ComplexEncoder(json.JSONEncoder):
 	def default(self, obj):
 		# logging.info("default: %s", obj)
@@ -95,18 +106,17 @@ def list_airports():
 @app.route("/play", methods=["POST"])
 def play():
 	logging.info("play request: %s", request.form)
-	business_name = request.form["businessName"].strip()
-	hub = request.form["hub"]
-	if business_name in AIRLINES:
-		logging.info("Signing in airline %s", business_name)
-		airline = AIRLINES[business_name]
+	airline = get_airline(request)
+	if airline:
+		logging.info("Signing in airline %s", airline)
 		airline.last_login = datetime.utcnow()
 		airlines_db.update({"last_login": airline.last_login}, Query().name == airline.name)
 	else:
-		logging.info("Creating airline %s with hub %s", business_name, hub)
-		airline = Airline(business_name, AIRPORTS[hub])
+		logging.info("Creating airline from request: %s", request.form)
+		hub = request.form["hub"]
+		airline = Airline(request.form["businessName"].strip(), AIRPORTS[hub])
 		airlines_db.insert(airline.db_dict())
-		AIRLINES[business_name] = airline
+		AIRLINES[airline.name] = airline
 
 	logging.info("play returning airline %s", airline)
 	return jsonify(airline)
@@ -114,7 +124,7 @@ def play():
 
 @app.route("/routes", methods=["GET"])
 def list_routes():
-	airline = AIRLINES[request.args["businessName"]]
+	airline = get_airline(request)
 	existing_route_destinations = {r.destination.code for r in airline.routes}
 	all_destinations = [
 		airport
