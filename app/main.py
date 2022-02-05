@@ -37,7 +37,9 @@ def get_airline(request):
 	try:
 		return AIRLINES[name]
 	except KeyError:
-		AIRLINES[name] = airlines_db.get(where('name') == name)
+		record = airlines_db.get(where('name') == name)
+		record["hub"] = AIRPORTS[record["hub"]]
+		AIRLINES[name] = Airline.from_db(record)
 	return AIRLINES[name]
 
 class ComplexEncoder(json.JSONEncoder):
