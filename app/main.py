@@ -15,7 +15,7 @@ from route import OfferedRoute, PurchasedRoute, RouteBase
 
 
 logging.basicConfig(level=logging.INFO)
-
+print("TEST PRINT")
 logging.info("TEST LOG STARTING")
 WEBSITE_ROOT = os.path.join(pathlib.Path(__file__).resolve().parent.parent, "website")
 
@@ -277,6 +277,8 @@ def collect_route():
 
 
 if __name__ == "__main__":
+	print("MAIN PRINT")
+	logging.error("TEST LOG ERRORR IN MAIN")
 	for db_airport in airports_db:
 		AIRPORTS[db_airport["code"]] = Airport.from_db(db_airport)
 	for db_airline in airlines_db:
