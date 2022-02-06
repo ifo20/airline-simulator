@@ -266,6 +266,7 @@ def run_route():
 					"planes": airline.planes,
 				}
 			)
+	raise AssertionError(f"Your airline does not have route {request.form['origin']}<->{request.form['destination']}. airline.routes={airline.routes}")
 
 
 @app.route("/collect", methods=["POST"])
