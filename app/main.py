@@ -317,5 +317,5 @@ if __name__ == "__main__":
 		AIRLINES[db_plane["airline"]].planes.append(plane)
 
 	logging.info("Loaded airlines: %s", [a.name for a in AIRLINES.values()])
-	app.run(debug=True, port=33507)
+	app.run(debug=True, port=process.env.PORT)
 
