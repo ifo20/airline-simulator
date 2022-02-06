@@ -64,4 +64,44 @@ def all_airports() -> List[Airport]:
 		),
 		# Middle East
 		Airport("DXB", "Dubai International Airport", "UAE", 25.2532, 55.3657, 91.2),
+		Airport("AUH", "Abu Dhabi International Airport", "UAE", 24.4331, 54.6511, 90.5),
+		Airport(
+			"JED", "King Abdulaziz International Airport", "Saudi Arabia", 21.6805, 39.1752, 85.6
+		),
+		Airport(
+			"RUH", "King Khalid International Airport", "Saudi Arabia", 24.9578, 46.6989, 77.4
+		),
+		Airport(
+			"AMM", "Amman Queen Alia International Airport", "Jordan", 31.7225, 35.9933, 65.8
+		),
+		Airport("MCT", "Muscat Airport", "Oman", 23.5928, 58.2817, 71.8),
+		Airport("SLL", "Salalah Airport", "Oman", 17.0386, 54.0914, 73.8),
+		Airport("MHD", "Mashhad Airport", "Iran", 36.2342, 59.645, 72.5),
+		Airport(
+			"IKA", "Tehran Imam Khomeini International Airport", "Iran", 35.4161, 51.1522, 72.5
+		),
+		Airport(
+			"THR", "Tehran Mehrabad International Airport", "Iran", 35.6889, 51.3147, 72.5
+		),
+		Airport("BND", "Bandar Abbas Airport", "Iran", 27.2186, 56.3778, 69.7),
+		Airport("BGW", "Baghdad Airport", "Iraq", 33.2625, 44.2344, 55.8),
+		Airport("KWI", "Kuwait Airport", "Kuwait", 29.2267, 47.9689, 58.8),
+		Airport(
+			"DAM",
+			"Damascus International Airport",
+			"Syria Arab Republic",
+			33.4106,
+			36.5144,
+			67.6,
+		),
+		Airport("SAH", "Sana'a International Airport", "Yemen", 15.4792, 44.2197, 55.8),
+		Airport("ADE", "Aden International Airport", "Yemen", 12.8254, 45.0371, 56.5),
+		Airport("BAH", "Bahrain Airport", "Bahrain", 26.2708, 50.6336, 67.6),
+		Airport(
+			"TLV", "Tel Aviv Ben Gurion International Airport", "Israel", 32.0114, 34.8867, 72.2
+		),
+		Airport("BEY", "Beirut Airport", "Lebanon", 33.8208, 35.4883, 65.9),
+		Airport(
+			"DOH", "Hamad International Airport Information", "Qatar", 25.2606, 51.6138, 69.9
+		),
 	]
