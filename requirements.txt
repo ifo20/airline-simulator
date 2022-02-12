@@ -3,3 +3,4 @@ gunicorn
 tinydb
 tinydb-serialization
 black-but-with-tabs-instead-of-spaces
+psycopg2-binary
