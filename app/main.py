@@ -229,16 +229,15 @@ def scrap_plane():
 
 @app.route("/run-route", methods=["POST"])
 def run_route():
-	airline = AIRLINES[request.form["businessName"]]
+	airline = SERVER.get_airline(request)
 	for route in airline.routes:
 		if (
 			route.origin.code == request.form["origin"]
 			and route.destination.code == request.form["destination"]
 		):
 			plane = route.run(airline)
-			route.save(routes_db, airline)
-			plane.save(planes_db, airline)
-			airline.save(airlines_db)
+			SERVER.db.save_route(route)
+			SERVER.db.save_plane(plane)
 			return jsonify(
 				{
 					"msg": f"Route {route.identifier} has taken off with {plane.name}",
@@ -252,7 +251,7 @@ def run_route():
 
 @app.route("/collect", methods=["POST"])
 def collect_route():
-	airline = AIRLINES[request.form["businessName"]]
+	airline = SERVER.get_airline(request)
 	logging.info(
 		"Customer %s collecting route results: %s", airline, request.form["route"]
 	)

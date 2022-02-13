@@ -32,7 +32,7 @@ INSERT INTO airport (code, name, country, latitude, longitude, popularity) VALUE
 ('BGW', 'Baghdad Airport', 'Iraq', 33.2625, 44.2344, 55.8),
 ('KWI', 'Kuwait Airport', 'Kuwait', 29.2267, 47.9689, 58.8),
 ('DAM',	'Damascus International Airport', 'Syria Arab Republic', 33.4106, 36.5144, 67.6),
-('SAH', 'Sana''a International Airport', 'Yemen', 15.4792, 44.2197, 55.8),
+('SAH', 'Sanaa International Airport', 'Yemen', 15.4792, 44.2197, 55.8),
 ('ADE', 'Aden International Airport', 'Yemen', 12.8254, 45.0371, 56.5),
 ('BAH', 'Bahrain Airport', 'Bahrain', 26.2708, 50.6336, 67.6),
 ('TLV', 'Tel Aviv Ben Gurion International Airport', 'Israel', 32.0114, 34.8867, 72.2),
@@ -53,3 +53,13 @@ CREATE TABLE IF NOT EXISTS airline (
 	  REFERENCES airport(code)
 );
 INSERT INTO airline VALUES (1, 'My First Airline', 'LHR', now(), now(), 1000000, 100.0) ON CONFLICT DO NOTHING;
+CREATE TABLE IF NOT EXISTS purchased_route (
+   origin VARCHAR(3),
+   destination VARCHAR(3),
+   popularity REAL NOT NULL,
+   purchased_cost INTEGER NOT NULL
+   last_run_at TIMESTAMP WITH TIME ZONE NULL,
+   next_available_at TIMESTAMP WITH TIME ZONE NOT NULL,
+   last_resulted_at TIMESTAMP WITH TIME ZONE NULL,
+   CONSTRAINT fk_origin FOREIGN KEY (origin) REFERENCES airport(code)
+   CONSTRAINT fk_destination FOREIGN KEY (destination) REFERENCES airport(code)
