@@ -7,7 +7,7 @@ import pathlib
 from flask import request, send_from_directory, Flask
 
 from app.airline import Airline
-from app.airport import Airport, all_airports
+from app.airport import Airport
 from app.db import PostgresqlDatabase
 from app.plane import PlaneStore, Plane
 from app.route import OfferedRoute, PurchasedRoute, RouteBase
@@ -64,7 +64,7 @@ def fav():
 
 @app.route("/debug")
 def debug():
-	return jsonify(AIRLINES)
+	return jsonify(SERVER.db.get_airlines())
 
 
 @app.route("/")
@@ -75,7 +75,7 @@ def home():
 @app.route("/leaderboard")
 def leaderboard():
 	all_airlines = sorted(
-		AIRLINES.values(), key=lambda airline: airline.cash, reverse=True
+		SERVER.db.get_airlines(), key=lambda airline: airline.cash, reverse=True
 	)
 	return "<br/>".join(
 		f"{i}: {airline.name}: ${airline.cash}: {len(airline.planes)} planes: {len(airline.routes)} routes"
@@ -85,31 +85,28 @@ def leaderboard():
 
 @app.route("/airports")
 def list_airports():
-	return jsonify(list(AIRPORTS.values()))
+	return jsonify(list(SERVER.db.get_airports()))
 
 
 @app.route("/play", methods=["POST"])
 def play():
 	logging.info("play request: %s", request.form)
-	airline = get_airline(request)
-	if airline:
+	airline = SERVER.get_airline(request)
+	if airline is None:
+		logging.info("Creating airline from request: %s", request.form)
+		SERVER.db.create_airline(request.form["businessName"].strip(), request.form["hub"])
+	else:
 		logging.info("Signing in airline %s", airline)
 		airline.last_login = datetime.utcnow()
-		airlines_db.update({"last_login": airline.last_login}, Query().name == airline.name)
-	else:
-		logging.info("Creating airline from request: %s", request.form)
-		hub = request.form["hub"]
-		airline = Airline(request.form["businessName"].strip(), AIRPORTS[hub])
-		airlines_db.insert(airline.db_dict())
-		AIRLINES[airline.name] = airline
-
+		SERVER.db.save_airline(airline)
+	airline = SERVER.get_airline(request)
 	logging.info("play returning airline %s", airline)
 	return jsonify(airline)
 
 
 @app.route("/routes", methods=["GET"])
 def list_routes():
-	airline = get_airline(request)
+	airline = SERVER.get_airline(request)
 	existing_route_destinations = {r.destination.code for r in airline.routes}
 	all_destinations = [
 		airport

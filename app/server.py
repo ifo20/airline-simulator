@@ -13,7 +13,4 @@ class Server:
             name = request.args["businessName"].strip()
         except KeyError:
             name = request.form["businessName"].strip()
-        try:
-            return self.airlines[name]
-        except KeyError:
-            return self.db.get_airline(name)
+        return self.db.get_airline_by_name(name)

@@ -1,20 +1,22 @@
 from datetime import datetime
 
-from tinydb import Query
-
 from app.airport import Airport
 
+STARTING_CASH = 1000000
+STARTING_POPULARITY = 50
 
 class Airline:
 	def __init__(
 		self,
+		id: int,
 		name: str,
 		hub: Airport,
 		joined=None,
 		last_login=None,
-		cash=1000000,
-		popularity=50,
+		cash=STARTING_CASH,
+		popularity=STARTING_POPULARITY,
 	):
+		self.id = id
 		self.name = name
 		self.hub = hub
 		self.joined = joined or datetime.utcnow()
@@ -25,21 +27,3 @@ class Airline:
 		self.routes = []
 		self.transactions = []
 		self.incidents = []
-
-	@classmethod
-	def from_db(cls, db_dict):
-		return cls(**db_dict)
-
-	def save(self, db):
-		params = self.db_dict()
-		db.update(params, Query().name == params["name"])
-
-	def db_dict(self):
-		return {
-			"name": self.name,
-			"hub": self.hub.code,
-			"joined": self.joined,
-			"last_login": self.last_login,
-			"cash": self.cash,
-			"popularity": self.popularity,
-		}

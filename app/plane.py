@@ -1,7 +1,5 @@
 import random
 
-from tinydb import Query
-
 from app.airline import Airline
 
 

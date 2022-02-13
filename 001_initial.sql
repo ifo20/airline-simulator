@@ -1,5 +1,6 @@
+BEGIN;
 CREATE TABLE IF NOT EXISTS airport (
-    id SERIAL,
+    id SERIAL PRIMARY KEY,
     code VARCHAR(3) UNIQUE NOT NULL,
     name TEXT UNIQUE NOT NULL,
     country TEXT NOT NULL,
@@ -41,11 +42,11 @@ INSERT INTO airport (code, name, country, latitude, longitude, popularity) VALUE
 ON CONFLICT DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS airline (
-    id SERIAL,
+    id SERIAL PRIMARY KEY,
     name VARCHAR(100) UNIQUE NOT NULL,
     hub VARCHAR(3),
-    joined TIMESTAMP WITH TIME ZONE NOT NULL,
-    last_login TIMESTAMP WITH TIME ZONE NOT NULL,
+    joined_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    last_login_at TIMESTAMP WITH TIME ZONE NOT NULL,
     cash INTEGER NOT NULL,
     popularity REAL NOT NULL,
     CONSTRAINT fk_hub
@@ -54,12 +55,29 @@ CREATE TABLE IF NOT EXISTS airline (
 );
 INSERT INTO airline VALUES (1, 'My First Airline', 'LHR', now(), now(), 1000000, 100.0) ON CONFLICT DO NOTHING;
 CREATE TABLE IF NOT EXISTS purchased_route (
-   origin VARCHAR(3),
-   destination VARCHAR(3),
-   popularity REAL NOT NULL,
-   purchased_cost INTEGER NOT NULL
-   last_run_at TIMESTAMP WITH TIME ZONE NULL,
-   next_available_at TIMESTAMP WITH TIME ZONE NOT NULL,
-   last_resulted_at TIMESTAMP WITH TIME ZONE NULL,
-   CONSTRAINT fk_origin FOREIGN KEY (origin) REFERENCES airport(code)
-   CONSTRAINT fk_destination FOREIGN KEY (destination) REFERENCES airport(code)
+    id SERIAL PRIMARY KEY,
+    airline_id INTEGER NOT NULL,
+    origin VARCHAR(3) NOT NULL,
+    destination VARCHAR(3) NOT NULL,
+    popularity REAL NOT NULL,
+    purchase_cost INTEGER NOT NULL,
+    last_run_at TIMESTAMP WITH TIME ZONE NULL,
+    next_available_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    last_resulted_at TIMESTAMP WITH TIME ZONE NULL,
+    UNIQUE (airline_id, origin, destination),
+    CONSTRAINT fk_airline_id FOREIGN KEY (airline_id) REFERENCES airline(id),
+    CONSTRAINT fk_origin FOREIGN KEY (origin) REFERENCES airport(code),
+    CONSTRAINT fk_destination FOREIGN KEY (destination) REFERENCES airport(code)
+);
+CREATE TABLE IF NOT EXISTS purchased_plane (
+    id SERIAL PRIMARY KEY,
+    airline_id INTEGER NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    max_distance INTEGER NOT NULL,
+    purchase_cost INTEGER NOT NULL,
+    health INTEGER NOT NULL,
+    route_id INTEGER NULL,
+    CONSTRAINT fk_airline_id FOREIGN KEY (airline_id) REFERENCES airline(id),
+    CONSTRAINT fk_route_id FOREIGN KEY (route_id) REFERENCES purchased_route(id)
+);
+COMMIT;

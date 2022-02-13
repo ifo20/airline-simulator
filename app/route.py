@@ -1,8 +1,6 @@
 from datetime import datetime, timedelta
 import random
 
-from tinydb import Query
-
 from app.airport import Airport
 from app.airline import Airline
 
