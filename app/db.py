@@ -1,35 +1,25 @@
-import json
+import logging
+import os
 
-from tinydb import TinyDB
-from tinydb.storages import JSONStorage
-from tinydb_serialization import SerializationMiddleware, Serializer
-from tinydb_serialization.serializers import DateTimeSerializer
+import psycopg2
+import psycopg2.extras
 
-from app.airport import all_airports, Airport
+LOGGER = logging.getLogger(__name__)
 
+class PostgresqlDatabase:
+	def __init__(self) -> None:
+		self.conn = psycopg2.connect(os.environ["DATABASE_URL"], sslmode='require')
+		LOGGER.info("Connected to database: %s", os.environ["DATABASE_URL"])
 
-class AirportSerializer(Serializer):
-	OBJ_CLASS = Airport  # The class this serializer handles
+	def migrate(self):
+		with self.conn.cursor() as cur:
+			with open("001_initial.sql", "r") as f:
+				cur.execute(f.read())
 
-	def encode(self, obj):
-		return obj.__dict__
-
-	def decode(self, s):
-		return json.loads(s)
-
-
-serialization = SerializationMiddleware(JSONStorage)
-serialization.register_serializer(DateTimeSerializer(), "TinyDate")
-serialization.register_serializer(AirportSerializer(), "Airport")
-DB = TinyDB("db.json", storage=serialization)
-
-
-def initialise():
-	airports = DB.table("airport")
-	# airports.truncate()
-	# for airport in all_airports():
-	# 	airports.insert(airport.db_dict())
-	airlines = DB.table("airline")
-	routes = DB.table("route")
-	planes = DB.table("planes")
-	return airports, airlines, routes, planes
+	def get_airports(self):
+		airports = {}
+		with self.conn.cursor() as cur:
+			cur.execute("SELECT * FROM airport")
+			for db_row in cur.fetchall():
+				print(db_row)
+		return airports

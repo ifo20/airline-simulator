@@ -5,13 +5,13 @@ import os
 import pathlib
 
 from flask import request, send_from_directory, Flask
-from tinydb import Query, where
 
 from app.airline import Airline
 from app.airport import Airport, all_airports
-from app.db import initialise
+from app.db import PostgresqlDatabase
 from app.plane import PlaneStore, Plane
 from app.route import OfferedRoute, PurchasedRoute, RouteBase
+from app.server import Server
 
 
 logging.basicConfig(level=logging.INFO)
@@ -20,29 +20,10 @@ WEBSITE_ROOT = os.path.join(pathlib.Path(__file__).resolve().parent.parent, "web
 app = Flask(__name__, static_folder=WEBSITE_ROOT)
 logging.info("Created app, WEBSITE_ROOT=%s", WEBSITE_ROOT)
 
-AIRLINES = {}
-AIRPORTS = {a.code: a for a in all_airports()}
 PLANE_STORE = PlaneStore()
 logging.info("Created PlaneStore")
 
-airports_db, airlines_db, routes_db, planes_db = initialise()
-logging.info("Initialised databases")
-
-
-def get_airline(request):
-	try:
-		name = request.args["businessName"].strip()
-	except KeyError:
-		name = request.form["businessName"].strip()
-	try:
-		return AIRLINES[name]
-	except KeyError:
-		record = airlines_db.get(where('name') == name)
-		if not record:
-			return None
-		record["hub"] = AIRPORTS[record["hub"]]
-		AIRLINES[name] = Airline.from_db(record)
-	return AIRLINES[name]
+global SERVER
 
 class ComplexEncoder(json.JSONEncoder):
 	def default(self, obj):
@@ -298,24 +279,7 @@ def collect_route():
 
 
 if __name__ == "__main__":
-	for db_airport in airports_db:
-		AIRPORTS[db_airport["code"]] = Airport.from_db(db_airport)
-	for db_airline in airlines_db:
-		db_airline["hub"] = AIRPORTS[db_airline["hub"]]
-		AIRLINES[db_airline["name"]] = Airline.from_db(db_airline)
-	for db_route in routes_db:
-		origin = AIRPORTS[db_route["origin"]]
-		destination = AIRPORTS[db_route["destination"]]
-		route = PurchasedRoute(
-			origin, destination, db_route["popularity"], db_route["purchase_cost"]
-		)
-		AIRLINES[db_route["airline"]].routes.append(route)
-	for db_plane in planes_db:
-		plane = Plane(
-			db_plane["id"], db_plane["name"], db_plane["max_distance"], db_plane["purchase_cost"]
-		)
-		AIRLINES[db_plane["airline"]].planes.append(plane)
-
-	logging.info("Loaded airlines: %s", [a.name for a in AIRLINES.values()])
+	database = PostgresqlDatabase()
+	SERVER = Server(database)
+	SERVER.initialise()
 	app.run(debug=True, host='0.0.0.0', port=os.environ["PORT"])
-
