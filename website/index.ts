@@ -119,6 +119,7 @@ class Airport {
 }
 
 class OfferedRoute {
+	id: number
 	identifier: string
 	distance: number
 	fromAirport: Airport
@@ -126,32 +127,29 @@ class OfferedRoute {
 	popularity: number
 	purchaseCost: number
 	constructor(data) {
-		const { identifier, distance, origin, destination, popularity, purchase_cost } = data
+		const { id, identifier, distance, origin, destination, popularity, cost } = data
+		this.id = id
 		this.identifier = identifier
 		this.distance = distance
 		this.fromAirport = origin
 		this.toAirport = destination
 		this.popularity = popularity
-		this.purchaseCost = purchase_cost
+		this.purchaseCost = cost
 	}
 	buttonHtml(): HTMLButtonElement {
 		var btn = document.createElement("button")
 		btn.setAttribute("style", "background-color:#ddcc44aa")
 		btn.setAttribute("class", "flex-grow")
 		btn.appendChild(this.cardHtml())
-		const { purchaseCost, popularity, identifier } = this
-		const route = this
+		const routeId = this.id
 		btn.addEventListener("click", () => {
 			var airline = <Airline>gameEngine.airline
 			$.ajax({
 				method: "POST",
-				url: "/route",
+				url: "/purchase_route",
 				data: {
-					businessName: airline.name,
-					purchaseCost,
-					origin: this.fromAirport.code,
-					destination: this.toAirport.code,
-					popularity,
+					airlineId: airline.id,
+					routeId,
 				},
 				error: errHandler,
 				success: function(response) {
@@ -202,16 +200,16 @@ class Route {
 	nextAvailableAt?: Date
 	plane?: Plane
 	constructor(data) {
-		const { distance, origin, destination, popularity, purchase_cost, last_run, last_result, next_available, plane } = data
+		const { distance, origin, destination, popularity, cost, last_run_at, last_resulted_at, next_available_at, plane } = data
 		this.identifier = [origin.code, destination.code].join("-")
 		this.fromAirport = origin
 		this.toAirport = destination
 		this.distance = distance
 		this.popularity = popularity
-		this.purchaseCost = purchase_cost
-		this.lastRunAt = last_run ? new Date(last_run) : null
-		this.lastResultedAt = last_result ? new Date(last_result): null
-		this.nextAvailableAt = next_available ? new Date(next_available) : null
+		this.purchaseCost = cost
+		this.lastRunAt = last_run_at ? new Date(last_run_at) : null
+		this.lastResultedAt = last_resulted_at ? new Date(last_resulted_at): null
+		this.nextAvailableAt = next_available_at ? new Date(next_available_at) : null
 		this.plane = plane
 	}
 	timeRemaining(): number {
@@ -229,7 +227,7 @@ class Route {
 			method: "POST",
 			url: "/run-route",
 			data: {
-				businessName: airline.name,
+				airlineId: airline.id,
 				origin: this.fromAirport.code,
 				destination: this.toAirport.code,
 			},
@@ -253,7 +251,7 @@ class Route {
 			method: "POST",
 			url: "/collect",
 			data: {
-				businessName: airline.name,
+				airlineId: airline.id,
 				route: this.identifier,
 			},
 			error: errHandler,
@@ -355,13 +353,13 @@ class Plane {
 	maxDistance: number
 	cost: number
 	constructor(data) {
-		const { id, name, status, health, max_distance, purchase_cost } = data
+		const { id, name, status, health, max_distance, cost } = data
 		this.id = id
 		this.name = name
 		this.status = status
 		this.health = health
 		this.maxDistance = max_distance
-		this.cost = purchase_cost
+		this.cost = cost
 	}
 	purchasedCardHtml(): HTMLElement {
 		var div = document.createElement("div")
@@ -406,7 +404,7 @@ class Plane {
 				method: "POST",
 				url: "/plane/fix",
 				data: {
-					businessName: airline.name,
+					airlineId: airline.id,
 					planeId: this.id
 				},
 				error: errHandler,
@@ -429,7 +427,7 @@ class Plane {
 				method: "POST",
 				url: "/plane/fix",
 				data: {
-					businessName: airline.name,
+					airlineId: airline.id,
 					planeId: this.id
 				},
 				error: errHandler,
@@ -448,6 +446,7 @@ class Plane {
 	}
 }
 class Airline {
+	id: number
 	name: string
 	hub: Airport
 	joined: Date
@@ -458,16 +457,18 @@ class Airline {
 	transactions: Array<string> = []
 	incidents: Array<string> = []
 	constructor(data: any) {
-		const { name, hub, joined, cash, planes, routes, popularity, transactions, incidents } = data
+		const { id, name, hub, joined_at, cash, planes, routes, popularity, transactions, incidents } = data
+		this.id = id
 		this.name = name
 		this.hub = hub
-		this.joined = new Date(joined)
+		console.log('joined', joined_at)
+		this.joined = new Date(joined_at)
 		this.cash = cash
-		this.planes = planes.map(p => new Plane(p))
-		this.routes = routes.map(r => new Route(r))
+		this.planes = (planes || []).map(p => new Plane(p))
+		this.routes = (routes || []).map(r => new Route(r))
 		this.popularity = popularity
-		this.transactions = transactions
-		this.incidents = incidents
+		this.transactions = transactions || []
+		this.incidents = incidents || []
 
 	}
 	updateTitle(): void {
@@ -514,8 +515,10 @@ class Airline {
 
 		$.ajax({
 			method: "GET",
-			url: "/planes",
-			data: {},
+			url: "/offered_planes",
+			data: {
+				airlineId: airline.id
+			},
 			error: errHandler,
 			success: function(response) {
 				JSON.parse(response).map(p => {
@@ -532,15 +535,14 @@ class Airline {
 						}
 						$.ajax({
 							method: "POST",
-							url: "/plane",
+							url: "/purchase_plane",
 							data: {
-								"businessName": airline.name,
-								"planeId": plane.id,
+								airlineId: airline.id,
+								planeId: plane.id,
 							},
 							error: errHandler,
 							success: function(response) {
 								var r = JSON.parse(response)
-								// airline.cash = r.cash
 								displayInfo(r.msg)
 								airline.addTransaction(r.transaction)
 								airline.planes.push(new Plane(r.plane))
@@ -671,9 +673,9 @@ class GameEngine {
 		main.appendChild(createTitle("Routes Available For Purchase"))
 		$.ajax({
 			method: "GET",
-			url: "/routes",
+			url: "/offered_routes",
 			data: {
-				businessName: airline.name,
+				airlineId: airline.id,
 			},
 			error: errHandler,
 			success: function(response) {
@@ -812,8 +814,8 @@ window.onload = () => {
 			method: "POST",
 			url: "/play",
 			data: {
-				"businessName": nameInput.value,
-				"hub": hubSelect.value,
+				businessName: nameInput.value,
+				hub: hubSelect.value,
 			},
 			error: errHandler,
 			success: function(response) {

@@ -1,14 +1,12 @@
+from ctypes import Union
+from datetime import datetime
 import random
+from typing import List
 
-from app.airline import Airline
+from app.db import DatabaseInterface
+from app.route import Route
 
-
-class PlaneBase:
-	def __init__(self, id, name, max_distance, purchase_cost):
-		self.id = id
-		self.name = name
-		self.max_distance = max_distance
-		self.purchase_cost = purchase_cost
+STARTING_HEALTH = 100
 
 
 def generate_name():
@@ -33,34 +31,97 @@ def generate_name():
 	)
 
 
-class Plane(PlaneBase):
-	def __init__(self, id, name, max_distance, purchase_cost):
-		super().__init__(id, name, max_distance, purchase_cost)
-		self.route = None
-		self.health = 100
+class Plane:
+	def __init__(
+		self,
+		plane_id,
+		airline_id,
+		name,
+		max_distance,
+		cost,
+		offered_at,
+		purchased_at,
+		route,
+		health,
+	):
+		self.id = plane_id
+		self.airline_id = airline_id
+		self.name = name
+		self.max_distance = max_distance
+		self.cost = cost
+		self.offered_at = offered_at
+		self.purchased_at = purchased_at
+		self.health = health
+		self.route: Union[Route, None] = route
+
+	@staticmethod
+	def from_db_row(db: DatabaseInterface, db_row):
+		(
+			plane_id,
+			airline_id,
+			name,
+			max_distance,
+			cost,
+			offered_at,
+			purchased_at,
+			health,
+			route_id,
+		) = db_row
+		if route_id is None:
+			route = None
+		else:
+			route = Route.get_by_id(db, route_id)
+		return Plane(
+			plane_id,
+			airline_id,
+			name,
+			max_distance,
+			cost,
+			offered_at,
+			purchased_at,
+			health,
+			route,
+		)
+
+	@staticmethod
+	def list_offered(db: DatabaseInterface, airline_id: int) -> List[object]:
+		return [
+			Plane.from_db_row(db, db_row) for db_row in db.list_offered_planes(airline_id)
+		]
+
+	@staticmethod
+	def list_owned(db: DatabaseInterface, airline_id: int) -> List[object]:
+		return [Plane.from_db_row(db, db_row) for db_row in db.list_owned_planes(airline_id)]
+
+	@staticmethod
+	def generate_offers(db: DatabaseInterface, airline_id: int, num_offers: int):
+		min_cost = 100000
+		min_distance = 500
+		max_distance = 16000
+		for _ in range(num_offers):
+			distance = random.randint(min_distance, max_distance)
+			cost = min_cost + distance * 20
+			db.create_plane(airline_id, generate_name(), distance, cost)
+
+	@staticmethod
+	def get_by_id(db: DatabaseInterface, plane_id: int):
+		return Plane.from_db_row(db, db.get_plane_by_id(plane_id))
 
 	@property
 	def status(self):
+		if self.purchased_at is None:
+			return "Available for purchase"
 		if self.route:
 			return f"Flying {self.route.origin.code} <-> {self.route.destination.code}"
 		if self.health < 30:
 			return "Requires maintenance"
 		return "Available"
 
-	def save(self, db, airline: Airline):
-		params = self.db_dict(airline)
-		airline_name = params.pop("airline")
-		db.update(params, Query().airline == airline_name)
-
-	def db_dict(self, airline):
-		return {
-			"id": self.id,
-			"name": self.name,
-			"max_distance": self.max_distance,
-			"purchase_cost": self.purchase_cost,
-			"airline": airline.name,
-			"health": self.health,
-		}
+	def purchase(self, db: DatabaseInterface):
+		now_ts = datetime.utcnow()
+		self.purchased_at = now_ts
+		self.health = STARTING_HEALTH
+		db.update_plane(self.id, self.purchased_at, self.health)
 
 	def available_for_route(self, route):
 		return self.route is None and self.max_distance > route.distance
@@ -70,34 +131,3 @@ class Plane(PlaneBase):
 
 	def free(self):
 		self.route = None
-
-
-class PlaneStore:
-	def __init__(self):
-		self.planes = {}
-		self.next_id = 1
-		self.min_cost = 100000
-		self.min_distance = 500
-		self.max_distance = 16000
-		for _ in range(5):
-			self.create_plane()
-
-	def list_for_sale(self):
-		return list(self.planes.values())
-
-	def create_plane(self):
-		distance = random.randint(self.min_distance, self.max_distance)
-		cost = self.min_cost + distance * 20
-		plane = Plane(self.next_id, generate_name(), distance, cost)
-		self.next_id += 1
-		self.planes[plane.id] = plane
-
-	def purchase_plane(self, plane_id, airline):
-		plane = self.planes[plane_id]
-		assert airline.cash > plane.purchase_cost, "You cannot afford this plane!"
-		plane = self.planes.pop(plane_id)
-		airline.cash -= plane.purchase_cost
-		plane.airline = airline.name
-		airline.planes.append(plane)
-		self.create_plane()
-		return plane

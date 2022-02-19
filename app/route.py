@@ -1,63 +1,154 @@
 from datetime import datetime, timedelta
+import logging
+import math
 import random
+from typing import Any, List
 
-from app.airport import Airport
 from app.airline import Airline
+from app.airport import Airport
+from app.db import DatabaseInterface
+
+LOGGER = logging.getLogger(__name__)
 
 
-class RouteBase:
+class Route:
 	def __init__(
-		self, origin: Airport, destination: Airport, popularity: int, purchase_cost: int
+		self,
+		id: int,
+		airline_id: int,
+		origin: Airport,
+		destination: Airport,
+		cost: int,
+		popularity: int,
+		offered_at: datetime,
+		purchased_at: datetime,
+		next_available_at: datetime,
+		last_run_at: datetime,
+		last_resulted_at: datetime,
 	) -> None:
-		self.origin: Airport = origin
-		self.destination: Airport = destination
-		self.distance = self.origin.distance_from(self.destination)
+		self.id = id
+		self.airline_id = airline_id
+		self.origin = origin
+		self.destination = destination
+		self.cost = cost
 		self.popularity = popularity
-		self.purchase_cost = purchase_cost
+		self.offered_at = offered_at
+		self.purchased_at = purchased_at
+		self.next_available_at = next_available_at
+		self.last_run_at = last_run_at
+		self.last_resulted_at = last_resulted_at
+		self.distance = self.calculate_distance()
 
-	@property
-	def identifier(self):
-		return f"{self.origin.code} <-> {self.destination.code}"
-
-
-class OfferedRoute(RouteBase):
-	def __init__(self, origin: Airport, destination: Airport) -> None:
-		popularity = random.randint(10, 100)
-		super().__init__(
-			origin, destination, popularity, popularity * 100 + random.randint(1, 1000)
+	@staticmethod
+	def from_db_row(db: DatabaseInterface, db_row: List[Any]):
+		(
+			route_id,
+			airline_id,
+			origin,
+			destination,
+			cost,
+			popularity,
+			offered_at,
+			purchased_at,
+			next_available_at,
+			last_run_at,
+			last_resulted_at,
+		) = db_row
+		return Route(
+			route_id,
+			airline_id,
+			Airport.get_by_code(db, origin),
+			Airport.get_by_code(db, destination),
+			cost,
+			popularity,
+			offered_at,
+			purchased_at,
+			next_available_at,
+			last_run_at,
+			last_resulted_at,
 		)
 
+	@staticmethod
+	def list_offered(db: DatabaseInterface, airline_id: int):
+		return [
+			Route.from_db_row(db, db_row) for db_row in db.list_offered_routes(airline_id)
+		]
 
-class PurchasedRoute(RouteBase):
-	def __init__(
-		self, origin: Airport, destination: Airport, popularity, purchase_cost
-	) -> None:
-		super().__init__(origin, destination, popularity, purchase_cost)
-		self.last_run = None
-		self.last_result = None
-		self.next_available = None
+	@staticmethod
+	def list_owned(db: DatabaseInterface, airline_id: int):
+		return [Route.from_db_row(db, db_row) for db_row in db.list_owned_routes(airline_id)]
 
-	def __str__(self):
-		return f"<PurchasedRoute {self.origin.code} <-> {self.destination.code} />"
+	@staticmethod
+	def generate_offers(
+		db: DatabaseInterface, airline: Airline, num_offers: int, existing_offers
+	):
+		LOGGER.info("Generating %s route offers for %s", num_offers, airline.name)
+		hub: Airport = airline.hub
+		airports = Airport.list(db)
+		existing_routes = Route.list_owned(db, airline.id) + existing_offers
+		existing_route_destinations = {r.destination.code for r in existing_routes}
+		all_destinations = [
+			airport
+			for airport in airports
+			if airport.code != hub.code
+			and airport.code not in existing_route_destinations
+			and airport.distance_from(hub) > 100
+		]
+		all_destinations.sort(key=lambda airport: airport.distance_from(hub))
+		for destination in all_destinations[:num_offers]:
+			# Generate appropriate popularity and cost
+			popularity = random.randint(10, 100)
+			cost = popularity * 100 + destination.distance_from(hub) + random.randint(1, 1000)
+			db.create_route(airline.id, hub.code, destination.code, popularity, cost)
+			LOGGER.info(
+				"Created Route offer for %s: %s - %s", airline.name, hub.code, destination.code
+			)
 
-	def save(self, db, airline: Airline):
-		params = self.db_dict(airline)
-		airline_name = params.pop("airline")
-		db.update(params, Query().airline == airline_name)
+	@staticmethod
+	def get_by_id(db: DatabaseInterface, route_id: int):
+		return Route.from_db_row(db, db.get_route_by_id(route_id))
 
-	def db_dict(self, airline: Airline):
-		return {
-			"airline": airline.name,
-			"origin": self.origin.code,
-			"destination": self.destination.code,
-			"popularity": self.popularity,
-			"purchase_cost": self.purchase_cost,
-			"last_run": self.last_run,
-			"last_result": self.last_result,
-			"next_available": self.next_available,
-		}
+	@staticmethod
+	def create(
+		db: DatabaseInterface,
+		airline_id: int,
+		origin: str,
+		destination: str,
+		popularity: float,
+		purchase_cost: int,
+	):
+		db_row = db.create_purchased_route(
+			airline_id, origin, destination, popularity, purchase_cost,
+		)
+		(
+			route_id,
+			airline_id,
+			_,
+			_,
+			popularity,
+			purchase_cost,
+			next_available_at,
+			*_args,
+		) = db_row
+		origin_airport = Airport.by_code(db, origin)
+		destination_airport = Airport.by_code(db, destination)
+		return Route(
+			airline_id,
+			route_id,
+			origin_airport,
+			destination_airport,
+			popularity,
+			purchase_cost,
+			next_available_at,
+		)
 
-	def run(self, airline: Airline):
+	def purchase(self, db: DatabaseInterface):
+		now_ts = datetime.utcnow()
+		self.purchased_at = now_ts
+		self.next_available_at = now_ts
+		db.update_route(self.id, self.purchased_at, self.next_available_at)
+
+	def run(self, airline):
 		assert (
 			self.next_available is None or self.next_available < datetime.utcnow()
 		), "That route is already running!"
@@ -77,7 +168,7 @@ class PurchasedRoute(RouteBase):
 		self.next_available = self.last_run + timedelta(seconds=5 + self.distance / 20)
 		return plane_to_use
 
-	def collect(self, airline: Airline):
+	def collect(self, airline):
 		assert (
 			self.next_available and self.next_available < datetime.utcnow()
 		), "This route has not finished yet!"
@@ -124,3 +215,24 @@ class PurchasedRoute(RouteBase):
 				plane.free()
 				return msg, incident, plane
 		raise RuntimeError(f"No plane found for route {self}")
+
+	def calculate_distance(self) -> float:
+		def deg2rad(deg):
+			return deg * math.pi / 180
+
+		R = 6371  # Radius of the earth in km
+		dLat = deg2rad(self.destination.lat - self.origin.lat)
+		# deg2rad below
+		dLon = deg2rad(self.destination.lon - self.origin.lon)
+		a = math.sin(dLat / 2) * math.sin(dLat / 2) + math.cos(
+			deg2rad(self.origin.lat)
+		) * math.cos(deg2rad(self.destination.lat)) * math.sin(dLon / 2) * math.sin(
+			dLon / 2
+		)
+		c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+		d = R * c  # Distance in km
+		return d
+
+	@property
+	def identifier(self):
+		return f"{self.origin.code} <-> {self.destination.code}"

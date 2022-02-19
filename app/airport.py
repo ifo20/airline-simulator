@@ -1,16 +1,27 @@
 import math
 from typing import List
 
+from app.db import DatabaseInterface
+
 
 class Airport:
-	def __init__(self, id: int, code: str, name: str, country: str, lat: float, lon: float, popularity: float) -> None:
-		self.id = id
+	def __init__(
+		self, code: str, name: str, country: str, lat: float, lon: float, popularity: float
+	) -> None:
 		self.code = code.upper()
 		self.name = name
 		self.country = country
 		self.lat = lat
 		self.lon = lon
 		self.popularity = popularity
+
+	@staticmethod
+	def list(db: DatabaseInterface):
+		return [Airport(*db_row) for db_row in db.get_airports()]
+
+	@staticmethod
+	def get_by_code(db: DatabaseInterface, code: str):
+		return Airport(*db.get_airport_by_code(code))
 
 	def distance_from(self, other):
 		"""Returns distance in kilometres"""

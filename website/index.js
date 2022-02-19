@@ -112,33 +112,29 @@ var Airport = /** @class */ (function () {
 }());
 var OfferedRoute = /** @class */ (function () {
     function OfferedRoute(data) {
-        var identifier = data.identifier, distance = data.distance, origin = data.origin, destination = data.destination, popularity = data.popularity, purchase_cost = data.purchase_cost;
+        var id = data.id, identifier = data.identifier, distance = data.distance, origin = data.origin, destination = data.destination, popularity = data.popularity, cost = data.cost;
+        this.id = id;
         this.identifier = identifier;
         this.distance = distance;
         this.fromAirport = origin;
         this.toAirport = destination;
         this.popularity = popularity;
-        this.purchaseCost = purchase_cost;
+        this.purchaseCost = cost;
     }
     OfferedRoute.prototype.buttonHtml = function () {
-        var _this = this;
         var btn = document.createElement("button");
         btn.setAttribute("style", "background-color:#ddcc44aa");
         btn.setAttribute("class", "flex-grow");
         btn.appendChild(this.cardHtml());
-        var _a = this, purchaseCost = _a.purchaseCost, popularity = _a.popularity, identifier = _a.identifier;
-        var route = this;
+        var routeId = this.id;
         btn.addEventListener("click", function () {
             var airline = gameEngine.airline;
             $.ajax({
                 method: "POST",
-                url: "/route",
+                url: "/purchase_route",
                 data: {
-                    businessName: airline.name,
-                    purchaseCost: purchaseCost,
-                    origin: _this.fromAirport.code,
-                    destination: _this.toAirport.code,
-                    popularity: popularity
+                    airlineId: airline.id,
+                    routeId: routeId
                 },
                 error: errHandler,
                 success: function (response) {
@@ -180,16 +176,16 @@ var OfferedRoute = /** @class */ (function () {
 }());
 var Route = /** @class */ (function () {
     function Route(data) {
-        var distance = data.distance, origin = data.origin, destination = data.destination, popularity = data.popularity, purchase_cost = data.purchase_cost, last_run = data.last_run, last_result = data.last_result, next_available = data.next_available, plane = data.plane;
+        var distance = data.distance, origin = data.origin, destination = data.destination, popularity = data.popularity, cost = data.cost, last_run_at = data.last_run_at, last_resulted_at = data.last_resulted_at, next_available_at = data.next_available_at, plane = data.plane;
         this.identifier = [origin.code, destination.code].join("-");
         this.fromAirport = origin;
         this.toAirport = destination;
         this.distance = distance;
         this.popularity = popularity;
-        this.purchaseCost = purchase_cost;
-        this.lastRunAt = last_run ? new Date(last_run) : null;
-        this.lastResultedAt = last_result ? new Date(last_result) : null;
-        this.nextAvailableAt = next_available ? new Date(next_available) : null;
+        this.purchaseCost = cost;
+        this.lastRunAt = last_run_at ? new Date(last_run_at) : null;
+        this.lastResultedAt = last_resulted_at ? new Date(last_resulted_at) : null;
+        this.nextAvailableAt = next_available_at ? new Date(next_available_at) : null;
         this.plane = plane;
     }
     Route.prototype.timeRemaining = function () {
@@ -207,7 +203,7 @@ var Route = /** @class */ (function () {
             method: "POST",
             url: "/run-route",
             data: {
-                businessName: airline.name,
+                airlineId: airline.id,
                 origin: this.fromAirport.code,
                 destination: this.toAirport.code
             },
@@ -231,7 +227,7 @@ var Route = /** @class */ (function () {
             method: "POST",
             url: "/collect",
             data: {
-                businessName: airline.name,
+                airlineId: airline.id,
                 route: this.identifier
             },
             error: errHandler,
@@ -328,13 +324,13 @@ var Route = /** @class */ (function () {
 }());
 var Plane = /** @class */ (function () {
     function Plane(data) {
-        var id = data.id, name = data.name, status = data.status, health = data.health, max_distance = data.max_distance, purchase_cost = data.purchase_cost;
+        var id = data.id, name = data.name, status = data.status, health = data.health, max_distance = data.max_distance, cost = data.cost;
         this.id = id;
         this.name = name;
         this.status = status;
         this.health = health;
         this.maxDistance = max_distance;
-        this.cost = purchase_cost;
+        this.cost = cost;
     }
     Plane.prototype.purchasedCardHtml = function () {
         var div = document.createElement("div");
@@ -379,7 +375,7 @@ var Plane = /** @class */ (function () {
                 method: "POST",
                 url: "/plane/fix",
                 data: {
-                    businessName: airline.name,
+                    airlineId: airline.id,
                     planeId: _this.id
                 },
                 error: errHandler,
@@ -402,7 +398,7 @@ var Plane = /** @class */ (function () {
                 method: "POST",
                 url: "/plane/fix",
                 data: {
-                    businessName: airline.name,
+                    airlineId: airline.id,
                     planeId: _this.id
                 },
                 error: errHandler,
@@ -427,16 +423,18 @@ var Airline = /** @class */ (function () {
         this.routes = [];
         this.transactions = [];
         this.incidents = [];
-        var name = data.name, hub = data.hub, joined = data.joined, cash = data.cash, planes = data.planes, routes = data.routes, popularity = data.popularity, transactions = data.transactions, incidents = data.incidents;
+        var id = data.id, name = data.name, hub = data.hub, joined_at = data.joined_at, cash = data.cash, planes = data.planes, routes = data.routes, popularity = data.popularity, transactions = data.transactions, incidents = data.incidents;
+        this.id = id;
         this.name = name;
         this.hub = hub;
-        this.joined = new Date(joined);
+        console.log('joined', joined_at);
+        this.joined = new Date(joined_at);
         this.cash = cash;
-        this.planes = planes.map(function (p) { return new Plane(p); });
-        this.routes = routes.map(function (r) { return new Route(r); });
+        this.planes = (planes || []).map(function (p) { return new Plane(p); });
+        this.routes = (routes || []).map(function (r) { return new Route(r); });
         this.popularity = popularity;
-        this.transactions = transactions;
-        this.incidents = incidents;
+        this.transactions = transactions || [];
+        this.incidents = incidents || [];
     }
     Airline.prototype.updateTitle = function () {
         var div = document.getElementById("airlineTitle");
@@ -478,8 +476,10 @@ var Airline = /** @class */ (function () {
         var airline = this;
         $.ajax({
             method: "GET",
-            url: "/planes",
-            data: {},
+            url: "/offered_planes",
+            data: {
+                airlineId: airline.id
+            },
             error: errHandler,
             success: function (response) {
                 JSON.parse(response).map(function (p) {
@@ -496,15 +496,14 @@ var Airline = /** @class */ (function () {
                         }
                         $.ajax({
                             method: "POST",
-                            url: "/plane",
+                            url: "/purchase_plane",
                             data: {
-                                "businessName": airline.name,
-                                "planeId": plane.id
+                                airlineId: airline.id,
+                                planeId: plane.id
                             },
                             error: errHandler,
                             success: function (response) {
                                 var r = JSON.parse(response);
-                                // airline.cash = r.cash
                                 displayInfo(r.msg);
                                 airline.addTransaction(r.transaction);
                                 airline.planes.push(new Plane(r.plane));
@@ -635,9 +634,9 @@ var GameEngine = /** @class */ (function () {
         main.appendChild(createTitle("Routes Available For Purchase"));
         $.ajax({
             method: "GET",
-            url: "/routes",
+            url: "/offered_routes",
             data: {
-                businessName: airline.name
+                airlineId: airline.id
             },
             error: errHandler,
             success: function (response) {
@@ -772,8 +771,8 @@ window.onload = function () {
             method: "POST",
             url: "/play",
             data: {
-                "businessName": nameInput.value,
-                "hub": hubSelect.value
+                businessName: nameInput.value,
+                hub: hubSelect.value
             },
             error: errHandler,
             success: function (response) {
