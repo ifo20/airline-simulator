@@ -94,7 +94,7 @@ def home():
 def leaderboard():
 	all_airlines = sorted(Airline.list(DB), key=lambda airline: airline.cash, reverse=True)
 	return "<br/>".join(
-		f"{i}: {airline.name}: ${airline.cash}: {len(airline.planes)} planes: {len(airline.routes)} routes"
+		f"{i}: {airline.name}: ${airline.cash}"
 		for i, airline in enumerate(all_airlines, start=1)
 	)
 
