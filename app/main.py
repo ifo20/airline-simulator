@@ -263,7 +263,7 @@ def collect_route():
 	airline.popularity += popularity_change
 	airline.update_for_route_collection(DB)
 	for plane in Plane.list_owned(DB, airline.id):
-		if plane.route.id == route.id:
+		if plane.route and plane.route.id == route.id:
 			plane.health -= plane_health_cost
 			plane.free(DB)
 	planes = Plane.list_owned(DB, airline.id)
