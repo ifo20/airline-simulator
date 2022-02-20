@@ -43,7 +43,7 @@ class DatabaseInterface:
 	def __init__(self) -> None:
 		pass
 
-	def migrate():
+	def migrate(self):
 		with open("001_initial.sql", "r") as f:
 			cursor().execute(f.read())
 
