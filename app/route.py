@@ -3,7 +3,7 @@ import logging
 import math
 import random
 from typing import Any, List
-
+import pytz
 from app.airline import Airline
 from app.airport import Airport
 from app.db import DatabaseInterface
@@ -143,38 +143,31 @@ class Route:
 		)
 
 	def purchase(self, db: DatabaseInterface):
-		now_ts = datetime.utcnow()
+		now_ts = datetime.now(pytz.UTC)
 		self.purchased_at = now_ts
 		self.next_available_at = now_ts
-		db.update_route(self.id, self.purchased_at, self.next_available_at)
+		db.update_route_for_purchase(self.id, self.purchased_at, self.next_available_at)
 
-	def run(self, airline):
-		assert (
-			self.next_available is None or self.next_available < datetime.utcnow()
+	def validate_can_run(self):
+		assert self.next_available_at is None or self.next_available_at < datetime.now(
+			pytz.UTC
 		), "That route is already running!"
 		assert (
-			self.last_result is None or self.last_result > self.last_run
+			self.last_resulted_at is None or self.last_resulted_at > self.last_run_at
 		), "Please collect the results from the previous run before running this route again"
-		plane_to_use = None
-		for plane in airline.planes:
-			if plane.available_for_route(self):
-				plane_to_use = plane
-				break
-		assert (
-			plane_to_use is not None
-		), f"No plane available to run this route (distance required is {self.distance}km) planes: {airline.planes}"
-		plane_to_use.reserve(self)
-		self.last_run = datetime.utcnow()
-		self.next_available = self.last_run + timedelta(seconds=5 + self.distance / 20)
-		return plane_to_use
 
-	def collect(self, airline):
-		assert (
-			self.next_available and self.next_available < datetime.utcnow()
+	def run(self, db: DatabaseInterface):
+		self.last_run_at = datetime.now(pytz.UTC)
+		self.next_available_at = self.last_run_at + timedelta(seconds=5 + self.distance / 20)
+		db.update_route_for_run(self)
+
+	def collect(self, db: DatabaseInterface):
+		assert self.next_available_at and self.next_available_at < datetime.now(
+			pytz.UTC
 		), "This route has not finished yet!"
-		assert self.last_run is not None, "This route has not been started!"
+		assert self.last_run_at is not None, "This route has not been started!"
 		assert (
-			self.last_result is None or self.last_run > self.last_result
+			self.last_resulted_at is None or self.last_run_at > self.last_resulted_at
 		), "These results have already been collected!"
 		num_passengers = random.randint(10, 500)
 		income = 100 * num_passengers
@@ -197,10 +190,9 @@ class Route:
 		else:
 			incident = None
 
-		self.last_result = datetime.utcnow()
-		airline.cash += income - cost
-		airline.popularity += popularity_change
-		if income >= cost:
+		self.last_resulted_at = datetime.now(pytz.UTC)
+		cash_change = income - cost
+		if cash_change >= 0:
 			msg = (
 				f"Route completed with {num_passengers} passengers and a profit of ${income - cost}"
 			)
@@ -208,13 +200,7 @@ class Route:
 			msg = (
 				f"Route completed with {num_passengers} passengers and a loss of ${cost - income}"
 			)
-
-		for plane in airline.planes:
-			if plane.route == self:
-				plane.health -= plane_health_cost
-				plane.free()
-				return msg, incident, plane
-		raise RuntimeError(f"No plane found for route {self}")
+		return cash_change, popularity_change, plane_health_cost, incident, msg
 
 	def calculate_distance(self) -> float:
 		def deg2rad(deg):

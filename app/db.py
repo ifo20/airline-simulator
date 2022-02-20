@@ -82,6 +82,14 @@ VALUES (%s, %s, now(), now(), %s, %s) RETURNING id
 	def update_last_login_at(self, airline_id: int):
 		return execute("UPDATE airlines SET last_login_at=now() WHERE id=%s", airline_id)
 
+	def update_airline(self, airline):
+		return execute(
+			"UPDATE airlines SET cash=%s, popularity=%s WHERE id=%s",
+			airline.cash,
+			airline.popularity,
+			airline.id,
+		)
+
 	def update_airline_cash(self, airline_id: int, cash: int):
 		return execute("UPDATE airlines SET cash=%s WHERE id=%s", cash, airline_id)
 
@@ -118,7 +126,7 @@ VALUES (%s, %s, %s, %s, %s) RETURNING *""",
 			cost,
 		)
 
-	def update_route(
+	def update_route_for_purchase(
 		self, route_id: int, purchased_at: datetime, next_available_at: datetime
 	):
 		return execute(
@@ -126,6 +134,15 @@ VALUES (%s, %s, %s, %s, %s) RETURNING *""",
 			purchased_at,
 			next_available_at,
 			route_id,
+		)
+
+	def update_route_for_run(self, route):
+		return execute(
+			"UPDATE routes SET next_available_at=%s, last_run_at=%s, last_resulted_at=%s WHERE id=%s",
+			route.next_available_at,
+			route.last_run_at,
+			route.last_resulted_at,
+			route.id,
 		)
 
 	def list_offered_planes(self, airline_id: int):
@@ -158,10 +175,14 @@ VALUES (%s, %s, %s, %s) RETURNING *""",
 			cost,
 		)
 
-	def update_plane(self, plane_id: int, purchased_at: datetime, health: int):
+	def update_plane(self, plane):
 		return execute(
-			"UPDATE planes SET purchased_at=%s, health=%s WHERE id=%s",
-			purchased_at,
-			health,
-			plane_id,
+			"""
+UPDATE planes
+SET purchased_at=%s, health=%s, route_id=%s
+WHERE id=%s""",
+			plane.purchased_at,
+			plane.health,
+			plane.route.id if plane.route else None,
+			plane.id,
 		)

@@ -1,4 +1,6 @@
-from datetime import datetime
+from datetime import datetime, tzinfo
+
+import pytz
 
 from app.airport import Airport
 from app.db import DatabaseInterface
@@ -21,8 +23,8 @@ class Airline:
 		self.id = id
 		self.name = name
 		self.hub = hub
-		self.joined_at = joined_at or datetime.utcnow()
-		self.last_login_at = last_login_at or datetime.utcnow()
+		self.joined_at = joined_at or datetime.now(tzinfo=pytz.UTC)
+		self.last_login_at = last_login_at or datetime.now(pytz.UTC)
 		self.cash = cash
 		self.popularity = popularity
 
@@ -94,3 +96,6 @@ class Airline:
 	@staticmethod
 	def update_cash(db: DatabaseInterface, airline_id: int, new_cash: int):
 		db.update_airline_cash(airline_id, new_cash)
+
+	def update_for_route_collection(self, db: DatabaseInterface):
+		db.update_airline(self)

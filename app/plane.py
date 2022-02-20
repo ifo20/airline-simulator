@@ -3,10 +3,13 @@ from datetime import datetime
 import random
 from typing import List
 
+import pytz
+
 from app.db import DatabaseInterface
 from app.route import Route
 
 STARTING_HEALTH = 100
+REQUIRED_FLYING_HEALTH = 30
 
 
 def generate_name():
@@ -41,8 +44,8 @@ class Plane:
 		cost,
 		offered_at,
 		purchased_at,
-		route,
 		health,
+		route,
 	):
 		self.id = plane_id
 		self.airline_id = airline_id
@@ -107,27 +110,42 @@ class Plane:
 	def get_by_id(db: DatabaseInterface, plane_id: int):
 		return Plane.from_db_row(db, db.get_plane_by_id(plane_id))
 
+	@staticmethod
+	def get_for_route(db: DatabaseInterface, route: Route):
+		for plane in Plane.list_owned(db, route.airline_id):
+			if plane.route is not None:
+				continue  # can't use, in the sky
+			if plane.health < REQUIRED_FLYING_HEALTH:
+				continue  # can't use, in bad shape
+			if plane.max_distance < route.distance:
+				continue  # can't use, not good enough
+			# if we reach here, we can use this plane
+			return plane
+		raise AssertionError("No planes are available to run this route!")
+
 	@property
 	def status(self):
 		if self.purchased_at is None:
 			return "Available for purchase"
 		if self.route:
 			return f"Flying {self.route.origin.code} <-> {self.route.destination.code}"
-		if self.health < 30:
+		if self.health < REQUIRED_FLYING_HEALTH:
 			return "Requires maintenance"
 		return "Available"
 
 	def purchase(self, db: DatabaseInterface):
-		now_ts = datetime.utcnow()
+		now_ts = datetime.now(pytz.UTC)
 		self.purchased_at = now_ts
 		self.health = STARTING_HEALTH
-		db.update_plane(self.id, self.purchased_at, self.health)
+		db.update_plane(self)
 
 	def available_for_route(self, route):
 		return self.route is None and self.max_distance > route.distance
 
-	def reserve(self, route):
+	def reserve(self, db: DatabaseInterface, route: Route):
 		self.route = route
+		db.update_plane(self)
 
-	def free(self):
+	def free(self, db: DatabaseInterface):
 		self.route = None
+		db.update_plane(self)

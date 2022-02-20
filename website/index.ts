@@ -120,16 +120,14 @@ class Airport {
 
 class OfferedRoute {
 	id: number
-	identifier: string
 	distance: number
 	fromAirport: Airport
 	toAirport: Airport
 	popularity: number
 	purchaseCost: number
 	constructor(data) {
-		const { id, identifier, distance, origin, destination, popularity, cost } = data
+		const { id, distance, origin, destination, popularity, cost } = data
 		this.id = id
-		this.identifier = identifier
 		this.distance = distance
 		this.fromAirport = origin
 		this.toAirport = destination
@@ -189,7 +187,7 @@ class OfferedRoute {
 	}
 }
 class Route {
-	identifier: string
+	id: number
 	distance: number
 	fromAirport: Airport
 	toAirport: Airport
@@ -200,8 +198,8 @@ class Route {
 	nextAvailableAt?: Date
 	plane?: Plane
 	constructor(data) {
-		const { distance, origin, destination, popularity, cost, last_run_at, last_resulted_at, next_available_at, plane } = data
-		this.identifier = [origin.code, destination.code].join("-")
+		const { id, distance, origin, destination, popularity, cost, last_run_at, last_resulted_at, next_available_at, plane } = data
+		this.id = id
 		this.fromAirport = origin
 		this.toAirport = destination
 		this.distance = distance
@@ -228,14 +226,13 @@ class Route {
 			url: "/run-route",
 			data: {
 				airlineId: airline.id,
-				origin: this.fromAirport.code,
-				destination: this.toAirport.code,
+				routeId: this.id,
 			},
 			error: errHandler,
 			success: function(response) {
 				var jresponse = JSON.parse(response)
-				route.lastRunAt = new Date(jresponse.last_run)
-				route.nextAvailableAt = new Date(jresponse.next_available)
+				route.lastRunAt = new Date(jresponse.last_run_at)
+				route.nextAvailableAt = new Date(jresponse.next_available_at)
 				airline.planes = jresponse.planes.map(p => new Plane(p))
 				airline.updateStats()
 				airline.getRoutesDisplay()
@@ -252,7 +249,7 @@ class Route {
 			url: "/collect",
 			data: {
 				airlineId: airline.id,
-				route: this.identifier,
+				routeId: this.id,
 			},
 			error: errHandler,
 			success: function(response) {

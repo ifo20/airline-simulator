@@ -2,3 +2,4 @@ flask
 gunicorn
 black-but-with-tabs-instead-of-spaces
 psycopg2-binary
+pytz==2021.3

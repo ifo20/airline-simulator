@@ -238,13 +238,17 @@ def scrap_plane():
 def run_route():
 	airline = airline_from_request(request)
 	route = Route.get_by_id(DB, request.form["routeId"])
-	plane = route.run(airline)
+	route.validate_can_run()
+	plane = Plane.get_for_route(DB, route)
+	route.run(DB)
+	plane.reserve(DB, route)
+	planes = Plane.list_owned(DB, airline.id)
 	return jsonify(
 		{
 			"msg": f"Route {route.identifier} has taken off with {plane.name}",
-			"last_run": route.last_run,
-			"next_available": route.next_available,
-			"planes": airline.planes,
+			"last_run_at": route.last_run_at,
+			"next_available_at": route.next_available_at,
+			"planes": planes,
 		}
 	)
 
@@ -252,15 +256,24 @@ def run_route():
 @app.route("/collect", methods=["POST"])
 def collect_route():
 	airline = airline_from_request(request)
-	route = Route.get_by_id(request.form["routeId"])
-	msg, incident, plane = route.collect(airline)
+	route = Route.get_by_id(DB, request.form["routeId"])
+	cash_change, popularity_change, plane_health_cost, incident, msg = route.collect(DB)
+	DB.update_route_for_run(route)
+	airline.cash += cash_change
+	airline.popularity += popularity_change
+	airline.update_for_route_collection(DB)
+	for plane in Plane.list_owned(DB, airline.id):
+		if plane.route.id == route.id:
+			plane.health -= plane_health_cost
+			plane.free(DB)
+	planes = Plane.list_owned(DB, airline.id)
 	return jsonify(
 		{
 			"msg": msg,
 			"cash": airline.cash,
 			"popularity": airline.popularity,
 			"incident": incident,
-			"planes": airline.planes,
+			"planes": planes,
 		}
 	)
 

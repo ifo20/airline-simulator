@@ -112,9 +112,8 @@ var Airport = /** @class */ (function () {
 }());
 var OfferedRoute = /** @class */ (function () {
     function OfferedRoute(data) {
-        var id = data.id, identifier = data.identifier, distance = data.distance, origin = data.origin, destination = data.destination, popularity = data.popularity, cost = data.cost;
+        var id = data.id, distance = data.distance, origin = data.origin, destination = data.destination, popularity = data.popularity, cost = data.cost;
         this.id = id;
-        this.identifier = identifier;
         this.distance = distance;
         this.fromAirport = origin;
         this.toAirport = destination;
@@ -176,8 +175,8 @@ var OfferedRoute = /** @class */ (function () {
 }());
 var Route = /** @class */ (function () {
     function Route(data) {
-        var distance = data.distance, origin = data.origin, destination = data.destination, popularity = data.popularity, cost = data.cost, last_run_at = data.last_run_at, last_resulted_at = data.last_resulted_at, next_available_at = data.next_available_at, plane = data.plane;
-        this.identifier = [origin.code, destination.code].join("-");
+        var id = data.id, distance = data.distance, origin = data.origin, destination = data.destination, popularity = data.popularity, cost = data.cost, last_run_at = data.last_run_at, last_resulted_at = data.last_resulted_at, next_available_at = data.next_available_at, plane = data.plane;
+        this.id = id;
         this.fromAirport = origin;
         this.toAirport = destination;
         this.distance = distance;
@@ -204,14 +203,13 @@ var Route = /** @class */ (function () {
             url: "/run-route",
             data: {
                 airlineId: airline.id,
-                origin: this.fromAirport.code,
-                destination: this.toAirport.code
+                routeId: this.id
             },
             error: errHandler,
             success: function (response) {
                 var jresponse = JSON.parse(response);
-                route.lastRunAt = new Date(jresponse.last_run);
-                route.nextAvailableAt = new Date(jresponse.next_available);
+                route.lastRunAt = new Date(jresponse.last_run_at);
+                route.nextAvailableAt = new Date(jresponse.next_available_at);
                 airline.planes = jresponse.planes.map(function (p) { return new Plane(p); });
                 airline.updateStats();
                 airline.getRoutesDisplay();
@@ -228,7 +226,7 @@ var Route = /** @class */ (function () {
             url: "/collect",
             data: {
                 airlineId: airline.id,
-                route: this.identifier
+                routeId: this.id
             },
             error: errHandler,
             success: function (response) {
