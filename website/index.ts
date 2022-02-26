@@ -677,9 +677,13 @@ class GameEngine {
 			error: errHandler,
 			success: function(response) {
 				// console.log("Got offered routes", response)
-				var div = document.createElement("div")
+				var div = document.getElementById("offered routes container")
+				if (!div) {
+					div = createElement("div", "offered routes container")
+				}
+				div.innerHTML = ""
 				var routesToDisplay = JSON.parse(response).map(r => new OfferedRoute(r))
-				routesToDisplay.forEach(r => div.appendChild(r.buttonHtml()))
+				routesToDisplay.forEach((r: OfferedRoute) => div.appendChild(r.buttonHtml()))
 				main.appendChild(div)
 
 			}
