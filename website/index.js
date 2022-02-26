@@ -639,7 +639,11 @@ var GameEngine = /** @class */ (function () {
             error: errHandler,
             success: function (response) {
                 // console.log("Got offered routes", response)
-                var div = document.createElement("div");
+                var div = document.getElementById("offered routes container");
+                if (!div) {
+                    div = createElement("div", "offered routes container");
+                }
+                div.innerHTML = "";
                 var routesToDisplay = JSON.parse(response).map(function (r) { return new OfferedRoute(r); });
                 routesToDisplay.forEach(function (r) { return div.appendChild(r.buttonHtml()); });
                 main.appendChild(div);
