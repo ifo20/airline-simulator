@@ -108,7 +108,9 @@ def list_airports():
 def play():
 	airline_name = airline_name_from_request(request)
 	airline = Airline.login(DB, airline_name, request.form["hub"])
-	return jsonify(airline)
+	j = jsonify (airline)
+	j ["routes"] = Route.list_owned(DB, airline.id)
+	return jsonify(j)
 
 
 @app.route("/offered_routes", methods=["GET"])
