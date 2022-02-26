@@ -3,6 +3,7 @@ from datetime import datetime
 import json
 import os
 import pathlib
+from typing import Dict
 
 from flask import request, send_from_directory, Flask
 
@@ -108,8 +109,9 @@ def list_airports():
 def play():
 	airline_name = airline_name_from_request(request)
 	airline = Airline.login(DB, airline_name, request.form["hub"])
-	j = json.loads(jsonify(airline))
-	j ["routes"] = Route.list_owned(DB, airline.id)
+	j: Dict = json.loads(jsonify(airline))
+	j["routes"] = Route.list_owned(DB, airline.id)
+	j["planes"] = Plane.list_owned(DB, airline.id)
 	return jsonify(j)
 
 
