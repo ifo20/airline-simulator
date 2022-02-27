@@ -7,6 +7,8 @@ from typing import Dict
 import timeit
 
 from flask import request, send_from_directory, Flask
+from werkzeug.middleware.lint import LintMiddleware
+from werkzeug.middleware.profiler import ProfilerMiddleware
 
 from app.db import DatabaseInterface
 from app.airline import Airline
@@ -19,11 +21,24 @@ logging.basicConfig(level=logging.INFO)
 
 WEBSITE_ROOT = os.path.join(pathlib.Path(__file__).resolve().parent.parent, "website")
 app = Flask(__name__, static_folder=WEBSITE_ROOT)
+app = LintMiddleware(app)
+app = ProfilerMiddleware(app)
+
 logging.info("Created app, WEBSITE_ROOT=%s", WEBSITE_ROOT)
 
 MINIMUM_OFFERS = 3
 
 DB = DatabaseInterface()
+
+
+@app.before_request
+def before_request_func():
+	DB.open()
+
+
+@app.teardown_request
+def teardown_request_func(error=None):
+	DB.close()
 
 
 def airline_id_from_request(request):

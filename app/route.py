@@ -92,7 +92,8 @@ class Route:
 			for airport in airports
 			if airport.code != hub.code
 			and airport.code not in existing_route_destinations
-			and airport.distance_from(hub) > 100 and hub.can_fly_to(airport)
+			and airport.distance_from(hub) > 100
+			and hub.can_fly_to(airport)
 		]
 		all_destinations.sort(key=lambda airport: airport.distance_from(hub))
 		for destination in all_destinations[:num_offers]:

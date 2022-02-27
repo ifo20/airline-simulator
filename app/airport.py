@@ -25,8 +25,8 @@ class Airport:
 
 	def can_fly_to(self, other) -> bool:
 		return (self.country, other.country) not in {
-			("Iran","Iraq"),
-			("Iraq","Iran"),
+			("Iran", "Iraq"),
+			("Iraq", "Iran"),
 		}
 
 	def distance_from(self, other):

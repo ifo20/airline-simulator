@@ -9,26 +9,27 @@ import psycopg2.extras
 
 
 class DatabaseInterface:
-	def __init__(self) -> None:
+	def open(self):
 		start_ts = timeit.default_timer()
 		self.conn = psycopg2.connect(os.environ["DATABASE_URL"], sslmode="require")
 		logging.info("TIMER DB connection took %s", timeit.default_timer() - start_ts)
 
+	def close(self):
+		logging.info("Closing DB connection")
+		self.conn.close()
+
 	def cursor(self):
 		return self.conn.cursor()
-
 
 	def execute(self, query: str, *args) -> None:
 		with self.cursor() as cur:
 			cur.execute(query, tuple(args))
-
 
 	def fetch_one(self, query: str, *args) -> Any:
 		with self.cursor() as cur:
 			cur.execute(query, tuple(args))
 			result = cur.fetchone()
 		return result
-
 
 	def fetch_all(self, query: str, *args) -> List[Any]:
 		with self.cursor() as cur:
