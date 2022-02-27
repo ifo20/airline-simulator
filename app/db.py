@@ -23,24 +23,21 @@ def cursor():
 
 
 def execute(query: str, *args) -> None:
-	with db_connection() as conn:
-		with conn.cursor() as cur:
-			cur.execute(query, tuple(args))
+	with db_connection().cursor() as cur:
+		cur.execute(query, tuple(args))
 
 
 def fetch_one(query: str, *args) -> Any:
-	with db_connection() as conn:
-		with conn.cursor() as cur:
-			cur.execute(query, tuple(args))
-			result = cur.fetchone()
+	with db_connection().cursor() as cur:
+		cur.execute(query, tuple(args))
+		result = cur.fetchone()
 	return result
 
 
 def fetch_all(query: str, *args) -> List[Any]:
-	with db_connection() as conn:
-		with conn.cursor() as cur:
-			cur.execute(query, tuple(args))
-			result = cur.fetchall()
+	with db_connection().cursor() as cur:
+		cur.execute(query, tuple(args))
+		result = cur.fetchall()
 	return result
 
 
