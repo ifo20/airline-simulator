@@ -16,22 +16,23 @@ class DatabaseInterface:
 
 	def close(self):
 		logging.info("Closing DB connection")
+		self.conn.commit()
 		self.conn.close()
 
 	def execute(self, query: str, *args) -> None:
-		logging.info("Executing %s with args %s", query, tuple(args))
+		logging.info("executing %s with args %s", query, tuple(args))
 		with self.conn.cursor() as cur:
-			logging.info("Cursor: %s Executing %s with args %s", cur, query, tuple(args))
 			cur.execute(query, tuple(args))
-		logging.info("Executed %s with args %s", query, tuple(args))
 
 	def fetch_one(self, query: str, *args) -> Any:
+		logging.info("fetch_one executing %s with args %s", query, tuple(args))
 		with self.conn.cursor() as cur:
 			cur.execute(query, tuple(args))
 			result = cur.fetchone()
 		return result
 
 	def fetch_all(self, query: str, *args) -> List[Any]:
+		logging.info("fetch_all executing %s with args %s", query, tuple(args))
 		with self.conn.cursor() as cur:
 			cur.execute(query, tuple(args))
 			result = cur.fetchall()
