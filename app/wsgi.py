@@ -8,8 +8,8 @@ from app.main import app as application
 logging.basicConfig(level=logging.INFO)
 
 app = application
-app = LintMiddleware(app)
-app = ProfilerMiddleware(app)
+# app = LintMiddleware(app)
+# app = ProfilerMiddleware(app)
 
 if __name__ == "__main__":
 	app.run()

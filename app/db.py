@@ -23,6 +23,7 @@ class DatabaseInterface:
 
 	def execute(self, query: str, *args) -> None:
 		with self.cursor() as cur:
+			logging.info("Executing %s %s", query, args)
 			cur.execute(query, tuple(args))
 
 	def fetch_one(self, query: str, *args) -> Any:
