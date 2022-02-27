@@ -23,6 +23,12 @@ class Airport:
 	def get_by_code(db: DatabaseInterface, code: str):
 		return Airport(*db.get_airport_by_code(code))
 
+	def can_fly_to(self, other) -> bool:
+		return (self.country, other.country) not in {
+			("Iran","Iraq"),
+			("Iraq","Iran"),
+		}
+
 	def distance_from(self, other):
 		"""Returns distance in kilometres"""
 
