@@ -1,6 +1,10 @@
 //////// HELPING FUNCTIONS
-function errHandler(err) {
+function errHandler(err, button) {
+    unsetLoader();
     displayError(err.responseText);
+    if (button) {
+        button.removeAttribute("disabled");
+    }
 }
 function randomBusinessName() {
     var adjectives = ["Blue", "Red", "Green", "Purple", "Orange", "White", "Trusty", "Speedy", "Enigmatic", "Fly", "Golden", "Sturdy", "Graceful", "Rapid", "Robust", "American", "British", "Asian", "European", "Indian", "Italian", "Australian", "Chinese", "Russian", "Nordic", "Southern", "Northern", "Southwest", "Express", "Paper", "Malaysia", "Thai"];
@@ -91,6 +95,30 @@ function createParagraph(text) {
 function hideElement(elem) {
     elem.style.display = 'none';
 }
+var inflight = 0;
+function setLoader() {
+    inflight += 1;
+    $("#loader").show();
+}
+function unsetLoader() {
+    $("#loader").hide();
+    inflight -= 1;
+    if (inflight === 0) {
+        $("#loader").hide();
+    }
+}
+function makeClickWrapper(btn, handler) {
+    // disable, show spinner until response
+    console.log('buttonClickWrapper ', btn, handler);
+    function completeHandler(ev) {
+        console.log('completeHandler enter', this, ev);
+        btn.setAttribute("disabled", "");
+        btn.innerHTML = '...';
+        handler();
+        console.log('completeHandler exit', this, ev);
+    }
+    return completeHandler;
+}
 var Airport = /** @class */ (function () {
     function Airport(data) {
         var code = data.code, name = data.name, country = data.country, lat = data.lat, lon = data.lon, popularity = data.popularity;
@@ -126,8 +154,9 @@ var OfferedRoute = /** @class */ (function () {
         btn.setAttribute("class", "flex-grow");
         btn.appendChild(this.cardHtml());
         var routeId = this.id;
-        btn.addEventListener("click", function () {
+        btn.addEventListener("click", makeClickWrapper(btn, function () {
             var airline = gameEngine.airline;
+            setLoader();
             $.ajax({
                 method: "POST",
                 url: "/purchase_route",
@@ -135,8 +164,9 @@ var OfferedRoute = /** @class */ (function () {
                     airlineId: airline.id,
                     routeId: routeId
                 },
-                error: errHandler,
+                error: function (x) { return errHandler(x, btn); },
                 success: function (response) {
+                    unsetLoader();
                     var jresponse = JSON.parse(response);
                     var route = new Route(jresponse.route);
                     airline.routes.push(route);
@@ -147,7 +177,7 @@ var OfferedRoute = /** @class */ (function () {
                     airline.updateStats();
                 }
             });
-        });
+        }));
         return btn;
     };
     OfferedRoute.prototype.cardHtml = function () {
@@ -195,9 +225,11 @@ var Route = /** @class */ (function () {
         var secondsTilNextAvailable = Math.ceil((+this.nextAvailableAt + -now) / 1000);
         return Math.max(0, secondsTilNextAvailable);
     };
-    Route.prototype.run = function () {
+    Route.prototype.run = function (btn) {
         var airline = gameEngine.airline;
         var route = this;
+        console.log("Route.run route=", route);
+        setLoader();
         $.ajax({
             method: "POST",
             url: "/run-route",
@@ -205,8 +237,9 @@ var Route = /** @class */ (function () {
                 airlineId: airline.id,
                 routeId: this.id
             },
-            error: errHandler,
+            error: function (x) { return errHandler(x, btn); },
             success: function (response) {
+                unsetLoader();
                 var jresponse = JSON.parse(response);
                 route.lastRunAt = new Date(jresponse.last_run_at);
                 route.nextAvailableAt = new Date(jresponse.next_available_at);
@@ -219,8 +252,9 @@ var Route = /** @class */ (function () {
         });
         return true;
     };
-    Route.prototype.getResults = function () {
+    Route.prototype.getResults = function (btn) {
         var airline = gameEngine.airline;
+        setLoader();
         $.ajax({
             method: "POST",
             url: "/collect",
@@ -228,8 +262,9 @@ var Route = /** @class */ (function () {
                 airlineId: airline.id,
                 routeId: this.id
             },
-            error: errHandler,
+            error: function (x) { return errHandler(x, btn); },
             success: function (response) {
+                unsetLoader();
                 var jresponse = JSON.parse(response);
                 displayInfo(jresponse.msg);
                 if (jresponse.incident) {
@@ -256,15 +291,10 @@ var Route = /** @class */ (function () {
             runbutton.innerHTML = "Current route running, ready in " + this.timeRemaining() + " seconds";
         }
         else {
-            runbutton.addEventListener("click", function () {
-                runbutton.setAttribute("disabled", "");
-                _this.run();
-            });
+            runbutton.addEventListener("click", makeClickWrapper(runbutton, function () { return _this.run(runbutton); }));
             runbutton.innerHTML = "Run Route";
         }
-        collectbutton.addEventListener("click", function () {
-            _this.getResults();
-        });
+        collectbutton.addEventListener("click", makeClickWrapper(collectbutton, function () { return _this.getResults(collectbutton); }));
         var updatebutton = function () {
             if (_this.timeRemaining() === 0) {
                 if (!_this.lastRunAt || _this.lastResultedAt && _this.lastResultedAt > _this.lastRunAt) {
@@ -368,7 +398,7 @@ var Plane = /** @class */ (function () {
         var btn = document.createElement("button");
         btn.innerText = "Fix for $100,000";
         div.appendChild(btn);
-        btn.addEventListener("click", function () {
+        btn.addEventListener("click", makeClickWrapper(btn, function () {
             $.ajax({
                 method: "POST",
                 url: "/plane/fix",
@@ -376,7 +406,7 @@ var Plane = /** @class */ (function () {
                     airlineId: airline.id,
                     planeId: _this.id
                 },
-                error: errHandler,
+                error: function (x) { return errHandler(x, btn); },
                 success: function (response) {
                     var jresponse = JSON.parse(response);
                     airline.planes = jresponse.planes.map(function (p) { return new Plane(p); });
@@ -387,11 +417,11 @@ var Plane = /** @class */ (function () {
                     airline.updateStats();
                 }
             });
-        });
+        }));
         var btn = document.createElement("button");
         btn.innerText = "Sell to  Mojave scrapyard for $10,000";
         div.appendChild(btn);
-        btn.addEventListener("click", function () {
+        btn.addEventListener("click", makeClickWrapper(btn, function () {
             $.ajax({
                 method: "POST",
                 url: "/plane/fix",
@@ -399,7 +429,7 @@ var Plane = /** @class */ (function () {
                     airlineId: airline.id,
                     planeId: _this.id
                 },
-                error: errHandler,
+                error: function (x) { return errHandler(x, btn); },
                 success: function (response) {
                     var jresponse = JSON.parse(response);
                     airline.planes = jresponse.planes.map(function (p) { return new Plane(p); });
@@ -410,7 +440,7 @@ var Plane = /** @class */ (function () {
                     airline.updateStats();
                 }
             });
-        });
+        }));
         return div;
     };
     return Plane;
@@ -472,15 +502,17 @@ var Airline = /** @class */ (function () {
         div.appendChild(planesContainer);
         div.appendChild(createParagraph("You have " + this.planes.length + " planes in your fleet"));
         var airline = this;
+        setLoader();
         $.ajax({
             method: "GET",
             url: "/offered_planes",
             data: {
                 airlineId: airline.id
             },
-            error: errHandler,
+            error: function (x) { return errHandler(x); },
             success: function (response) {
                 JSON.parse(response).map(function (p) {
+                    unsetLoader();
                     var plane = new Plane(p);
                     var button = document.createElement("button");
                     button.setAttribute("style", "margin: 0.5rem");
@@ -492,6 +524,8 @@ var Airline = /** @class */ (function () {
                         if (!confirmed) {
                             return;
                         }
+                        button.setAttribute("disabled", "");
+                        button.innerHTML = "...";
                         $.ajax({
                             method: "POST",
                             url: "/purchase_plane",
@@ -499,7 +533,7 @@ var Airline = /** @class */ (function () {
                                 airlineId: airline.id,
                                 planeId: plane.id
                             },
-                            error: errHandler,
+                            error: function (x) { return errHandler(x); },
                             success: function (response) {
                                 var r = JSON.parse(response);
                                 displayInfo(r.msg);
@@ -598,10 +632,12 @@ var GameEngine = /** @class */ (function () {
         if (this.airports.length === 0) {
             var airs = this.airports;
             var ge = this;
+            setLoader();
             $.ajax({
                 url: "/airports",
-                error: errHandler,
+                error: function (x) { return errHandler(x); },
                 success: function (response) {
+                    unsetLoader();
                     airs = JSON.parse(response).map(function (a) { return new Airport(a); });
                     ge.airports = airs;
                     loadHubSelect(airs);
@@ -630,14 +666,16 @@ var GameEngine = /** @class */ (function () {
         var airline = this.airline;
         main.appendChild(airline.getRoutesDisplay());
         main.appendChild(createTitle("Routes Available For Purchase"));
+        setLoader();
         $.ajax({
             method: "GET",
             url: "/offered_routes",
             data: {
                 airlineId: airline.id
             },
-            error: errHandler,
+            error: function (x) { return errHandler(x); },
             success: function (response) {
+                unsetLoader();
                 // console.log("Got offered routes", response)
                 var div = document.getElementById("offered routes container");
                 if (!div) {
@@ -769,6 +807,7 @@ window.onload = function () {
         var hubSelect = document.getElementById("hubSelect");
         e.preventDefault();
         hideElement(form);
+        setLoader();
         $.ajax({
             method: "POST",
             url: "/play",
@@ -776,8 +815,9 @@ window.onload = function () {
                 businessName: nameInput.value,
                 hub: hubSelect.value
             },
-            error: errHandler,
+            error: function (x) { return errHandler(x); },
             success: function (response) {
+                unsetLoader();
                 // console.log(response)
                 var airline = new Airline(JSON.parse(response));
                 console.log('Logged in, airline=', airline);

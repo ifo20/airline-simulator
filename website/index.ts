@@ -1,6 +1,10 @@
 //////// HELPING FUNCTIONS
-function errHandler(err) {
+function errHandler(err, button?: HTMLButtonElement) {
+	unsetLoader()
 	displayError(err.responseText)
+	if (button) {
+		button.removeAttribute("disabled");
+	}
 }
 function randomBusinessName(): string {
 	var adjectives: Array<string> = ["Blue", "Red", "Green", "Purple", "Orange", "White", "Trusty", "Speedy", "Enigmatic", "Fly", "Golden", "Sturdy", "Graceful", "Rapid", "Robust", "American", "British", "Asian", "European", "Indian", "Italian", "Australian", "Chinese", "Russian", "Nordic", "Southern", "Northern", "Southwest", "Express", "Paper", "Malaysia", "Thai"]
@@ -90,6 +94,30 @@ function createParagraph(text: string): HTMLParagraphElement {
 function hideElement(elem: HTMLElement): void {
 	elem.style.display = 'none'
 }
+var inflight = 0
+function setLoader() {
+	inflight += 1
+	$("#loader").show()
+}
+function unsetLoader() {
+	$("#loader").hide()
+	inflight -= 1
+	if (inflight === 0) {
+		$("#loader").hide()
+	}
+}
+function makeClickWrapper(btn: HTMLButtonElement, handler) {
+	// disable, show spinner until response
+	console.log('buttonClickWrapper ', btn, handler)
+	function completeHandler(this: HTMLElement, ev: MouseEvent) {
+		console.log('completeHandler enter', this, ev)
+		btn.setAttribute("disabled", "")
+		btn.innerHTML = '...'
+		handler()
+		console.log('completeHandler exit', this, ev)
+	}
+	return completeHandler
+}
 //////// OUR TYPES & CLASSES (THINGS)
 type AirportCode = string
 
@@ -140,8 +168,9 @@ class OfferedRoute {
 		btn.setAttribute("class", "flex-grow")
 		btn.appendChild(this.cardHtml())
 		const routeId = this.id
-		btn.addEventListener("click", () => {
+		btn.addEventListener("click", makeClickWrapper(btn, () => {
 			var airline = <Airline>gameEngine.airline
+			setLoader()
 			$.ajax({
 				method: "POST",
 				url: "/purchase_route",
@@ -149,8 +178,9 @@ class OfferedRoute {
 					airlineId: airline.id,
 					routeId,
 				},
-				error: errHandler,
+				error: (x) => errHandler(x, btn),
 				success: function(response) {
+					unsetLoader()
 					var jresponse = JSON.parse(response)
 					var route = new Route(jresponse.route)
 					airline.routes.push(route)
@@ -161,7 +191,7 @@ class OfferedRoute {
 					airline.updateStats()
 				}
 			})
-		})
+		}))
 		return btn
 	}
 	cardHtml(): HTMLElement {
@@ -218,9 +248,11 @@ class Route {
 		var secondsTilNextAvailable = Math.ceil((+this.nextAvailableAt + -now) / 1000)
 		return Math.max(0, secondsTilNextAvailable)
 	}
-	run(): boolean {
+	run(btn: HTMLButtonElement): boolean {
 		var airline = <Airline>gameEngine.airline
 		var route = this
+		console.log("Route.run route=", route)
+		setLoader()
 		$.ajax({
 			method: "POST",
 			url: "/run-route",
@@ -228,8 +260,9 @@ class Route {
 				airlineId: airline.id,
 				routeId: this.id,
 			},
-			error: errHandler,
+			error: (x) => errHandler(x, btn),
 			success: function(response) {
+				unsetLoader()
 				var jresponse = JSON.parse(response)
 				route.lastRunAt = new Date(jresponse.last_run_at)
 				route.nextAvailableAt = new Date(jresponse.next_available_at)
@@ -242,8 +275,9 @@ class Route {
 		})
 		return true
 	}
-	getResults() {
+	getResults(btn: HTMLButtonElement) {
 		var airline = <Airline>gameEngine.airline
+		setLoader()
 		$.ajax({
 			method: "POST",
 			url: "/collect",
@@ -251,8 +285,9 @@ class Route {
 				airlineId: airline.id,
 				routeId: this.id,
 			},
-			error: errHandler,
+			error: (x) => errHandler(x, btn),
 			success: function(response) {
+				unsetLoader()
 				var jresponse = JSON.parse(response)
 				displayInfo(jresponse.msg)
 				if (jresponse.incident) {
@@ -279,15 +314,10 @@ class Route {
 			runbutton.setAttribute("disabled", "")
 			runbutton.innerHTML = `Current route running, ready in ${this.timeRemaining()} seconds`
 		} else {
-			runbutton.addEventListener("click", () => {
-				runbutton.setAttribute("disabled", "")
-				this.run()
-			})
+			runbutton.addEventListener("click", makeClickWrapper(runbutton, () => this.run(runbutton)))
 			runbutton.innerHTML = "Run Route"
 		}
-		collectbutton.addEventListener("click", () => {
-			this.getResults()
-		})
+		collectbutton.addEventListener("click", makeClickWrapper(collectbutton, () => this.getResults(collectbutton)))
 		const updatebutton = () => {
 			if (this.timeRemaining() === 0) {
 				if (!this.lastRunAt || this.lastResultedAt && this.lastResultedAt > this.lastRunAt) {
@@ -396,7 +426,7 @@ class Plane {
 		var btn = document.createElement("button")
 		btn.innerText = "Fix for $100,000"
 		div.appendChild(btn)
-		btn.addEventListener("click", () => {
+		btn.addEventListener("click", makeClickWrapper(btn, () => {
 			$.ajax({
 				method: "POST",
 				url: "/plane/fix",
@@ -404,7 +434,7 @@ class Plane {
 					airlineId: airline.id,
 					planeId: this.id
 				},
-				error: errHandler,
+				error: (x) => errHandler(x, btn),
 				success: function(response) {
 					var jresponse = JSON.parse(response)
 					airline.planes = jresponse.planes.map(p => new Plane(p))
@@ -415,11 +445,11 @@ class Plane {
 					airline.updateStats()
 				}
 			})
-		})
+		}))
 		var btn = document.createElement("button")
 		btn.innerText = "Sell to  Mojave scrapyard for $10,000"
 		div.appendChild(btn)
-		btn.addEventListener("click", () => {
+		btn.addEventListener("click", makeClickWrapper(btn, () => {
 			$.ajax({
 				method: "POST",
 				url: "/plane/fix",
@@ -427,7 +457,7 @@ class Plane {
 					airlineId: airline.id,
 					planeId: this.id
 				},
-				error: errHandler,
+				error: (x) => errHandler(x, btn),
 				success: function(response) {
 					var jresponse = JSON.parse(response)
 					airline.planes = jresponse.planes.map(p => new Plane(p))
@@ -438,7 +468,7 @@ class Plane {
 					airline.updateStats()
 				}
 			})
-		})
+		}))
 		return div
 	}
 }
@@ -509,16 +539,17 @@ class Airline {
 		div.appendChild(planesContainer)
 		div.appendChild(createParagraph(`You have ${this.planes.length} planes in your fleet`))
 		var airline = this
-
+		setLoader()
 		$.ajax({
 			method: "GET",
 			url: "/offered_planes",
 			data: {
 				airlineId: airline.id
 			},
-			error: errHandler,
+			error: (x) => errHandler(x),
 			success: function(response) {
 				JSON.parse(response).map(p => {
+					unsetLoader()
 					var plane = new Plane(p)
 					var button = document.createElement("button")
 					button.setAttribute("style", "margin: 0.5rem")
@@ -530,6 +561,8 @@ class Airline {
 						if (!confirmed) {
 							return
 						}
+						button.setAttribute("disabled", "")
+						button.innerHTML = "..."
 						$.ajax({
 							method: "POST",
 							url: "/purchase_plane",
@@ -537,7 +570,7 @@ class Airline {
 								airlineId: airline.id,
 								planeId: plane.id,
 							},
-							error: errHandler,
+							error: (x) => errHandler(x),
 							success: function(response) {
 								var r = JSON.parse(response)
 								displayInfo(r.msg)
@@ -636,10 +669,12 @@ class GameEngine {
 		if (this.airports.length === 0) {
 			var airs = this.airports
 			var ge = this
+			setLoader()
 			$.ajax({
 				url: "/airports",
-				error: errHandler,
+				error: (x) => errHandler(x),
 				success: function(response) {
+					unsetLoader()
 					airs = JSON.parse(response).map(a => new Airport(a))
 					ge.airports = airs
 					loadHubSelect(airs)
@@ -668,14 +703,16 @@ class GameEngine {
 		var airline = <Airline>this.airline
 		main.appendChild(airline.getRoutesDisplay())
 		main.appendChild(createTitle("Routes Available For Purchase"))
+		setLoader()
 		$.ajax({
 			method: "GET",
 			url: "/offered_routes",
 			data: {
 				airlineId: airline.id,
 			},
-			error: errHandler,
+			error: (x) => errHandler(x),
 			success: function(response) {
+				unsetLoader()
 				// console.log("Got offered routes", response)
 				var div = document.getElementById("offered routes container")
 				if (!div) {
@@ -685,7 +722,7 @@ class GameEngine {
 				var routesToDisplay = JSON.parse(response).map(r => new OfferedRoute(r))
 				routesToDisplay.forEach((r: OfferedRoute) => div.appendChild(r.buttonHtml()))
 				main.appendChild(div)
-
+				
 			}
 		})
 	}
@@ -811,6 +848,7 @@ window.onload = () => {
 		var hubSelect = <HTMLSelectElement>document.getElementById("hubSelect")
 		e.preventDefault()
 		hideElement(form)
+		setLoader()
 		$.ajax({
 			method: "POST",
 			url: "/play",
@@ -818,8 +856,9 @@ window.onload = () => {
 				businessName: nameInput.value,
 				hub: hubSelect.value,
 			},
-			error: errHandler,
+			error: (x) => errHandler(x),
 			success: function(response) {
+				unsetLoader()
 				// console.log(response)
 				var airline = new Airline(JSON.parse(response))
 				console.log('Logged in, airline=', airline)
