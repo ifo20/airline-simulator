@@ -4,6 +4,7 @@ import json
 import os
 import pathlib
 from typing import Dict
+import timeit
 
 from flask import request, send_from_directory, Flask
 
@@ -107,16 +108,20 @@ def list_airports():
 
 @app.route("/play", methods=["POST"])
 def play():
+	start_ts = timeit.default_timer()
 	airline_name = airline_name_from_request(request)
 	airline = Airline.login(DB, airline_name, request.form["hub"])
 	j: Dict = json.loads(jsonify(airline))
 	j["routes"] = Route.list_owned(DB, airline.id)
 	j["planes"] = Plane.list_owned(DB, airline.id)
-	return jsonify(j)
+	response = jsonify(j)
+	logging.info("TIMER play took %s", timeit.default_timer() - start_ts)
+	return response
 
 
 @app.route("/offered_routes", methods=["GET"])
 def offered_routes():
+	start_ts = timeit.default_timer()
 	airline = airline_from_request(request)
 	offered_routes = Route.list_offered(DB, airline.id)
 	if len(offered_routes) < MINIMUM_OFFERS:
@@ -124,18 +129,22 @@ def offered_routes():
 			DB, airline, MINIMUM_OFFERS - len(offered_routes), offered_routes
 		)
 		offered_routes = Route.list_offered(DB, airline.id)
+	logging.info("TIMER offered_routes took %s", timeit.default_timer() - start_ts)
 	return jsonify(offered_routes)
 
 
 @app.route("/owned_routes", methods=["GET"])
 def owned_routes():
+	start_ts = timeit.default_timer()
 	airline_id = airline_id_from_request(request)
 	offered_routes = Route.list(DB, airline_id)
+	logging.info("TIMER owned_routes took %s", timeit.default_timer() - start_ts)
 	return jsonify(offered_routes)
 
 
 @app.route("/purchase_route", methods=["POST"])
 def purchase_route():
+	start_ts = timeit.default_timer()
 	airline = airline_from_request(request)
 	route = Route.get_by_id(DB, request.form["routeId"])
 	if route.airline_id != airline.id:
@@ -149,6 +158,7 @@ def purchase_route():
 	airline.cash -= route.cost
 	Airline.update_cash(DB, airline.id, airline.cash)
 	route.purchase(DB)
+	logging.info("TIMER purchase_route took %s", timeit.default_timer() - start_ts)
 	return jsonify(
 		{
 			"route": route,
