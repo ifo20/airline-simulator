@@ -180,14 +180,12 @@ class Route:
 			plane_health_cost += 5
 			cost += 100
 			popularity_change -= 2
-			incident = "Smoke in cabin! See Accidents tab for details"
-			# incidentText = `Smoke in cabin ${prettyCashString(eventCost)} and ${popularityChange} reputation`
+			incident = f"Smoke in cabin! Plane health {plane_health_cost} Popularity {popularity_change}"
 		elif random.random() < 0.1:
 			plane_health_cost += 25
 			cost += 300
 			popularity_change -= 10
-			incident = "There was an engine fire! See Accidents tab for details"
-			# incidentText = `Engine fire costing ${prettyCashString(eventCost)} and ${popularityChange} reputation`
+			incident = f"Engine fire! Plane health {plane_health_cost} Popularity {popularity_change}"
 		else:
 			incident = None
 
