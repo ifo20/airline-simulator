@@ -2,16 +2,23 @@ from datetime import datetime
 import logging
 import os
 from typing import Any, List
+import timeit
 
 import psycopg2
 import psycopg2.extras
 
 LOGGER = logging.getLogger(__name__)
 
+class ConnectionHolder:
+	def __init__(self) -> None:
+		start_ts = timeit.default_timer()
+		self.conn = psycopg2.connect(os.environ["DATABASE_URL"], sslmode="require")
+		LOGGER.info("TIMER DB connection took %s", timeit.default_timer() - start_ts)
+
+CONN_HOLDER = ConnectionHolder()
 
 def db_connection():
-	return psycopg2.connect(os.environ["DATABASE_URL"], sslmode="require")
-
+	return CONN_HOLDER.conn
 
 def cursor():
 	return db_connection().cursor()
