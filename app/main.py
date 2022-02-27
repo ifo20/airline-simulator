@@ -73,13 +73,13 @@ def jsonify(data):
 	return ComplexEncoder().encode(data)
 
 
-@app.errorhandler(Exception)
-def handle_exception(e):
-	logging.exception("Error handler called with %s", e)
-	if isinstance(e, AssertionError):
-		return str(e), 400
-	# below is for local use only
-	return repr(e), 500
+# @app.errorhandler(Exception)
+# def handle_exception(e):
+# 	logging.exception("Error handler called with %s", e)
+# 	if isinstance(e, AssertionError):
+# 		return str(e), 400
+# 	# below is for local use only
+# 	return repr(e), 500
 
 
 @app.route("/static/<path:filename>")

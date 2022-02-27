@@ -48,6 +48,9 @@ class Airline:
 
 	@staticmethod
 	def get_by_id(db: DatabaseInterface, airline_id: int):
+		result = db.get_airline_by_id(airline_id)
+		if result is None:
+			return result
 		(
 			airline_id,
 			name,
@@ -56,7 +59,7 @@ class Airline:
 			last_login_at,
 			cash,
 			popularity,
-		) = db.get_airline_by_id(airline_id)
+		) = result
 		hub_airport = Airport.get_by_code(db, hub)
 		return Airline(
 			airline_id, name, hub_airport, joined_at, last_login_at, cash, popularity
