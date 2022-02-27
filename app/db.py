@@ -7,13 +7,11 @@ import timeit
 import psycopg2
 import psycopg2.extras
 
-LOGGER = logging.getLogger(__name__)
-
 class ConnectionHolder:
 	def __init__(self) -> None:
 		start_ts = timeit.default_timer()
 		self.conn = psycopg2.connect(os.environ["DATABASE_URL"], sslmode="require")
-		LOGGER.info("TIMER DB connection took %s", timeit.default_timer() - start_ts)
+		logging.info("TIMER DB connection took %s", timeit.default_timer() - start_ts)
 
 CONN_HOLDER = ConnectionHolder()
 
@@ -72,7 +70,7 @@ class DatabaseInterface:
 	def create_airline(
 		self, name: str, hub_code: str, starting_cash: int, starting_popularity: int
 	) -> List[Any]:
-		LOGGER.info("Inserting airline %s ...", name)
+		logging.info("Inserting airline %s ...", name)
 		[inserted_id] = fetch_one(
 			"""
 INSERT INTO airlines (name, hub, joined_at, last_login_at, cash, popularity)
@@ -83,7 +81,7 @@ VALUES (%s, %s, now(), now(), %s, %s) RETURNING id
 			starting_cash,
 			starting_popularity,
 		)
-		LOGGER.info("Inserted airline %s: %s", inserted_id, name)
+		logging.info("Inserted airline %s: %s", inserted_id, name)
 		return self.get_airline_by_id(inserted_id)
 
 	def update_last_login_at(self, airline_id: int):
