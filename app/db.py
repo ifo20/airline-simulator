@@ -18,29 +18,28 @@ class DatabaseInterface:
 		logging.info("Closing DB connection")
 		self.conn.close()
 
-	def cursor(self):
-		return self.conn.cursor()
-
 	def execute(self, query: str, *args) -> None:
-		with self.cursor() as cur:
-			logging.info("Executing %s with args %s", query, tuple(args))
+		logging.info("Executing %s with args %s", query, tuple(args))
+		with self.conn.cursor() as cur:
+			logging.info("Cursor: %s Executing %s with args %s", cur, query, tuple(args))
 			cur.execute(query, tuple(args))
+		logging.info("Executed %s with args %s", query, tuple(args))
 
 	def fetch_one(self, query: str, *args) -> Any:
-		with self.cursor() as cur:
+		with self.conn.cursor() as cur:
 			cur.execute(query, tuple(args))
 			result = cur.fetchone()
 		return result
 
 	def fetch_all(self, query: str, *args) -> List[Any]:
-		with self.cursor() as cur:
+		with self.conn.cursor() as cur:
 			cur.execute(query, tuple(args))
 			result = cur.fetchall()
 		return result
 
 	def migrate(self):
 		with open("001_initial.sql", "r") as f:
-			self.cursor().execute(f.read())
+			self.conn.cursor().execute(f.read())
 
 	def get_airports(self) -> List[List[Any]]:
 		return self.fetch_all("SELECT * FROM airports")
