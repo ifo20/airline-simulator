@@ -6,7 +6,7 @@ import pathlib
 from typing import Dict
 import timeit
 
-from flask import request, send_from_directory, Flask
+from flask import abort, request, send_from_directory, Flask
 
 from app.db import DatabaseInterface
 from app.airline import Airline
@@ -52,7 +52,10 @@ def airline_name_from_request(request):
 
 
 def airline_from_request(request):
-	return Airline.get_by_id(DB, airline_id_from_request(request))
+	airline = Airline.get_by_id(DB, airline_id_from_request(request))
+	if not airline:
+		abort(404)
+	return airline
 
 
 class ComplexEncoder(json.JSONEncoder):
