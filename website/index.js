@@ -569,13 +569,21 @@ var Airline = /** @class */ (function () {
         div.appendChild(heading);
         var p = document.createElement("p");
         var numStars = 0;
-        if (this.popularity > 79) {
+        if (this.popularity > 89) {
             p.innerText = "Customers favorite airline in " + this.hub.country + "!";
             numStars = 5;
         }
+        else if (this.popularity > 69) {
+            p.innerText = "Very reputable airline";
+            numStars = 4;
+        }
         else if (this.popularity > 49) {
-            p.innerText = "Customers secound favorite choice";
+            p.innerText = "Distinctly average";
             numStars = 3;
+        }
+        else if (this.popularity > 39) {
+            p.innerText = "Poor reputation";
+            numStars = 2;
         }
         else {
             p.innerText = "Customers least favorite choice";
