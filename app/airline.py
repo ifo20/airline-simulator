@@ -105,4 +105,4 @@ class Airline:
 
 	@staticmethod
 	def leaderboard(db: DatabaseInterface):
-		return sorted(Airline.list(db), key=lambda airline: airline.popularity, reverse=True)
+		return sorted(Airline.list(db), key=lambda airline: (airline.popularity, airline.cash), reverse=True)

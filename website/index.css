@@ -20,6 +20,17 @@ body {
 p {
     margin:1rem;
 }
+table {
+    margin: 0;
+    width: 100vw;
+    text-align: center;
+    background-color: white;
+    border-collapse: collapse;
+}
+th, td {
+    border: 1px solid grey;
+    padding: 0.1rem 0.5rem;
+}
 @-webkit-keyframes loader {
     from {
         background-position: 0;

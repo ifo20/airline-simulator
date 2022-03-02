@@ -109,10 +109,16 @@ def home():
 @app.route("/leaderboard")
 def leaderboard():
 	all_airlines = Airline.leaderboard(DB)
-	return "<br/>".join(
-		f"{i}: {airline.name}: ${airline.cash}"
+	rows = "".join([
+		f"<tr><td>{i}</td><td>{airline.name}</td><td>{airline.joined_at.date()}</td><td>${airline.cash}</td><td>{airline.popularity:.0f}</td></tr>"
 		for i, airline in enumerate(all_airlines, start=1)
-	)
+	])
+	return f"""
+<link rel="stylesheet" href="static/index.css">
+<table>
+<thead><tr><th>Rank</th><th>Airline</th><th>Date Joined</th><th>Cash</th><th>Reputation</th></tr></thead>
+<tbody>{rows}</tbody>
+</table>"""
 
 
 @app.route("/airports")
