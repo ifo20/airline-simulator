@@ -181,3 +181,6 @@ WHERE id=%s""",
 			plane.route.id if plane.route else None,
 			plane.id,
 		)
+
+	def delete_plane(self, plane_id):
+		return self.execute("DELETE FROM planes WHERE id=%s", plane_id)

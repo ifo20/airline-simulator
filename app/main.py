@@ -237,10 +237,10 @@ def purchase_plane():
 def fix_plane():
 	fix_cost = 100000
 	airline = airline_from_request(request)
-	plane = Plane.get_by_id(request.form["planeId"])
+	plane = Plane.get_by_id(DB, int(request.form["planeId"]))
 	assert airline.cash >= fix_cost, f"Airline cannot afford to fix - requires ${fix_cost}"
 	plane.health = 100
-	# TODO update DB for new health
+	DB.update_plane(plane)
 	airline.cash -= fix_cost
 	Airline.update_cash(DB, airline.id, airline.cash)
 	planes = Plane.list_owned(DB, airline.id)
@@ -248,8 +248,8 @@ def fix_plane():
 		{
 			"planes": planes,
 			"cash": airline.cash,
-			"msg": f"Plane {plane} fixed for $100,000!",
-			"transaction": f"Fixed plane {plane} for $100,000",
+			"msg": f"Plane {plane.name} fixed for $100,000!",
+			"transaction": f"Fixed {plane.name} for $100,000",
 		}
 	)
 
@@ -258,18 +258,18 @@ def fix_plane():
 def scrap_plane():
 	scrap_value = 10000
 	airline = airline_from_request(request)
-	plane = Plane.get_by_id(request.form["planeId"])
+	plane = Plane.get_by_id(DB, int(request.form["planeId"]))
 	assert plane.airline_id == airline.id, f"Airline does not have that plane"
 	airline.cash += scrap_value
 	Airline.update_cash(DB, airline.id, airline.cash)
-	# TODO actually scrap the plane
+	Plane.scrap(DB, plane)
 	planes = [p for p in Plane.list_owned(DB, airline.id) if p.id != plane.id]
 	return jsonify(
 		{
 			"planes": planes,
 			"cash": airline.cash,
-			"msg": f"Plane {plane} sold to Mojave scrapyard for $10,000!",
-			"transaction": f"Sold plane {plane} to scrapyard for $10,000",
+			"msg": f"Plane {plane.name} sold to Mojave scrapyard for $10,000!",
+			"transaction": f"Sold {plane.name} to scrapyard for $10,000",
 		}
 	)
 
@@ -280,7 +280,7 @@ def run_route():
 	route = Route.get_by_id(DB, request.form["routeId"])
 	route.validate_can_run()
 	plane = Plane.get_for_route(DB, route)
-	route.run(DB)
+	route.run(DB, airline)
 	plane.reserve(DB, route)
 	planes = Plane.list_owned(DB, airline.id)
 	return jsonify(

@@ -424,7 +424,7 @@ var Plane = /** @class */ (function () {
         btn.addEventListener("click", makeClickWrapper(btn, function () {
             $.ajax({
                 method: "POST",
-                url: "/plane/fix",
+                url: "/plane/scrap",
                 data: {
                     airlineId: airline.id,
                     planeId: _this.id

@@ -123,6 +123,10 @@ class Plane:
 			return plane
 		raise AssertionError("No planes are available to run this route!")
 
+	@staticmethod
+	def scrap(db: DatabaseInterface, plane):
+		db.delete_plane(plane.id)
+
 	@property
 	def status(self):
 		if self.purchased_at is None:

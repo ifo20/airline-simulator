@@ -157,9 +157,14 @@ class Route:
 			self.last_resulted_at is None or self.last_resulted_at > self.last_run_at
 		), "Please collect the results from the previous run before running this route again"
 
-	def run(self, db: DatabaseInterface):
+	def run(self, db: DatabaseInterface, airline):
 		self.last_run_at = datetime.now(pytz.UTC)
-		self.next_available_at = self.last_run_at + timedelta(seconds=5 + self.distance / 20)
+		duration = timedelta(seconds=5 + self.distance / 20)
+		if "Speedy" in airline.name:
+			duration /= 2
+		if "Super Speedy" in airline.name:
+			duration /= 10
+		self.next_available_at = self.last_run_at + duration
 		db.update_route_for_run(self)
 
 	def collect(self, db: DatabaseInterface):
@@ -174,18 +179,18 @@ class Route:
 		income = 100 * num_passengers
 		cost = random.randint(500, 1000)
 		plane_health_cost = random.randint(1, 10)
-		popularity_change = random.randint(0, 1)
+		popularity_change = random.randint(0, 1) # ev: 0.5
 
-		if random.random() < 0.1:
-			plane_health_cost += 5
-			cost += 100
-			popularity_change -= 2
-			incident = f"Smoke in cabin! Plane health {plane_health_cost} Popularity {popularity_change}"
-		elif random.random() < 0.1:
+		if random.random() < 0.01:
 			plane_health_cost += 25
 			cost += 300
-			popularity_change -= 10
+			popularity_change -= 10 # ev -0.1 -> 0.4
 			incident = f"Engine fire! Plane health {plane_health_cost} Popularity {popularity_change}"
+		elif random.random() < 0.1:
+			plane_health_cost += 5
+			cost += 100
+			popularity_change -= 2 # ev: -0.18 -> 0.22
+			incident = f"Smoke in cabin! Plane health {plane_health_cost} Popularity {popularity_change}"
 		else:
 			incident = None
 
