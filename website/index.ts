@@ -478,19 +478,21 @@ class Airline {
 	hub: Airport
 	joined: Date
 	cash: number
+	rank: string
 	planes: Array<Plane> = []
 	routes: Array<Route> = []
 	popularity: number
 	transactions: Array<string> = []
 	incidents: Array<string> = []
 	constructor(data: any) {
-		const { id, name, hub, joined_at, cash, planes, routes, popularity, transactions, incidents } = data
+		const { id, name, hub, joined_at, cash, rank, planes, routes, popularity, transactions, incidents } = data
 		this.id = id
 		this.name = name
 		this.hub = hub
 		console.log('joined', joined_at)
 		this.joined = new Date(joined_at)
 		this.cash = cash
+		this.rank = rank
 		this.planes = (planes || []).map(p => new Plane(p))
 		this.routes = (routes || []).map(r => new Route(r))
 		this.popularity = popularity
@@ -526,6 +528,7 @@ class Airline {
 			["Planes", String(this.planes.length)],
 			["Routes", String(this.routes.length)],
 			["Popularity", String(this.popularity)],
+			["Rank", this.rank],
 		])
 		return dl
 	}

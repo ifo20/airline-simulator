@@ -451,13 +451,14 @@ var Airline = /** @class */ (function () {
         this.routes = [];
         this.transactions = [];
         this.incidents = [];
-        var id = data.id, name = data.name, hub = data.hub, joined_at = data.joined_at, cash = data.cash, planes = data.planes, routes = data.routes, popularity = data.popularity, transactions = data.transactions, incidents = data.incidents;
+        var id = data.id, name = data.name, hub = data.hub, joined_at = data.joined_at, cash = data.cash, rank = data.rank, planes = data.planes, routes = data.routes, popularity = data.popularity, transactions = data.transactions, incidents = data.incidents;
         this.id = id;
         this.name = name;
         this.hub = hub;
         console.log('joined', joined_at);
         this.joined = new Date(joined_at);
         this.cash = cash;
+        this.rank = rank;
         this.planes = (planes || []).map(function (p) { return new Plane(p); });
         this.routes = (routes || []).map(function (r) { return new Route(r); });
         this.popularity = popularity;
@@ -489,6 +490,7 @@ var Airline = /** @class */ (function () {
             ["Planes", String(this.planes.length)],
             ["Routes", String(this.routes.length)],
             ["Popularity", String(this.popularity)],
+            ["Rank", this.rank],
         ]);
         return dl;
     };

@@ -102,3 +102,7 @@ class Airline:
 
 	def update_for_route_collection(self, db: DatabaseInterface):
 		db.update_airline(self)
+
+	@staticmethod
+	def leaderboard(db: DatabaseInterface):
+		return sorted(Airline.list(db), key=lambda airline: airline.popularity, reverse=True)

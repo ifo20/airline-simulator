@@ -108,7 +108,7 @@ def home():
 
 @app.route("/leaderboard")
 def leaderboard():
-	all_airlines = sorted(Airline.list(DB), key=lambda airline: airline.cash, reverse=True)
+	all_airlines = Airline.leaderboard(DB)
 	return "<br/>".join(
 		f"{i}: {airline.name}: ${airline.cash}"
 		for i, airline in enumerate(all_airlines, start=1)
@@ -128,6 +128,12 @@ def play():
 	j: Dict = json.loads(jsonify(airline))
 	j["routes"] = Route.list_owned(DB, airline.id)
 	j["planes"] = Plane.list_owned(DB, airline.id)
+	n = 0
+	for idx, leaderboard_airline in enumerate(Airline.leaderboard(DB), start=1):
+		n += 1
+		if leaderboard_airline.id == airline.id:
+			this_rank = idx
+	j["rank"] = f"#{this_rank} / {n}"
 	response = jsonify(j)
 	logging.info("TIMER play took %s", timeit.default_timer() - start_ts)
 	return response
