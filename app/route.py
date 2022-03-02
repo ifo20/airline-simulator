@@ -100,7 +100,7 @@ class Route:
 			# Generate appropriate popularity and cost
 			popularity = random.randint(10, 100)
 			cost = popularity * 100 + destination.distance_from(hub) + random.randint(1, 1000)
-			db.create_route(airline.id, hub.code, destination.code, popularity, cost)
+			db.create_route(airline.id, hub.code, destination.code, cost, popularity)
 			LOGGER.info(
 				"Created Route offer for %s: %s - %s", airline.name, hub.code, destination.code
 			)

@@ -108,17 +108,17 @@ VALUES (%s, %s, now(), now(), %s, %s) RETURNING id
 		return self.fetch_one("SELECT * FROM routes WHERE id=%s", route_id)
 
 	def create_route(
-		self, airline_id: int, origin: str, destination: str, popularity: int, cost: int
+		self, airline_id: int, origin: str, destination: str, cost: int, popularity: int,
 	):
 		return self.fetch_one(
 			"""
-INSERT INTO routes (airline_id, origin, destination, popularity, cost)
+INSERT INTO routes (airline_id, origin, destination, cost, popularity)
 VALUES (%s, %s, %s, %s, %s) RETURNING *""",
 			airline_id,
 			origin,
 			destination,
-			popularity,
 			cost,
+			popularity,
 		)
 
 	def update_route_for_purchase(

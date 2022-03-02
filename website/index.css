@@ -95,7 +95,7 @@ p {
 
     to {
         opacity: 0;
-        transform: translate(0px, -100px)
+        transform: translate(0px, 500px)
     }
 }
 #main > * {
@@ -250,27 +250,30 @@ dd {
 
 #info, #error {
     position: absolute;
-    width: 50%;
-    left: 50%;
-    top: 0;
+    bottom: 0;
+    width: 100vw;
+    /*left: 50%;
+    top: 100; */
     text-align: center;
-    transform: translate(-50%, 0px);
+    /* transform: translate(-50%, 0px); */
 }
 
 #info>span,
 #error>span {
     font-size: larger;
-    padding: 0.5rem;
+    padding: 0.6rem;
 }
 
 #info>span {
     background-color: #1351de;
     color: #fff;
+    border-bottom: 1px solid white;
 }
 
 #error>span {
     background-color: #ffffff;
     color: #f33;
+    border: 1px solid #f33;
 }
 
 #airlineStats {
