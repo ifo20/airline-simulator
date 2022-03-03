@@ -51,15 +51,7 @@ class Airline:
 		result = db.get_airline_by_id(airline_id)
 		if result is None:
 			return result
-		(
-			airline_id,
-			name,
-			hub,
-			joined_at,
-			last_login_at,
-			cash,
-			popularity,
-		) = result
+		(airline_id, name, hub, joined_at, last_login_at, cash, popularity,) = result
 		hub_airport = Airport.get_by_code(db, hub)
 		return Airline(
 			airline_id, name, hub_airport, joined_at, last_login_at, cash, popularity
@@ -105,4 +97,8 @@ class Airline:
 
 	@staticmethod
 	def leaderboard(db: DatabaseInterface):
-		return sorted(Airline.list(db), key=lambda airline: (airline.popularity, airline.cash), reverse=True)
+		return sorted(
+			Airline.list(db),
+			key=lambda airline: (airline.popularity, airline.cash),
+			reverse=True,
+		)

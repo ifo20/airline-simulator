@@ -140,6 +140,9 @@ th, td {
     justify-content: center;
 }
 
+.text-center {
+    text-align: center;
+}
 .justify-content-between {
     justify-content: space-between;
 }
@@ -184,7 +187,9 @@ form {
     margin: 0.6rem auto;
     font-size: larger;
 }
-
+.p-3 {
+    padding: 1rem;
+}
 form>div {
     display: flex;
     flex-direction: column;
@@ -205,6 +210,9 @@ button {
     font-size: 12px;
     line-height: 14px;
     position: relative;
+}
+button:disabled {
+    color: grey;
 }
 button:before, .button:after {
     content: '';
@@ -258,7 +266,9 @@ dd {
     grid-column-start: 2;
     text-align: right;
 }
-
+.w-100 {
+    width: 100%;
+}
 #info, #error {
     position: absolute;
     bottom: 0;

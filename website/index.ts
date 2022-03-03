@@ -187,7 +187,7 @@ class OfferedRoute {
 					airline.cash = jresponse.cash
 					airline.addTransaction(jresponse.transaction)
 					displayInfo(jresponse.msg)
-					gameEngine.displayRoutesTab()
+					airline.getRoutesDisplay()
 					airline.updateStats()
 				}
 			})
@@ -226,10 +226,11 @@ class Route {
 	lastRunAt?: Date
 	lastResultedAt?: Date
 	nextAvailableAt?: Date
-	plane?: Plane
+	status: string
 	constructor(data) {
-		const { id, distance, origin, destination, popularity, cost, last_run_at, last_resulted_at, next_available_at, plane } = data
+		const { id, distance, origin, destination, popularity, cost, last_run_at, last_resulted_at, next_available_at, status } = data
 		this.id = id
+		console.log('created route id', this.id)
 		this.fromAirport = origin
 		this.toAirport = destination
 		this.distance = distance
@@ -238,7 +239,8 @@ class Route {
 		this.lastRunAt = last_run_at ? new Date(last_run_at) : null
 		this.lastResultedAt = last_resulted_at ? new Date(last_resulted_at): null
 		this.nextAvailableAt = next_available_at ? new Date(next_available_at) : null
-		this.plane = plane
+		this.status = status || "ready"
+		console.log("Created Route", this.status, data)
 	}
 	timeRemaining(): number {
 		if (!this.nextAvailableAt) {
@@ -260,16 +262,19 @@ class Route {
 				airlineId: airline.id,
 				routeId: this.id,
 			},
-			error: (x) => errHandler(x, btn),
+			error: (x) => {
+				errHandler(x, btn)
+				route.updatePurchasedCardContent()
+			},
 			success: function(response) {
 				unsetLoader()
 				var jresponse = JSON.parse(response)
+				route.status = jresponse.status
 				route.lastRunAt = new Date(jresponse.last_run_at)
 				route.nextAvailableAt = new Date(jresponse.next_available_at)
 				airline.planes = jresponse.planes.map(p => new Plane(p))
 				airline.updateStats()
-				airline.getRoutesDisplay()
-				gameEngine.displayRoutesTab()
+				route.updatePurchasedCardContent()
 				displayInfo(jresponse.msg)
 			}
 		})
@@ -277,6 +282,7 @@ class Route {
 	}
 	getResults(btn: HTMLButtonElement) {
 		var airline = <Airline>gameEngine.airline
+		var route = this
 		setLoader()
 		$.ajax({
 			method: "POST",
@@ -285,7 +291,10 @@ class Route {
 				airlineId: airline.id,
 				routeId: this.id,
 			},
-			error: (x) => errHandler(x, btn),
+			error: (x) => {
+				errHandler(x, btn)
+				route.updatePurchasedCardContent()
+			},
 			success: function(response) {
 				unsetLoader()
 				var jresponse = JSON.parse(response)
@@ -294,60 +303,67 @@ class Route {
 					displayInfo(jresponse.incident)
 					airline.incidents.push(jresponse.incident)
 				}
+				route.status = jresponse.status
 				airline.planes = jresponse.planes.map(p => new Plane(p))
 				airline.popularity = jresponse.popularity
 				airline.updateStats(jresponse.cash)
-				airline.getRoutesDisplay()
-				gameEngine.displayRoutesTab()
+				route.updatePurchasedCardContent()
 
 			}
 		})
 	}
-
-	purchasedCardHtml(): HTMLDivElement {
-		var div = document.createElement("div")
-		div.className = "bg-light border-box"
+	updatePurchasedCardContent() {
+		var div = document.getElementById(`owned-route-${this.id}`)
+		if (!div) {
+			console.log("Failed to find element", `owned-route-${this.id}`)
+			setTimeout(() => this.updatePurchasedCardContent(), 1000)
+			return
+		}
+		div.innerHTML = ""
 		div.appendChild(this.cardHtml())
-		var runbutton = document.createElement("button")
-		var collectbutton = document.createElement("button")
+		var actionButton = document.createElement("button")
+		var statusText = ""
 		if (this.timeRemaining()) {
-			runbutton.setAttribute("disabled", "")
-			runbutton.innerHTML = `Current route running, ready in ${this.timeRemaining()} seconds`
+			actionButton.setAttribute("disabled", "")
+			actionButton.innerHTML = "Collect Results"
+			statusText = `Current route running, ready in ${this.timeRemaining()} seconds`
+			setTimeout(() => this.updatePurchasedCardContent(), 1000)
+		} else if (this.status === "ready") {
+			statusText = "Ready to run!"
+			actionButton.addEventListener("click", makeClickWrapper(actionButton, () => this.run(actionButton)))
+			actionButton.innerHTML = "Run Route"
+		} else if (this.status === "landed") {
+			statusText = `Landed at ${this.toAirport.code}!`
+			actionButton.addEventListener("click", makeClickWrapper(actionButton, () => this.getResults(actionButton)))
+			actionButton.innerHTML = "Collect Route"
 		} else {
-			runbutton.addEventListener("click", makeClickWrapper(runbutton, () => this.run(runbutton)))
-			runbutton.innerHTML = "Run Route"
-		}
-		collectbutton.addEventListener("click", makeClickWrapper(collectbutton, () => this.getResults(collectbutton)))
-		const updatebutton = () => {
-			if (this.timeRemaining() === 0) {
-				if (!this.lastRunAt || this.lastResultedAt && this.lastResultedAt > this.lastRunAt) {
-					collectbutton.setAttribute("disabled", "")
-					hideElement(collectbutton)
-					if (this.nextAvailableAt && new Date() < this.nextAvailableAt) {
-						runbutton.innerHTML = "Plane is Refueling, Cleaning, Unloading. Ready in 1 minute"
-					} else {
-						runbutton.innerHTML = "Run Route"
-						runbutton.removeAttribute("disabled")
-					}
-				} else {
-					collectbutton.style.display = "inherit"
-					collectbutton.innerHTML = "Show Results"
-					collectbutton.removeAttribute("disabled")
+			statusText = "Retrieving status..."
+			actionButton.innerHTML = ""
+			var route = this
+			$.ajax({
+				method: "GET",
+				url: `/route/${this.id}`,
+				data: {},
+				error: (x) => errHandler(x),
+				success: function(response) {
+					var jresponse = JSON.parse(response)
+					route.status = jresponse.status
+					route.updatePurchasedCardContent()
 				}
-			} else {
-				runbutton.setAttribute("disabled", "")
-				collectbutton.setAttribute("disabled", "")
-				hideElement(collectbutton)
-				runbutton.innerHTML = `Current route running, ready in ${this.timeRemaining()} seconds`
-
-			}
+			})
+			return
 		}
-		setInterval(updatebutton, 1000)
-		updatebutton()
-		div.appendChild(runbutton)
-		div.appendChild(collectbutton)
+		var statusDiv = createElement("div", `route-status-${this.id}`, "p-3 text-center")
+		statusDiv.innerText = statusText
+		actionButton.className = "p-3 text-center w-100"
+		div.appendChild(statusDiv)
+		div.appendChild(actionButton)
+	}
+	createPurchasedCardHtml(): HTMLDivElement {
+		var div = <HTMLDivElement>createElement("div", `owned-route-${this.id}`)
+		div.className = "bg-light border-box"
+		setTimeout(() => this.updatePurchasedCardContent(), 100)
 		return div
-
 	}
 	cardHtml(): HTMLElement {
 		var dl = dataLabels([
@@ -592,14 +608,14 @@ class Airline {
 		return div
 	}
 	getRoutesDisplay(): HTMLElement {
-		var div = document.createElement("div")
-		div.appendChild(createTitle("Your Routes"))
-		var routesContainer = document.createElement("div")
+		const routesContainer = <HTMLElement>document.getElementById("owned-routes")
 		this.routes.forEach(route => {
-			routesContainer.appendChild(route.purchasedCardHtml())
+			var div = document.getElementById(`owned-route-${route.id}`)
+			if (!div) {
+				routesContainer.appendChild(route.createPurchasedCardHtml())
+			}
 		})
-		div.appendChild(routesContainer)
-		return div
+		return routesContainer
 	}
 	getReputationDisplay(): HTMLElement {
 		var div = document.createElement("div")
@@ -691,8 +707,18 @@ class GameEngine {
 			})
 		}
 	}
+	hideTabs(except: string): void {
+		["overview", "fleet", "routes", "reputation", "finance", "accidents"].forEach(k => {
+			if (k === except) {
+				$(`#main-${k}`).show()
+			} else {
+				$(`#main-${k}`).hide()
+			}
+		})
+	}
 	displaySummaryTab(): void {
-		const main = <HTMLElement>document.getElementById("main")
+		this.hideTabs("overview")
+		const main = <HTMLElement>document.getElementById("main-overview")
 		main.innerHTML = ""
 		var airline = <Airline>this.airline
 		var heading = createTitle(airline.name)
@@ -701,17 +727,17 @@ class GameEngine {
 		main.appendChild(airline.getAccidentsDisplay())
 	}
 	displayFleetTab(): void {
-		const main = <HTMLElement>document.getElementById("main")
+		this.hideTabs("fleet")
+		const main = <HTMLElement>document.getElementById("main-fleet")
 		main.innerHTML = ""
 		var airline = <Airline>this.airline
 		main.appendChild(airline.getFleetDisplay())
 	}
 	displayRoutesTab(): void {
-		const main = <HTMLElement>document.getElementById("main")
-		main.innerHTML = ""
+		this.hideTabs("routes")
 		var airline = <Airline>this.airline
-		main.appendChild(airline.getRoutesDisplay())
-		main.appendChild(createTitle("Routes Available For Purchase"))
+		airline.getRoutesDisplay()
+		const offered = <HTMLElement>document.getElementById("offered-routes")
 		setLoader()
 		$.ajax({
 			method: "GET",
@@ -722,33 +748,29 @@ class GameEngine {
 			error: (x) => errHandler(x),
 			success: function(response) {
 				unsetLoader()
-				// console.log("Got offered routes", response)
-				var div = document.getElementById("offered routes container")
-				if (!div) {
-					div = createElement("div", "offered routes container")
-				}
-				div.innerHTML = ""
+				offered.innerHTML = ""
 				var routesToDisplay = JSON.parse(response).map(r => new OfferedRoute(r))
-				routesToDisplay.forEach((r: OfferedRoute) => div.appendChild(r.buttonHtml()))
-				main.appendChild(div)
-				
+				routesToDisplay.forEach((r: OfferedRoute) => offered.appendChild(r.buttonHtml()))
 			}
 		})
 	}
 	displayReputationTab(): void {
-		const main = <HTMLElement>document.getElementById("main")
+		this.hideTabs("reputation")
+		const main = <HTMLElement>document.getElementById("main-reputation")
 		main.innerHTML = ""
 		var airline = <Airline>this.airline
 		main.appendChild(airline.getReputationDisplay())
 	}
 	displayFinanceTab(): void {
-		const main = <HTMLElement>document.getElementById("main")
+		this.hideTabs("finance")
+		const main = <HTMLElement>document.getElementById("main-finance")
 		main.innerHTML = ""
 		var airline = <Airline>this.airline
 		main.appendChild(airline.getFinanceDisplay())
 	}
 	displayAccidentsTab(): void {
-		const main = <HTMLElement>document.getElementById("main")
+		this.hideTabs("accidents")
+		const main = <HTMLElement>document.getElementById("main-accidents")
 		main.innerHTML = ""
 		var airline = <Airline>this.airline
 		main.appendChild(airline.getAccidentsDisplay())
@@ -885,6 +907,7 @@ window.onload = () => {
 		})
 	})
 	gameEngine.loadAirports()
+	gameEngine.hideTabs("")
 	var logoImg = <HTMLImageElement>document.getElementById("logo")
 	logoImg.addEventListener("click", () => {
 		var oldSrc = logoImg.src

@@ -109,10 +109,12 @@ def home():
 @app.route("/leaderboard")
 def leaderboard():
 	all_airlines = Airline.leaderboard(DB)
-	rows = "".join([
-		f"<tr><td>{i}</td><td>{airline.name}</td><td>{airline.joined_at.date()}</td><td>${airline.cash}</td><td>{airline.popularity:.0f}</td></tr>"
-		for i, airline in enumerate(all_airlines, start=1)
-	])
+	rows = "".join(
+		[
+			f"<tr><td>{i}</td><td>{airline.name}</td><td>{airline.joined_at.date()}</td><td>${airline.cash}</td><td>{airline.popularity:.0f}</td></tr>"
+			for i, airline in enumerate(all_airlines, start=1)
+		]
+	)
 	return f"""
 <link rel="stylesheet" href="static/index.css">
 <table>
@@ -166,6 +168,11 @@ def owned_routes():
 	offered_routes = Route.list(DB, airline_id)
 	logging.info("TIMER owned_routes took %s", timeit.default_timer() - start_ts)
 	return jsonify(offered_routes)
+
+
+@app.route("/route/<int:route_id>", methods=["GET"])
+def get_route(route_id):
+	return jsonify(Route.get_by_id(DB, route_id))
 
 
 @app.route("/purchase_route", methods=["POST"])
@@ -285,6 +292,7 @@ def run_route():
 	planes = Plane.list_owned(DB, airline.id)
 	return jsonify(
 		{
+			"status": "flying",
 			"msg": f"Route {route.identifier} has taken off with {plane.name}",
 			"last_run_at": route.last_run_at,
 			"next_available_at": route.next_available_at,
@@ -297,7 +305,9 @@ def run_route():
 def collect_route():
 	airline = airline_from_request(request)
 	route = Route.get_by_id(DB, request.form["routeId"])
-	cash_change, popularity_change, plane_health_cost, incident, msg = route.collect(DB)
+	cash_change, popularity_change, plane_health_cost, incident, msg = route.collect(
+		DB, airline
+	)
 	DB.update_route_for_run(route)
 	airline.cash += cash_change
 	airline.popularity += popularity_change
@@ -314,6 +324,7 @@ def collect_route():
 			"popularity": airline.popularity,
 			"incident": incident,
 			"planes": planes,
+			"status": "ready",
 		}
 	)
 

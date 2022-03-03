@@ -38,6 +38,19 @@ class Route:
 		self.last_run_at = last_run_at
 		self.last_resulted_at = last_resulted_at
 		self.distance = self.calculate_distance()
+		self.status = None
+		if self.purchased_at:
+			if self.next_available_at:
+				if self.next_available_at > datetime.now(pytz.UTC):
+					self.status = "flying"
+				elif (
+					self.last_resulted_at is None or self.next_available_at > self.last_resulted_at
+				):
+					self.status = "landed"
+				else:
+					self.status = "ready"
+			else:
+				self.status = "ready"
 
 	@staticmethod
 	def from_db_row(db: DatabaseInterface, db_row: List[Any]):
@@ -167,7 +180,7 @@ class Route:
 		self.next_available_at = self.last_run_at + duration
 		db.update_route_for_run(self)
 
-	def collect(self, db: DatabaseInterface):
+	def collect(self, db: DatabaseInterface, airline):
 		assert self.next_available_at and self.next_available_at < datetime.now(
 			pytz.UTC
 		), "This route has not finished yet!"
@@ -177,20 +190,36 @@ class Route:
 		), "These results have already been collected!"
 		num_passengers = random.randint(10, 500)
 		income = 100 * num_passengers
+		if "Golden" in airline.name:
+			income *= 2
 		cost = random.randint(500, 1000)
-		plane_health_cost = random.randint(1, 10)
-		popularity_change = random.randint(0, 1) # ev: 0.5
+		if "Sturdy" in airline.name or "Robust" in airline.name:
+			plane_health_cost = 0
+			fire_prob = 0.000001
+			smoke_prob = 0.01
+		else:
+			plane_health_cost = random.randint(1, 10)
+			fire_prob = 0.01
+			smoke_prob = 0.1
 
-		if random.random() < 0.01:
+		popularity_change = random.randint(0, 1)  # ev: 0.5
+		if "Trusty" in airline.name:
+			popularity_change += 1
+
+		if random.random() < fire_prob:
 			plane_health_cost += 25
 			cost += 300
-			popularity_change -= 10 # ev -0.1 -> 0.4
-			incident = f"Engine fire! Plane health {plane_health_cost} Popularity {popularity_change}"
-		elif random.random() < 0.1:
+			popularity_change -= 10  # ev -0.1 -> 0.4
+			incident = (
+				f"Engine fire! Plane health {plane_health_cost} Popularity {popularity_change}"
+			)
+		elif random.random() < smoke_prob:
 			plane_health_cost += 5
 			cost += 100
-			popularity_change -= 2 # ev: -0.18 -> 0.22
-			incident = f"Smoke in cabin! Plane health {plane_health_cost} Popularity {popularity_change}"
+			popularity_change -= 2  # ev: -0.18 -> 0.22
+			incident = (
+				f"Smoke in cabin! Plane health {plane_health_cost} Popularity {popularity_change}"
+			)
 		else:
 			incident = None
 
