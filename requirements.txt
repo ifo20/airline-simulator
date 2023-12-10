@@ -1,5 +1,6 @@
 flask
 gunicorn
-black-but-with-tabs-instead-of-spaces
+black
+pylint
 psycopg2-binary
 pytz==2021.3
