@@ -54,6 +54,7 @@ def airline_name_from_request(request):
 def airline_from_request(request):
     airline = Airline.get_by_id(DB, airline_id_from_request(request))
     if not airline:
+        print(f"Failed to get airline from request: {request}")
         abort(404)
     return airline
 
@@ -254,7 +255,7 @@ def fix_plane():
         airline.cash >= fix_cost
     ), f"Airline cannot afford to fix - requires ${fix_cost}"
     plane.health = 100
-    DB.update_plane(plane)
+    DB.save_plane(plane)
     airline.cash -= fix_cost
     DB.save_airline(airline)
     planes = Plane.list_owned(DB, airline.id)
@@ -276,7 +277,7 @@ def scrap_plane():
     assert plane.airline_id == airline.id, f"Airline does not have that plane"
     airline.cash += scrap_value
     DB.save_airline(airline)
-    Plane.scrap(DB, plane)
+    DB.delete_plane(plane.id)
     planes = [p for p in Plane.list_owned(DB, airline.id) if p.id != plane.id]
     return jsonify(
         {
@@ -294,8 +295,10 @@ def run_route():
     route = Route.get_by_id(DB, request.form["route_id"])
     route.validate_can_run()
     plane = Plane.get_for_route(DB, route)
-    route.run(DB, airline)
-    plane.reserve(DB, route)
+    route.run(airline)
+    DB.save_route(route)
+    plane.reserve(route.id)
+    DB.save_plane(plane)
     planes = Plane.list_owned(DB, airline.id)
     return jsonify(
         {
@@ -313,16 +316,17 @@ def collect_route():
     airline = airline_from_request(request)
     route = Route.get_by_id(DB, request.form["route_id"])
     cash_change, popularity_change, plane_health_cost, incident, msg = route.collect(
-        DB, airline
+        airline
     )
     DB.save_route(route)
     airline.cash += cash_change
     airline.popularity += popularity_change
     DB.save_airline(airline)
     for plane in Plane.list_owned(DB, airline.id):
-        if plane.route and plane.route.id == route.id:
+        if plane.route_id == route.id:
             plane.health -= plane_health_cost
-            plane.free(DB)
+            plane.free()
+            DB.save_plane(plane)
     planes = Plane.list_owned(DB, airline.id)
     return jsonify(
         {

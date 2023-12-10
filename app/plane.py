@@ -4,6 +4,7 @@ import random
 from typing import List
 
 import pytz
+from app.config import FUEL_COST_PER_KM, PLANE_COST, PLANE_RANGE
 
 from app.route import Route
 
@@ -82,13 +83,10 @@ class Plane:
 
     @staticmethod
     def generate_offers(db, airline_id: int, num_offers: int):
-        min_cost = 100000
-        min_distance = 500
-        max_distance = 16000
         now_ts = datetime.now()
         for _ in range(num_offers):
-            distance = random.randint(min_distance, max_distance)
-            cost = min_cost + distance * 20
+            distance = random.randint(PLANE_RANGE["min"], PLANE_RANGE["max"])
+            cost = PLANE_COST["min"] + distance * FUEL_COST_PER_KM
             plane = Plane(
                 None,
                 airline_id,
@@ -124,10 +122,6 @@ class Plane:
             return plane
         raise AssertionError("No planes are available to run this route!")
 
-    @staticmethod
-    def scrap(db, plane):
-        db.delete_plane(plane.id)
-
     @property
     def status(self):
         if self.purchased_at is None:
@@ -152,10 +146,9 @@ class Plane:
     def available_for_route(self, route):
         return self.route is None and self.max_distance > route.distance
 
-    def reserve(self, db, route: Route):
-        self.route = route
-        db.save_plane(self)
+    def reserve(self, route_id: int):
+        self.route_id = route_id
 
-    def free(self, db):
+    def free(self):
+        self.route_id = None
         self.route = None
-        db.save_plane(self)

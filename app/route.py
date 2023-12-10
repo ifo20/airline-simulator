@@ -3,9 +3,17 @@ import logging
 import math
 import random
 from typing import Any, List
+
 import pytz
+
 from app.airline import Airline
 from app.airport import Airport
+from app.config import (
+    DAMAGE_MULTIPLIER,
+    FLIGHT_PROFIT_HACK,
+    FUEL_COST_PER_KM,
+    TIME_SPEED,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -56,53 +64,23 @@ class Route:
                 self.status = "ready"
 
     @staticmethod
-    def from_db_row(db, db_row: List[Any]):
-        (
-            route_id,
-            airline_id,
-            origin,
-            destination,
-            cost,
-            popularity,
-            offered_at,
-            purchased_at,
-            next_available_at,
-            last_run_at,
-            last_resulted_at,
-        ) = db_row
-        return Route(
-            route_id,
-            airline_id,
-            Airport.get_by_code(db, origin),
-            Airport.get_by_code(db, destination),
-            cost,
-            popularity,
-            offered_at,
-            purchased_at,
-            next_available_at,
-            last_run_at,
-            last_resulted_at,
-        )
-
-    @staticmethod
     def list_offered(db, airline_id: int):
-        return [
-            Route.from_db_row(db, db_row) if isinstance(db_row, tuple) else db_row
-            for db_row in db.list_offered_routes(airline_id)
-        ]
+        return db.list_offered_routes(airline_id)
 
     @staticmethod
     def list_owned(db, airline_id: int):
-        return [
-            Route.from_db_row(db, db_row) if isinstance(db_row, tuple) else db_row
-            for db_row in db.list_owned_routes(airline_id)
-        ]
+        return db.list_owned_routes(airline_id)
 
     @staticmethod
     def generate_offers(
         db, airports: List[Airport], airline: Airline, num_offers: int, existing_offers
     ):
-        LOGGER.info("Generating %s route offers for %s", num_offers, airline.name)
+        LOGGER.info(
+            "Generating %s route offers for (%s) %s",
+            num_offers,
+            airline.id,
+            airline.name,
+        )
         hub: Airport = airline.hub
         existing_routes = Route.list_owned(db, airline.id) + existing_offers
         existing_route_destinations = {r.destination.code for r in existing_routes}
@@ -121,13 +99,14 @@ class Route:
             popularity = random.randint(10, 100)
             cost = (
                 popularity * 100
-                + destination.distance_from(hub)
-                + random.randint(1, 1000)
+                + (destination.distance_from(hub) * FUEL_COST_PER_KM)
+                + random.randint(1, 10000)
             )
             route = Route(None, airline.id, hub, destination, cost, popularity, now_ts)
             db.create_route(route)
             LOGGER.info(
-                "Created Route offer for %s: %s - %s. Route ID is %s",
+                "Created Route offer for (%s) %s: %s - %s. Route ID is %s",
+                airline.id,
                 airline.name,
                 hub.code,
                 destination.code,
@@ -190,17 +169,17 @@ class Route:
             self.last_resulted_at is None or self.last_resulted_at > self.last_run_at
         ), "Please collect the results from the previous run before running this route again"
 
-    def run(self, db, airline):
+    def run(self, airline):
         self.last_run_at = datetime.now(pytz.UTC)
         duration = timedelta(seconds=5 + self.distance / 20)
+        duration /= TIME_SPEED
         if "Speedy" in airline.name:
             duration /= 2
         if "Super Speedy" in airline.name:
             duration /= 10
         self.next_available_at = self.last_run_at + duration
-        db.save_route(self)
 
-    def collect(self, db, airline):
+    def collect(self, airline):
         assert self.next_available_at and self.next_available_at < datetime.now(
             pytz.UTC
         ), "This route has not finished yet!"
@@ -211,7 +190,7 @@ class Route:
         num_passengers = random.randint(10, 500)
         income = 100 * num_passengers
         if "Golden" in airline.name:
-            income *= 2
+            income *= 3
         cost = random.randint(500, 1000)
         if "Sturdy" in airline.name or "Robust" in airline.name:
             plane_health_cost = 0
@@ -245,6 +224,8 @@ class Route:
             msg = f"Route completed with {num_passengers} passengers and a profit of ${income - cost}"
         else:
             msg = f"Route completed with {num_passengers} passengers and a loss of ${cost - income}"
+        plane_health_cost *= DAMAGE_MULTIPLIER
+        cash_change += FLIGHT_PROFIT_HACK
         return cash_change, popularity_change, plane_health_cost, incident, msg
 
     def calculate_distance(self) -> float:

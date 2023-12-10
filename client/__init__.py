@@ -2,6 +2,8 @@
 import random
 import requests
 
+from app.airline import STARTING_CASH
+
 
 def generate_airline_name():
     adjectives = [
@@ -73,16 +75,16 @@ class JIASClient:
     HOST = "http://localhost:8000/"
 
     def __init__(self) -> None:
-        pass
+        self.session = requests.session()
 
     def get(self, path, params=None):
-        resp = requests.get(self.HOST + path, params)
+        resp = self.session.get(self.HOST + path, params=params)
         if resp.status_code < 400:
             return resp.json()
         resp.raise_for_status()
 
     def post(self, path, data):
-        resp = requests.post(self.HOST + path, data=data)
+        resp = self.session.post(self.HOST + path, data=data)
         if resp.status_code < 400:
             return resp.json()
         resp.raise_for_status()
@@ -167,8 +169,6 @@ for r_id, p_id in live_flights:
     assertAssertionError(c.fly_route, airline_id, r_id, p_id)
 print("Route check complete")
 
-print("Check finances...")
+print("Checking finances...")
 latest_airline = c.create_airline_or_login(airline_name, my_hub["code"])
-from app.airline import STARTING_CASH
-
 assert latest_airline["cash"] < STARTING_CASH

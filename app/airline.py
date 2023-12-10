@@ -37,29 +37,18 @@ class Airline:
 
     @staticmethod
     def get_by_name(db, airline_name: str):
-        (
-            airline_id,
-            name,
-            hub,
-            joined_at,
-            last_login_at,
-            cash,
-            popularity,
-        ) = db.get_airline_by_name(airline_name)
-        hub_airport = Airport.get_by_code(db, hub)
-        return Airline(
-            airline_id, name, hub_airport, joined_at, last_login_at, cash, popularity
-        )
+        return db.get_airline_by_name(airline_name)
 
     @classmethod
     def login(cls, db, airline_name: str, hub: str):
         """For now, we simply register if the airline does not yet exist"""
+        logging.info("LOGIN LOGIN LOGIN %s %s", airline_name, hub)
         now_ts = datetime.now()
-        try:
-            airline = Airline.get_by_name(db, airline_name)
+        airline = Airline.get_by_name(db, airline_name)
+        if airline:
             airline.last_login_at = now_ts
             db.save_airline(airline)
-        except TypeError:
+        else:
             airline = cls(
                 id=None,
                 name=airline_name,
