@@ -3,3 +3,4 @@ index.js
 */venv/*
 */__pycache__/*
 website/node_modules
+venv

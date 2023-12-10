@@ -323,6 +323,7 @@ class Route {
 		div.appendChild(this.cardHtml())
 		var actionButton = document.createElement("button")
 		var statusText = ""
+        console.log('updatePurchasedCardContent', this.status);
 		if (this.timeRemaining()) {
 			actionButton.setAttribute("disabled", "")
 			actionButton.innerHTML = "Collect Results"

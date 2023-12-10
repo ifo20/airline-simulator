@@ -40,6 +40,8 @@ INSERT INTO airports (code, name, country, latitude, longitude, popularity) VALU
 ('DOH', 'Hamad International Airport Information', 'Qatar', 25.2606, 51.6138, 69.9)
 ON CONFLICT DO NOTHING;
 
+-- Players create their own airline. Each row belongs to a player.
+-- For now, each row *is* a player
 CREATE TABLE IF NOT EXISTS airlines (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) UNIQUE NOT NULL,
@@ -52,6 +54,11 @@ CREATE TABLE IF NOT EXISTS airlines (
       FOREIGN KEY(hub) 
 	  REFERENCES airports(code)
 );
+
+-- Theoretically, every route is defined as a pair of airports.
+-- Each row here represents a route owned by an airline, from the offer stage
+-- (when purchased_at is null), through to ownership stage
+-- (where the user may run the route repeatedly)
 CREATE TABLE IF NOT EXISTS routes (
     id SERIAL PRIMARY KEY,
     airline_id INTEGER NOT NULL,
@@ -69,6 +76,9 @@ CREATE TABLE IF NOT EXISTS routes (
     CONSTRAINT fk_origin FOREIGN KEY (origin) REFERENCES airports(code),
     CONSTRAINT fk_destination FOREIGN KEY (destination) REFERENCES airports(code)
 );
+
+-- Planes are required to fly routes. Similarly we create these rows at offer stage,
+-- and they update based on usage once purchased
 CREATE TABLE IF NOT EXISTS planes (
     id SERIAL PRIMARY KEY,
     airline_id INTEGER NOT NULL,

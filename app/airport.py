@@ -1,9 +1,6 @@
 import math
 from typing import List
 
-from app.db import DatabaseInterface
-
-
 class Airport:
 	def __init__(
 		self, code: str, name: str, country: str, lat: float, lon: float, popularity: float
@@ -15,13 +12,13 @@ class Airport:
 		self.lon = lon
 		self.popularity = popularity
 
-	@staticmethod
-	def list(db: DatabaseInterface):
-		return [Airport(*db_row) for db_row in db.get_airports()]
+	@classmethod
+	def from_db_row(cls, db_row):
+		return cls(*db_row)
 
 	@staticmethod
-	def get_by_code(db: DatabaseInterface, code: str):
-		return Airport(*db.get_airport_by_code(code))
+	def get_by_code(db, code: str):
+		return db.get_airport_by_code(code)
 
 	def can_fly_to(self, other) -> bool:
 		return (self.country, other.country) not in {

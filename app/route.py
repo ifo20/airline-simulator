@@ -6,7 +6,6 @@ from typing import Any, List
 import pytz
 from app.airline import Airline
 from app.airport import Airport
-from app.db import DatabaseInterface
 
 LOGGER = logging.getLogger(__name__)
 
@@ -21,10 +20,10 @@ class Route:
 		cost: int,
 		popularity: int,
 		offered_at: datetime,
-		purchased_at: datetime,
-		next_available_at: datetime,
-		last_run_at: datetime,
-		last_resulted_at: datetime,
+		purchased_at: datetime = None,
+		next_available_at: datetime = None,
+		last_run_at: datetime = None, 
+		last_resulted_at: datetime = None,
 	) -> None:
 		self.id = id
 		self.airline_id = airline_id
@@ -39,6 +38,9 @@ class Route:
 		self.last_resulted_at = last_resulted_at
 		self.distance = self.calculate_distance()
 		self.status = None
+		self.update_status()
+
+	def update_status(self):
 		if self.purchased_at:
 			if self.next_available_at:
 				if self.next_available_at > datetime.now(pytz.UTC):
@@ -53,7 +55,7 @@ class Route:
 				self.status = "ready"
 
 	@staticmethod
-	def from_db_row(db: DatabaseInterface, db_row: List[Any]):
+	def from_db_row(db, db_row: List[Any]):
 		(
 			route_id,
 			airline_id,
@@ -82,22 +84,25 @@ class Route:
 		)
 
 	@staticmethod
-	def list_offered(db: DatabaseInterface, airline_id: int):
+	def list_offered(db, airline_id: int):
 		return [
-			Route.from_db_row(db, db_row) for db_row in db.list_offered_routes(airline_id)
+			Route.from_db_row(db, db_row) if isinstance(db_row, tuple) else db_row
+			for db_row in db.list_offered_routes(airline_id)
 		]
 
 	@staticmethod
-	def list_owned(db: DatabaseInterface, airline_id: int):
-		return [Route.from_db_row(db, db_row) for db_row in db.list_owned_routes(airline_id)]
+	def list_owned(db, airline_id: int):
+		return [
+			Route.from_db_row(db, db_row) if isinstance(db_row, tuple) else db_row
+			for db_row in db.list_owned_routes(airline_id)
+		]
 
 	@staticmethod
 	def generate_offers(
-		db: DatabaseInterface, airline: Airline, num_offers: int, existing_offers
+		db, airports: List[Airport], airline: Airline, num_offers: int, existing_offers
 	):
 		LOGGER.info("Generating %s route offers for %s", num_offers, airline.name)
 		hub: Airport = airline.hub
-		airports = Airport.list(db)
 		existing_routes = Route.list_owned(db, airline.id) + existing_offers
 		existing_route_destinations = {r.destination.code for r in existing_routes}
 		all_destinations = [
@@ -109,22 +114,24 @@ class Route:
 			and hub.can_fly_to(airport)
 		]
 		all_destinations.sort(key=lambda airport: airport.distance_from(hub))
+		now_ts = datetime.now()
 		for destination in all_destinations[:num_offers]:
 			# Generate appropriate popularity and cost
 			popularity = random.randint(10, 100)
 			cost = popularity * 100 + destination.distance_from(hub) + random.randint(1, 1000)
-			db.create_route(airline.id, hub.code, destination.code, cost, popularity)
+			route = Route(None, airline.id, hub, destination, cost, popularity, now_ts)
+			db.create_route(route)
 			LOGGER.info(
-				"Created Route offer for %s: %s - %s", airline.name, hub.code, destination.code
+				"Created Route offer for %s: %s - %s. Route ID is %s", airline.name, hub.code, destination.code, route.id
 			)
 
 	@staticmethod
-	def get_by_id(db: DatabaseInterface, route_id: int):
-		return Route.from_db_row(db, db.get_route_by_id(route_id))
+	def get_by_id(db, route_id: int):
+		return db.get_route_by_id(route_id)
 
 	@staticmethod
 	def create(
-		db: DatabaseInterface,
+		db,
 		airline_id: int,
 		origin: str,
 		destination: str,
@@ -144,8 +151,8 @@ class Route:
 			next_available_at,
 			*_args,
 		) = db_row
-		origin_airport = Airport.by_code(db, origin)
-		destination_airport = Airport.by_code(db, destination)
+		origin_airport = Airport.get_by_code(db, origin)
+		destination_airport = Airport.get_by_code(db, destination)
 		return Route(
 			airline_id,
 			route_id,
@@ -156,11 +163,11 @@ class Route:
 			next_available_at,
 		)
 
-	def purchase(self, db: DatabaseInterface):
+	def purchase(self, db):
 		now_ts = datetime.now(pytz.UTC)
 		self.purchased_at = now_ts
 		self.next_available_at = now_ts
-		db.update_route_for_purchase(self.id, self.purchased_at, self.next_available_at)
+		db.save_route(self)
 
 	def validate_can_run(self):
 		assert self.next_available_at is None or self.next_available_at < datetime.now(
@@ -170,7 +177,7 @@ class Route:
 			self.last_resulted_at is None or self.last_resulted_at > self.last_run_at
 		), "Please collect the results from the previous run before running this route again"
 
-	def run(self, db: DatabaseInterface, airline):
+	def run(self, db, airline):
 		self.last_run_at = datetime.now(pytz.UTC)
 		duration = timedelta(seconds=5 + self.distance / 20)
 		if "Speedy" in airline.name:
@@ -178,9 +185,9 @@ class Route:
 		if "Super Speedy" in airline.name:
 			duration /= 10
 		self.next_available_at = self.last_run_at + duration
-		db.update_route_for_run(self)
+		db.save_route(self)
 
-	def collect(self, db: DatabaseInterface, airline):
+	def collect(self, db, airline):
 		assert self.next_available_at and self.next_available_at < datetime.now(
 			pytz.UTC
 		), "This route has not finished yet!"

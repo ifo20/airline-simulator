@@ -8,7 +8,7 @@ import timeit
 
 from flask import abort, request, send_from_directory, Flask
 
-from app.db import DatabaseInterface
+from app.db import get_db
 from app.airline import Airline
 from app.airport import Airport
 from app.plane import Plane
@@ -24,7 +24,7 @@ logging.info("Created app, WEBSITE_ROOT=%s", WEBSITE_ROOT)
 
 MINIMUM_OFFERS = 3
 
-DB = DatabaseInterface()
+DB = get_db()
 
 
 @app.before_request
@@ -39,9 +39,9 @@ def teardown_request_func(error=None):
 
 def airline_id_from_request(request):
 	try:
-		return request.form["airlineId"]
+		return int(request.form["airlineId"])
 	except KeyError:
-		return request.args["airlineId"]
+		return int(request.args["airlineId"])
 
 
 def airline_name_from_request(request):
@@ -98,7 +98,7 @@ def fav():
 
 @app.route("/debug")
 def debug():
-	return jsonify(Airline.list(DB))
+	return jsonify(None)
 
 
 @app.route("/")
@@ -125,7 +125,7 @@ def leaderboard():
 
 @app.route("/airports")
 def list_airports():
-	return jsonify(list(Airport.list(DB)))
+	return jsonify(DB.get_airports())
 
 
 @app.route("/play", methods=["POST"])
@@ -152,9 +152,10 @@ def offered_routes():
 	start_ts = timeit.default_timer()
 	airline = airline_from_request(request)
 	offered_routes = Route.list_offered(DB, airline.id)
+	airports = DB.get_airports()
 	if len(offered_routes) < MINIMUM_OFFERS:
 		Route.generate_offers(
-			DB, airline, MINIMUM_OFFERS - len(offered_routes), offered_routes
+			DB, airports, airline, MINIMUM_OFFERS - len(offered_routes), offered_routes
 		)
 		offered_routes = Route.list_offered(DB, airline.id)
 	logging.info("TIMER offered_routes took %s", timeit.default_timer() - start_ts)
@@ -165,21 +166,25 @@ def offered_routes():
 def owned_routes():
 	start_ts = timeit.default_timer()
 	airline_id = airline_id_from_request(request)
-	offered_routes = Route.list(DB, airline_id)
+	offered_routes = Route.list_owned(DB, airline_id)
 	logging.info("TIMER owned_routes took %s", timeit.default_timer() - start_ts)
 	return jsonify(offered_routes)
 
 
 @app.route("/route/<int:route_id>", methods=["GET"])
 def get_route(route_id):
-	return jsonify(Route.get_by_id(DB, route_id))
+	route = Route.get_by_id(DB, route_id)
+	if route:
+		route.update_status()
+	return jsonify(route)
 
 
 @app.route("/purchase_route", methods=["POST"])
 def purchase_route():
 	start_ts = timeit.default_timer()
 	airline = airline_from_request(request)
-	route = Route.get_by_id(DB, request.form["routeId"])
+	logging.info("routeId is %s", request.form["routeId"])
+	route = Route.get_by_id(DB, int(request.form["routeId"]))
 	if route.airline_id != airline.id:
 		return "plane belongs to different airline", 400
 	if route.purchased_at is not None:
@@ -189,7 +194,7 @@ def purchase_route():
 	if airline.cash < route.cost:
 		return "Cannot afford route", 400
 	airline.cash -= route.cost
-	Airline.update_cash(DB, airline.id, airline.cash)
+	DB.save_airline(airline)
 	route.purchase(DB)
 	logging.info("TIMER purchase_route took %s", timeit.default_timer() - start_ts)
 	return jsonify(
@@ -214,13 +219,15 @@ def offered_planes():
 
 @app.route("/owned_planes", methods=["GET"])
 def owned_planes():
-	return jsonify(Plane.list_for_airline(DB, airline_id_from_request(request),))
+	planes = Plane.list_owned(DB, airline_id_from_request(request))
+	return jsonify(planes)
 
 
 @app.route("/purchase_plane", methods=["POST"])
 def purchase_plane():
 	airline = airline_from_request(request)
-	plane = Plane.get_by_id(DB, request.form["planeId"])
+	plane = Plane.get_by_id(DB, int(request.form["planeId"]))
+	logging.info("Purchasing plane: %s for airline %s", plane, airline.id)
 	if plane.airline_id != airline.id:
 		return "plane belongs to different airline", 400
 	if plane.purchased_at is not None:
@@ -228,7 +235,7 @@ def purchase_plane():
 	if airline.cash < plane.cost:
 		return "you cannot afford that plane", 400
 	airline.cash -= plane.cost
-	Airline.update_cash(DB, airline.id, airline.cash)
+	DB.save_airline(airline)
 	plane.purchase(DB)
 	return jsonify(
 		{
@@ -249,7 +256,7 @@ def fix_plane():
 	plane.health = 100
 	DB.update_plane(plane)
 	airline.cash -= fix_cost
-	Airline.update_cash(DB, airline.id, airline.cash)
+	DB.save_airline(airline)
 	planes = Plane.list_owned(DB, airline.id)
 	return jsonify(
 		{
@@ -268,7 +275,7 @@ def scrap_plane():
 	plane = Plane.get_by_id(DB, int(request.form["planeId"]))
 	assert plane.airline_id == airline.id, f"Airline does not have that plane"
 	airline.cash += scrap_value
-	Airline.update_cash(DB, airline.id, airline.cash)
+	DB.save_airline(airline)
 	Plane.scrap(DB, plane)
 	planes = [p for p in Plane.list_owned(DB, airline.id) if p.id != plane.id]
 	return jsonify(
@@ -308,10 +315,10 @@ def collect_route():
 	cash_change, popularity_change, plane_health_cost, incident, msg = route.collect(
 		DB, airline
 	)
-	DB.update_route_for_run(route)
+	DB.save_route(route)
 	airline.cash += cash_change
 	airline.popularity += popularity_change
-	airline.update_for_route_collection(DB)
+	DB.save_airline(airline)
 	for plane in Plane.list_owned(DB, airline.id):
 		if plane.route and plane.route.id == route.id:
 			plane.health -= plane_health_cost
@@ -330,7 +337,5 @@ def collect_route():
 
 
 if __name__ == "__main__":
-	db = DatabaseInterface()
-	db.open()
-	db.migrate()
+	DB.migrate()
 	app.run(debug=True, host="0.0.0.0", port=os.environ.get("PORT", 8000))
