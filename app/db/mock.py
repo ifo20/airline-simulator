@@ -10,7 +10,7 @@ from app.route import Route
 
 class MockDatabase:
     def __init__(self):
-        logging.info("Creating fresh MockDatabase...")
+        logging.info("Using a mock database ... progress will not be saved")
         # Store everything as a dict keyed by primary key
         self.airports = {}
         self.airlines = {}

@@ -167,7 +167,7 @@ class OfferedRoute {
 		btn.setAttribute("style", "background-color:#ddcc44aa")
 		btn.setAttribute("class", "flex-grow")
 		btn.appendChild(this.cardHtml())
-		const routeId = this.id
+		const route_id = this.id
 		btn.addEventListener("click", makeClickWrapper(btn, () => {
 			var airline = <Airline>gameEngine.airline
 			setLoader()
@@ -175,8 +175,8 @@ class OfferedRoute {
 				method: "POST",
 				url: "/purchase_route",
 				data: {
-					airlineId: airline.id,
-					routeId,
+					airline_id: airline.id,
+					route_id,
 				},
 				error: (x) => errHandler(x, btn),
 				success: function(response) {
@@ -257,10 +257,10 @@ class Route {
 		setLoader()
 		$.ajax({
 			method: "POST",
-			url: "/run-route",
+			url: "/fly_route",
 			data: {
-				airlineId: airline.id,
-				routeId: this.id,
+				airline_id: airline.id,
+				route_id: this.id,
 			},
 			error: (x) => {
 				errHandler(x, btn)
@@ -288,8 +288,8 @@ class Route {
 			method: "POST",
 			url: "/collect",
 			data: {
-				airlineId: airline.id,
-				routeId: this.id,
+				airline_id: airline.id,
+				route_id: this.id,
 			},
 			error: (x) => {
 				errHandler(x, btn)
@@ -448,8 +448,8 @@ class Plane {
 				method: "POST",
 				url: "/plane/fix",
 				data: {
-					airlineId: airline.id,
-					planeId: this.id
+					airline_id: airline.id,
+					plane_id: this.id
 				},
 				error: (x) => errHandler(x, btn),
 				success: function(response) {
@@ -471,8 +471,8 @@ class Plane {
 				method: "POST",
 				url: "/plane/scrap",
 				data: {
-					airlineId: airline.id,
-					planeId: this.id
+					airline_id: airline.id,
+					plane_id: this.id
 				},
 				error: (x) => errHandler(x, btn),
 				success: function(response) {
@@ -564,7 +564,7 @@ class Airline {
 			method: "GET",
 			url: "/offered_planes",
 			data: {
-				airlineId: airline.id
+				airline_id: airline.id
 			},
 			error: (x) => errHandler(x),
 			success: function(response) {
@@ -587,8 +587,8 @@ class Airline {
 							method: "POST",
 							url: "/purchase_plane",
 							data: {
-								airlineId: airline.id,
-								planeId: plane.id,
+								airline_id: airline.id,
+								plane_id: plane.id,
 							},
 							error: (x) => errHandler(x),
 							success: function(response) {
@@ -744,7 +744,7 @@ class GameEngine {
 			method: "GET",
 			url: "/offered_routes",
 			data: {
-				airlineId: airline.id,
+				airline_id: airline.id,
 			},
 			error: (x) => errHandler(x),
 			success: function(response) {

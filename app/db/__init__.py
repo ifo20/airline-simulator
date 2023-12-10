@@ -1,3 +1,4 @@
+import os
 import platform
 
 from .mock import MockDatabase
@@ -10,7 +11,7 @@ def get_db():
 
 
 def get_db_type():
-    if platform.system() == "Windows":
+    if platform.system() == "Windows" or "DATABASE_URL" not in os.environ:
         return MockDatabase
     else:
         return PostgresqlDatabase

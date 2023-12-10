@@ -14,6 +14,7 @@ from app.plane import Plane
 
 class PostgresqlDatabase:
     def __init__(self):
+        logging.info("Using a postgresql database")
         self.conn = None
         self.open()
 

@@ -1,1 +1,92 @@
-{"airport": {"1": {"code": "LHR", "name": "London Heathrow", "country": "United Kingdom", "lat": 51.4775, "lon": -0.461388, "popularity": 80.1}, "2": {"code": "CDG", "name": "Charles de Gaulle Airport", "country": "France", "lat": 49.009722, "lon": 2.547778, "popularity": 69.5}, "3": {"code": "FRA", "name": "Frankfurt International Airport", "country": "Germany", "lat": 50.0379, "lon": 8.5622, "popularity": 71.0}, "4": {"code": "JFK", "name": "John F. Kennedy Airport", "country": "USA", "lat": 40.6413, "lon": 73.7781, "popularity": 71.9}, "5": {"code": "IAD", "name": "Washington Dulles International Airport", "country": "USA", "lat": 38.9531, "lon": 77.4565, "popularity": 51.9}, "6": {"code": "KUL", "name": "Kuala Lumpur International Airport", "country": "Malaysia", "lat": 2.743333, "lon": 101.698056, "popularity": 60.0}, "7": {"code": "HKG", "name": "Hong Kong International Airport", "country": "Hong Kong", "lat": 22.308889, "lon": 113.914444, "popularity": 71.4}, "8": {"code": "BKK", "name": "Suvarnabhumi International Airport", "country": "Thailand", "lat": 13.69, "lon": 100.7501, "popularity": 65.4}, "9": {"code": "SIN", "name": "Changi International Airport", "country": "Singapore", "lat": 1.3644, "lon": 103.9915, "popularity": 91.0}, "10": {"code": "CPT", "name": "Cape Town International Airport", "country": "South Africa", "lat": 33.9715, "lon": 18.6021, "popularity": 56.5}, "11": {"code": "DXB", "name": "Dubai International Airport", "country": "UAE", "lat": 25.2532, "lon": 55.3657, "popularity": 91.2}}}
+{
+    "airport": {
+        "1": {
+            "code": "LHR",
+            "name": "London Heathrow",
+            "country": "United Kingdom",
+            "lat": 51.4775,
+            "lon": -0.461388,
+            "popularity": 80.1
+        },
+        "2": {
+            "code": "CDG",
+            "name": "Charles de Gaulle Airport",
+            "country": "France",
+            "lat": 49.009722,
+            "lon": 2.547778,
+            "popularity": 69.5
+        },
+        "3": {
+            "code": "FRA",
+            "name": "Frankfurt International Airport",
+            "country": "Germany",
+            "lat": 50.0379,
+            "lon": 8.5622,
+            "popularity": 71.0
+        },
+        "4": {
+            "code": "JFK",
+            "name": "John F. Kennedy Airport",
+            "country": "USA",
+            "lat": 40.6413,
+            "lon": 73.7781,
+            "popularity": 71.9
+        },
+        "5": {
+            "code": "IAD",
+            "name": "Washington Dulles International Airport",
+            "country": "USA",
+            "lat": 38.9531,
+            "lon": 77.4565,
+            "popularity": 51.9
+        },
+        "6": {
+            "code": "KUL",
+            "name": "Kuala Lumpur International Airport",
+            "country": "Malaysia",
+            "lat": 2.743333,
+            "lon": 101.698056,
+            "popularity": 60.0
+        },
+        "7": {
+            "code": "HKG",
+            "name": "Hong Kong International Airport",
+            "country": "Hong Kong",
+            "lat": 22.308889,
+            "lon": 113.914444,
+            "popularity": 71.4
+        },
+        "8": {
+            "code": "BKK",
+            "name": "Suvarnabhumi International Airport",
+            "country": "Thailand",
+            "lat": 13.69,
+            "lon": 100.7501,
+            "popularity": 65.4
+        },
+        "9": {
+            "code": "SIN",
+            "name": "Changi International Airport",
+            "country": "Singapore",
+            "lat": 1.3644,
+            "lon": 103.9915,
+            "popularity": 91.0
+        },
+        "10": {
+            "code": "CPT",
+            "name": "Cape Town International Airport",
+            "country": "South Africa",
+            "lat": 33.9715,
+            "lon": 18.6021,
+            "popularity": 56.5
+        },
+        "11": {
+            "code": "DXB",
+            "name": "Dubai International Airport",
+            "country": "UAE",
+            "lat": 25.2532,
+            "lon": 55.3657,
+            "popularity": 91.2
+        }
+    }
+}

@@ -153,7 +153,7 @@ var OfferedRoute = /** @class */ (function () {
         btn.setAttribute("style", "background-color:#ddcc44aa");
         btn.setAttribute("class", "flex-grow");
         btn.appendChild(this.cardHtml());
-        var routeId = this.id;
+        var route_id = this.id;
         btn.addEventListener("click", makeClickWrapper(btn, function () {
             var airline = gameEngine.airline;
             setLoader();
@@ -161,8 +161,8 @@ var OfferedRoute = /** @class */ (function () {
                 method: "POST",
                 url: "/purchase_route",
                 data: {
-                    airlineId: airline.id,
-                    routeId: routeId
+                    airline_id: airline.id,
+                    route_id: route_id
                 },
                 error: function (x) { return errHandler(x, btn); },
                 success: function (response) {
@@ -234,10 +234,10 @@ var Route = /** @class */ (function () {
         setLoader();
         $.ajax({
             method: "POST",
-            url: "/run-route",
+            url: "/fly_route",
             data: {
-                airlineId: airline.id,
-                routeId: this.id
+                airline_id: airline.id,
+                route_id: this.id
             },
             error: function (x) {
                 errHandler(x, btn);
@@ -265,8 +265,8 @@ var Route = /** @class */ (function () {
             method: "POST",
             url: "/collect",
             data: {
-                airlineId: airline.id,
-                routeId: this.id
+                airline_id: airline.id,
+                route_id: this.id
             },
             error: function (x) {
                 errHandler(x, btn);
@@ -423,8 +423,8 @@ var Plane = /** @class */ (function () {
                 method: "POST",
                 url: "/plane/fix",
                 data: {
-                    airlineId: airline.id,
-                    planeId: _this.id
+                    airline_id: airline.id,
+                    plane_id: _this.id
                 },
                 error: function (x) { return errHandler(x, btn); },
                 success: function (response) {
@@ -446,8 +446,8 @@ var Plane = /** @class */ (function () {
                 method: "POST",
                 url: "/plane/scrap",
                 data: {
-                    airlineId: airline.id,
-                    planeId: _this.id
+                    airline_id: airline.id,
+                    plane_id: _this.id
                 },
                 error: function (x) { return errHandler(x, btn); },
                 success: function (response) {
@@ -529,7 +529,7 @@ var Airline = /** @class */ (function () {
             method: "GET",
             url: "/offered_planes",
             data: {
-                airlineId: airline.id
+                airline_id: airline.id
             },
             error: function (x) { return errHandler(x); },
             success: function (response) {
@@ -552,8 +552,8 @@ var Airline = /** @class */ (function () {
                             method: "POST",
                             url: "/purchase_plane",
                             data: {
-                                airlineId: airline.id,
-                                planeId: plane.id
+                                airline_id: airline.id,
+                                plane_id: plane.id
                             },
                             error: function (x) { return errHandler(x); },
                             success: function (response) {
@@ -712,7 +712,7 @@ var GameEngine = /** @class */ (function () {
             method: "GET",
             url: "/offered_routes",
             data: {
-                airlineId: airline.id
+                airline_id: airline.id
             },
             error: function (x) { return errHandler(x); },
             success: function (response) {

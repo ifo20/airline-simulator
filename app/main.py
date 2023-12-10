@@ -39,9 +39,9 @@ def teardown_request_func(error=None):
 
 def airline_id_from_request(request):
     try:
-        return int(request.form["airlineId"])
+        return int(request.form["airline_id"])
     except KeyError:
-        return int(request.args["airlineId"])
+        return int(request.args["airline_id"])
 
 
 def airline_name_from_request(request):
@@ -183,14 +183,12 @@ def get_route(route_id):
 def purchase_route():
     start_ts = timeit.default_timer()
     airline = airline_from_request(request)
-    logging.info("routeId is %s", request.form["routeId"])
-    route = Route.get_by_id(DB, int(request.form["routeId"]))
+    logging.info("route_id is %s", request.form["route_id"])
+    route = Route.get_by_id(DB, int(request.form["route_id"]))
     if route.airline_id != airline.id:
-        return "plane belongs to different airline", 400
+        return "route belongs to different airline", 400
     if route.purchased_at is not None:
-        return "that plane is already purchased", 400
-    if airline.cash < route.cost:
-        return "you cannot afford that plane", 400
+        return "that route is already purchased", 400
     if airline.cash < route.cost:
         return "Cannot afford route", 400
     airline.cash -= route.cost
@@ -226,7 +224,7 @@ def owned_planes():
 @app.route("/purchase_plane", methods=["POST"])
 def purchase_plane():
     airline = airline_from_request(request)
-    plane = Plane.get_by_id(DB, int(request.form["planeId"]))
+    plane = Plane.get_by_id(DB, int(request.form["plane_id"]))
     logging.info("Purchasing plane: %s for airline %s", plane, airline.id)
     if plane.airline_id != airline.id:
         return "plane belongs to different airline", 400
@@ -251,7 +249,7 @@ def purchase_plane():
 def fix_plane():
     fix_cost = 100000
     airline = airline_from_request(request)
-    plane = Plane.get_by_id(DB, int(request.form["planeId"]))
+    plane = Plane.get_by_id(DB, int(request.form["plane_id"]))
     assert (
         airline.cash >= fix_cost
     ), f"Airline cannot afford to fix - requires ${fix_cost}"
@@ -274,7 +272,7 @@ def fix_plane():
 def scrap_plane():
     scrap_value = 10000
     airline = airline_from_request(request)
-    plane = Plane.get_by_id(DB, int(request.form["planeId"]))
+    plane = Plane.get_by_id(DB, int(request.form["plane_id"]))
     assert plane.airline_id == airline.id, f"Airline does not have that plane"
     airline.cash += scrap_value
     DB.save_airline(airline)
@@ -290,10 +288,10 @@ def scrap_plane():
     )
 
 
-@app.route("/run-route", methods=["POST"])
+@app.route("/fly_route", methods=["POST"])
 def run_route():
     airline = airline_from_request(request)
-    route = Route.get_by_id(DB, request.form["routeId"])
+    route = Route.get_by_id(DB, request.form["route_id"])
     route.validate_can_run()
     plane = Plane.get_for_route(DB, route)
     route.run(DB, airline)
@@ -313,7 +311,7 @@ def run_route():
 @app.route("/collect", methods=["POST"])
 def collect_route():
     airline = airline_from_request(request)
-    route = Route.get_by_id(DB, request.form["routeId"])
+    route = Route.get_by_id(DB, request.form["route_id"])
     cash_change, popularity_change, plane_health_cost, incident, msg = route.collect(
         DB, airline
     )
