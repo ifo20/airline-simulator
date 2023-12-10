@@ -331,5 +331,6 @@ def collect_route():
 
 if __name__ == "__main__":
 	db = DatabaseInterface()
+	db.open()
 	db.migrate()
-	app.run(debug=True, host="0.0.0.0", port=os.environ["PORT"])
+	app.run(debug=True, host="0.0.0.0", port=os.environ.get("PORT", 8000))
