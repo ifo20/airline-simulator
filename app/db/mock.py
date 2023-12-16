@@ -1,3 +1,8 @@
+"""
+This module only saves state in-memory, so if the server is restarted, all state is lost.
+
+So it is not really a database - hence the name 'mock'
+"""
 import logging
 import json
 from typing import List, Optional

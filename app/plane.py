@@ -1,5 +1,6 @@
 from ctypes import Union
 from datetime import datetime
+import logging
 import random
 from typing import List
 
@@ -143,13 +144,18 @@ class Plane:
         self.purchased_at = now_ts
         self.health = STARTING_HEALTH
         db.save_plane(self)
+        logging.info("Purchased plane %s", self.id)
 
     def available_for_route(self, route):
         return self.route is None and self.max_distance > route.distance
 
-    def reserve(self, route_id: int):
+    def reserve(self, db, route_id: int):
         self.route_id = route_id
+        self.load_route(db)
+        logging.info("Reserved plane %s for route %s", self.id, route_id)
 
     def free(self):
         self.route_id = None
         self.route = None
+        logging.info("Freed plane %s", self.id)
+

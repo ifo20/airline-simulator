@@ -419,6 +419,14 @@ class Route {
 		onAttach: function(clonedElement, domIcon, domMarker) {
 			clonedElement.addEventListener('mouseover', changeOpacity);
 			clonedElement.addEventListener('mouseout', changeOpacityToOne);
+					// // Create an info bubble object at a specific geographic location:
+			var bubble = new H.ui.InfoBubble({ lng: this.toAirport.lon, lat: this.toAirport.lat }, {
+				content: `<b>Route from ${this.fromAirport.name} to ${this.toAirport.name}</b>`
+			});
+
+			// // Add info bubble to the UI:
+			gameEngine.ui.addBubble(bubble);
+
 		},
 		// the function is called every time marker leaves the viewport
 		onDetach: function(clonedElement, domIcon, domMarker) {
@@ -427,42 +435,16 @@ class Route {
 		}
 		});
 	
-		// Marker for Chicago Bears home
-		var toairport = new H.map.DomMarker({lat: this.toAirport.lat, lng: this.toAirport.lon}, {
-			icon: domIcon
-		});
-		gameEngine.routeMap.addObject(toairport);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-		// var marker = new H.map.Marker({lat:this.toAirport.lat, lng:this.toAirport.lon});
-		// gameEngine.routeMap.addObject(marker);
-		addPolylineToMap(gameEngine.routeMap, this.fromAirport.lat,  this.fromAirport.lon, this.toAirport.lat, this.toAirport.lon)
-		// // Create an info bubble object at a specific geographic location:
-		// var bubble = new H.ui.InfoBubble({ lng: this.toAirport.lon, lat: this.toAirport.lat }, {
-		// 	content: `<b>Route from ${this.fromAirport.name} to ${this.toAirport.name}</b>`
+		// var toairport = new H.map.DomMarker({lat: this.toAirport.lat, lng: this.toAirport.lon}, {
+		// 	icon: domIcon
 		// });
+		// gameEngine.routeMap.addObject(toairport);
 
-		// // Add info bubble to the UI:
-		// gameEngine.ui.addBubble(bubble);
+
+		var marker = new H.map.Marker({lat:this.toAirport.lat, lng:this.toAirport.lon});
+		gameEngine.routeMap.addObject(marker);
+		addPolylineToMap(gameEngine.routeMap, this.fromAirport.lat,  this.fromAirport.lon, this.toAirport.lat, this.toAirport.lon)
+
 
 		setTimeout(() => this.updatePurchasedCardContent(), 100)
 		return div

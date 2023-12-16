@@ -1,3 +1,7 @@
+"""
+This module saves game state to a Postgresql database
+We use the psycopg2 library to 'talk' to Postgresql
+"""
 import logging
 import os
 from typing import Any, List

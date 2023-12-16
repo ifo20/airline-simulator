@@ -299,9 +299,10 @@ def run_route():
     route = Route.get_by_id(DB, request.form["route_id"])
     route.validate_can_run()
     plane = Plane.get_for_route(DB, route)
+    
     route.run(airline)
     DB.save_route(route)
-    plane.reserve(route.id)
+    plane.reserve(DB, route.id)
     DB.save_plane(plane)
     planes = Plane.list_owned(DB, airline.id)
     return jsonify(
