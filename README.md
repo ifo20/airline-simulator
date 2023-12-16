@@ -20,3 +20,9 @@ cd website
 npm install (first time only)
 tsc index.ts
 ```
+
+To run the test client (the server should already be running):
+```
+PYTHONPATH=. python client/__init__.py
+```
+
