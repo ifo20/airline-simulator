@@ -1,7 +1,4 @@
 __pycache__
 .vscode
-*/venv/*
-db.json
-index.js
 website/node_modules
 venv
