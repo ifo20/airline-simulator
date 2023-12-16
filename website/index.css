@@ -310,3 +310,9 @@ dd {
 .inflight {
     background-color: crimson;
 }
+
+#map {
+    width: 95%;
+    height: 450px;
+    background: grey;
+}

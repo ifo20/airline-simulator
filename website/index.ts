@@ -118,6 +118,16 @@ function makeClickWrapper(btn: HTMLButtonElement, handler) {
 	}
 	return completeHandler
 }
+function addPolylineToMap(map: H.Map, startinglat: number, startinglon: number, endinglat: number, endinglon: number) {
+    var lineString = new H.geo.LineString();
+  
+    lineString.pushPoint({lat:startinglat, lng:startinglon});
+    lineString.pushPoint({lat:endinglat, lng:endinglon});
+  
+    map.addObject(new H.map.Polyline(
+      lineString, { style: { lineWidth: 4 }}
+    ));
+}
 //////// OUR TYPES & CLASSES (THINGS)
 type AirportCode = string
 
@@ -363,6 +373,97 @@ class Route {
 	createPurchasedCardHtml(): HTMLDivElement {
 		var div = <HTMLDivElement>createElement("div", `owned-route-${this.id}`)
 		div.className = "bg-light border-box"
+
+
+
+
+		var outerElement = document.createElement('div'),
+		innerElement = document.createElement('div');
+  
+		outerElement.style.userSelect = 'none';
+		outerElement.style.webkitUserSelect = 'none';
+		outerElement.style.cursor = 'default';
+	
+		innerElement.style.color = 'red';
+		innerElement.style.backgroundColor = 'blue';
+		innerElement.style.border = '2px solid black';
+		innerElement.style.font = 'normal 12px arial';
+		innerElement.style.lineHeight = '12px'
+	
+		innerElement.style.paddingTop = '2px';
+		innerElement.style.paddingLeft = '4px';
+		innerElement.style.width = '20px';
+		innerElement.style.height = '20px';
+	
+		// add negative margin to inner element
+		// to move the anchor to center of the div
+		innerElement.style.marginTop = '-10px';
+		innerElement.style.marginLeft = '-10px';
+	
+		outerElement.appendChild(innerElement);
+	
+		// Add text to the DOM element
+		innerElement.innerHTML = 'C';
+	
+		function changeOpacity(evt) {
+		evt.target.style.opacity = 0.6;
+		};
+	
+		function changeOpacityToOne(evt) {
+		evt.target.style.opacity = 1;
+		};
+	
+		//create dom icon and add/remove opacity listeners
+		var domIcon = new H.map.DomIcon(outerElement, {
+		// the function is called every time marker enters the viewport
+		onAttach: function(clonedElement, domIcon, domMarker) {
+			clonedElement.addEventListener('mouseover', changeOpacity);
+			clonedElement.addEventListener('mouseout', changeOpacityToOne);
+		},
+		// the function is called every time marker leaves the viewport
+		onDetach: function(clonedElement, domIcon, domMarker) {
+			clonedElement.removeEventListener('mouseover', changeOpacity);
+			clonedElement.removeEventListener('mouseout', changeOpacityToOne);
+		}
+		});
+	
+		// Marker for Chicago Bears home
+		var toairport = new H.map.DomMarker({lat: this.toAirport.lat, lng: this.toAirport.lon}, {
+			icon: domIcon
+		});
+		gameEngine.routeMap.addObject(toairport);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		// var marker = new H.map.Marker({lat:this.toAirport.lat, lng:this.toAirport.lon});
+		// gameEngine.routeMap.addObject(marker);
+		addPolylineToMap(gameEngine.routeMap, this.fromAirport.lat,  this.fromAirport.lon, this.toAirport.lat, this.toAirport.lon)
+		// // Create an info bubble object at a specific geographic location:
+		// var bubble = new H.ui.InfoBubble({ lng: this.toAirport.lon, lat: this.toAirport.lat }, {
+		// 	content: `<b>Route from ${this.fromAirport.name} to ${this.toAirport.name}</b>`
+		// });
+
+		// // Add info bubble to the UI:
+		// gameEngine.ui.addBubble(bubble);
+
 		setTimeout(() => this.updatePurchasedCardContent(), 100)
 		return div
 	}
@@ -610,6 +711,37 @@ class Airline {
 	}
 	getRoutesDisplay(): HTMLElement {
 		const routesContainer = <HTMLElement>document.getElementById("owned-routes")
+		if (!gameEngine.routeMap) {
+			var platform = new H.service.Platform({
+				'apikey': 'r7U4pzaJCQZVOL0cJLmpjQz0Sqzf3Wlq7LJwg3fbvik'
+			});
+			var defaultLayers = platform.createDefaultLayers();
+			//Step 2: initialize a map - this map is centered over Europe
+			var map = new H.Map(document.getElementById('map'),
+			defaultLayers.vector.normal.map,{
+				center: {lat: this.hub.lat, lng:this.hub.lon},
+				zoom: 3,
+				pixelRatio: window.devicePixelRatio || 1
+			});
+			gameEngine.ui = H.ui.UI.createDefault(map, defaultLayers);
+			map.setBaseLayer(defaultLayers.raster.satellite.map);
+			// MapEvents enables the event system
+			// Behavior implements default interactions for pan/zoom (also on mobile touch environments)
+			var behavior = new H.mapevents.Behavior(new H.mapevents.MapEvents(map));
+			// add a resize listener to make sure that the map occupies the whole container
+			window.addEventListener('resize', () => map.getViewPort().resize());
+			gameEngine.routeMap = map
+			setTimeout(() => {
+				var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><path fill="#f28bc1" d="M1.9 32c0 13.1 8.4 24.2 20 28.3V3.7C10.3 7.8 1.9 18.9 1.9 32z"/><path fill="#ed4c5c" d="M61.9 32c0-13.1-8.3-24.2-20-28.3v56.6c11.7-4.1 20-15.2 20-28.3"/><path fill="#fff" d="M21.9 60.3c3.1 1.1 6.5 1.7 10 1.7s6.9-.6 10-1.7V3.7C38.8 2.6 35.5 2 31.9 2s-6.9.6-10 1.7v56.6"/></svg>'
+				var marker = new H.map.Marker({
+					lat:this.hub.lat,
+					lng:this.hub.lon,
+				}, {
+					// icon: new H.map.Icon(svg)
+				});
+				map.addObject(marker);
+			}, 3000);
+		}
 		this.routes.forEach(route => {
 			var div = document.getElementById(`owned-route-${route.id}`)
 			if (!div) {
@@ -677,6 +809,8 @@ class Airline {
 
 class GameEngine {
 	airline?: Airline
+	routeMap?: H.Map
+	ui?: any
 	airports: Array<Airport> = []
 	routes: Array<Route> = []
 	days: number = 0
