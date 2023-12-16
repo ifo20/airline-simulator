@@ -84,18 +84,18 @@ class MockDatabase:
         self.routes[route.id] = route
 
     def list_offered_planes(self, airline_id: int) -> List[Plane]:
-        routes = []
+        planes = []
         for plane in self.planes.values():
             if plane.airline_id == airline_id and plane.purchased_at is None:
-                routes.append(plane)
-        return routes
+                planes.append(plane)
+        return planes
 
     def list_owned_planes(self, airline_id: int) -> List[Plane]:
-        routes = []
+        planes = []
         for plane in self.planes.values():
             if plane.airline_id == airline_id and plane.purchased_at is not None:
-                routes.append(plane)
-        return routes
+                planes.append(plane)
+        return planes
 
     def get_plane_by_id(self, plane_id: int) -> Optional[Plane]:
         return self.planes[plane_id]

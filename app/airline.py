@@ -31,13 +31,22 @@ class Airline:
     def from_db_row(cls, db_row):
         return cls(*db_row)
 
+    def load_fields(self, db):
+        self.hub = Airport.get_by_code(db, self.hub)
+
     @staticmethod
     def get_by_id(db, airline_id: int):
-        return db.get_airline_by_id(airline_id)
+        base = db.get_airline_by_id(airline_id)
+        if base:
+            base.load_fields(db)
+        return base
 
     @staticmethod
     def get_by_name(db, airline_name: str):
-        return db.get_airline_by_name(airline_name)
+        base = db.get_airline_by_name(airline_name)
+        if base:
+            base.load_fields(db)
+        return base
 
     @classmethod
     def login(cls, db, airline_name: str, hub: str):
@@ -58,7 +67,8 @@ class Airline:
                 cash=STARTING_CASH,
                 popularity=STARTING_POPULARITY,
             )
-            db.create_airline(airline)
+            airline_id = db.create_airline(airline)
+            airline.id = airline_id
             logging.info("Created airline %s: %s", airline.id, airline.name)
         hub_airport = Airport.get_by_code(db, hub)
         airline.hub = hub_airport

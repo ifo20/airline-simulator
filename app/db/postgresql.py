@@ -75,28 +75,26 @@ class PostgresqlDatabase:
         db_row = self.fetch_one("SELECT * FROM airlines WHERE name=%s", name)
         return Airline.from_db_row(db_row) if db_row else None
 
-    def create_airline(
-        self, name: str, hub_code: str, starting_cash: int, starting_popularity: int
-    ) -> List[Any]:
-        logging.info("Inserting airline %s ...", name)
+    def create_airline(self, airline) -> List[Any]:
+        logging.info("Inserting airline %s ...", airline)
         [inserted_id] = self.fetch_one(
             """
 INSERT INTO airlines (name, hub, joined_at, last_login_at, cash, popularity)
 VALUES (%s, %s, now(), now(), %s, %s) RETURNING id
 """,
-            name,
-            hub_code,
-            starting_cash,
-            starting_popularity,
+            airline.name,
+            airline.hub,
+            airline.cash,
+            airline.popularity,
         )
-        logging.info("Inserted airline %s: %s", inserted_id, name)
-        return self.get_airline_by_id(inserted_id)
+        logging.info("Inserted airline %s: %s", inserted_id, airline)
+        return inserted_id
 
     def save_airline(self, airline):
         return self.execute(
             "UPDATE airlines SET name=%s, hub=%s, joined_at=%s, last_login_at=%s, cash=%s, popularity=%s WHERE id=%s",
             airline.name,
-            airline.hub,
+            airline.hub.code,
             airline.joined_at,
             airline.last_login_at,
             airline.cash,
@@ -104,44 +102,40 @@ VALUES (%s, %s, now(), now(), %s, %s) RETURNING id
             airline.id,
         )
 
-    def list_offered_routes(self, airline_id: int):
+    def list_offered_routes(self, airline_id: int) -> List[Route]:
         routes = []
         for row in self.fetch_all(
             "SELECT * FROM routes WHERE airline_id=%s AND purchased_at IS NULL",
             airline_id,
         ):
-            routes.append(row)
+            routes.append(Route.from_db_row(self, row))
         return routes
 
-    def list_owned_routes(self, airline_id: int) -> List[List[Any]]:
+    def list_owned_routes(self, airline_id: int) -> List[Route]:
         routes = []
         for row in self.fetch_all(
             "SELECT * FROM routes WHERE airline_id=%s AND purchased_at IS NOT NULL",
             airline_id,
         ):
-            routes.append(row)
+            routes.append(Route.from_db_row(self, row))
         return routes
 
     def get_route_by_id(self, route_id: int):
-        return self.fetch_one("SELECT * FROM routes WHERE id=%s", route_id)
+        base = self.fetch_one("SELECT * FROM routes WHERE id=%s", route_id)
+        if base:
+            base = Route.from_db_row(self, base)
+        return base
 
-    def create_route(
-        self,
-        airline_id: int,
-        origin: str,
-        destination: str,
-        cost: int,
-        popularity: int,
-    ):
+    def create_route(self, route: Route):
         return self.fetch_one(
             """
 INSERT INTO routes (airline_id, origin, destination, cost, popularity)
 VALUES (%s, %s, %s, %s, %s) RETURNING *""",
-            airline_id,
-            origin,
-            destination,
-            cost,
-            popularity,
+            route.airline_id,
+            route.origin.code,
+            route.destination.code,
+            route.cost,
+            route.popularity,
         )
 
     def save_route(self, route):
@@ -151,7 +145,7 @@ VALUES (%s, %s, %s, %s, %s) RETURNING *""",
             route.last_run_at,
             route.last_resulted_at,
             route.next_available_at,
-            route.route_id,
+            route.id,
         )
 
     def list_offered_planes(self, airline_id: int):
@@ -188,7 +182,7 @@ VALUES (%s, %s, %s, %s) RETURNING id""",
         )
         return plane_id
 
-    def update_plane(self, plane):
+    def save_plane(self, plane):
         return self.execute(
             """
 UPDATE planes

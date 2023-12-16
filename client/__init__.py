@@ -145,9 +145,9 @@ shortest_offers_first = sorted(
 )
 # Check they are now owned
 owned_planes = c.get_owned_planes(airline_id)
-shortest_owned_first = sorted(owned_planes, key=lambda p: p["max_distance"])
-assert len(shortest_offers_first) == len(shortest_owned_first)
-for offer, owned in zip(shortest_offers_first, shortest_owned_first):
+shortest_owned_planes_first = sorted(owned_planes, key=lambda p: p["max_distance"])
+assert len(shortest_offers_first) == len(shortest_owned_planes_first)
+for offer, owned in zip(shortest_offers_first, shortest_owned_planes_first):
     assert offer["max_distance"] == owned["max_distance"]
     assert owned["status"] == "Available"
 print("Plane check complete")
@@ -158,7 +158,9 @@ for r in offered_routes:
     c.buy_route(airline_id, r["id"])
 owned_routes = c.get_owned_routes(airline_id)
 live_flights = set()  # (r_id, p_id)
-for p, r in zip(shortest_owned_first, owned_routes):
+for p, r in zip(shortest_owned_planes_first, owned_routes):
+    print("p", p)
+    print("r", r)
     if p["max_distance"] > r["distance"]:
         c.fly_route(airline_id, r["id"], p["id"])
         live_flights.add((r["id"], p["id"]))

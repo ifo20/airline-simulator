@@ -44,9 +44,17 @@ class Route:
         self.next_available_at = next_available_at
         self.last_run_at = last_run_at
         self.last_resulted_at = last_resulted_at
-        self.distance = self.calculate_distance()
+        self.distance = None
         self.status = None
         self.update_status()
+
+    @classmethod
+    def from_db_row(cls, db, row):
+        base = cls(*row)
+        base.origin = Airport.get_by_code(db, base.origin)
+        base.destination = Airport.get_by_code(db, base.destination)
+        base.distance = base.calculate_distance()
+        return base
 
     def update_status(self):
         if self.purchased_at:
@@ -94,6 +102,7 @@ class Route:
         ]
         all_destinations.sort(key=lambda airport: airport.distance_from(hub))
         now_ts = datetime.now()
+        LOGGER.info("all_destinations=%s", all_destinations)
         for destination in all_destinations[:num_offers]:
             # Generate appropriate popularity and cost
             popularity = random.randint(10, 100)

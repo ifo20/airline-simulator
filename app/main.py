@@ -137,9 +137,9 @@ def play():
     j: Dict = json.loads(jsonify(airline))
     j["routes"] = Route.list_owned(DB, airline.id)
     j["planes"] = Plane.list_owned(DB, airline.id)
-    n = 0
-    for idx, leaderboard_airline in enumerate(Airline.leaderboard(DB), start=1):
-        n += 1
+    all_airlines = Airline.leaderboard(DB)
+    n = len(all_airlines)
+    for idx, leaderboard_airline in enumerate(all_airlines, start=1):
         if leaderboard_airline.id == airline.id:
             this_rank = idx
     j["rank"] = f"#{this_rank} / {n}"
@@ -159,7 +159,8 @@ def offered_routes():
             DB, airports, airline, MINIMUM_OFFERS - len(offered_routes), offered_routes
         )
         offered_routes = Route.list_offered(DB, airline.id)
-    logging.info("TIMER offered_routes took %s", timeit.default_timer() - start_ts)
+    logging.info("TIMER offered_routes took %s for Airline %r", timeit.default_timer() - start_ts, airline.id)
+    logging.info("offered_routes response:%s", offered_routes)
     return jsonify(offered_routes)
 
 
@@ -167,9 +168,10 @@ def offered_routes():
 def owned_routes():
     start_ts = timeit.default_timer()
     airline_id = airline_id_from_request(request)
-    offered_routes = Route.list_owned(DB, airline_id)
+    owned_routes = Route.list_owned(DB, airline_id)
     logging.info("TIMER owned_routes took %s", timeit.default_timer() - start_ts)
-    return jsonify(offered_routes)
+    logging.info("owned_routes response:%s", owned_routes)
+    return jsonify(owned_routes)
 
 
 @app.route("/route/<int:route_id>", methods=["GET"])
@@ -213,12 +215,14 @@ def offered_planes():
     if len(planes_for_sale) < MINIMUM_OFFERS:
         Plane.generate_offers(DB, airline_id, MINIMUM_OFFERS - len(planes_for_sale))
         planes_for_sale = Plane.list_offered(DB, airline_id)
+    logging.info("offered_planes response:%s", planes_for_sale)
     return jsonify(planes_for_sale)
 
 
 @app.route("/owned_planes", methods=["GET"])
 def owned_planes():
     planes = Plane.list_owned(DB, airline_id_from_request(request))
+    logging.info("owned_planes response:%s", planes)
     return jsonify(planes)
 
 

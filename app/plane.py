@@ -65,6 +65,7 @@ class Plane:
         self.purchased_at = purchased_at
         self.health = health
         self.route_id: Union[int, None] = route_id
+        self.route: Union[Plane, None] = None
 
     def __str__(self):
         return f"<Plane {self.id} belonging to airline {self.airline_id} />"
