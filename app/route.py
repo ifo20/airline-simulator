@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import logging
 import math
 import random
-from typing import List
+from typing import List, Union
 
 import pytz
 
@@ -21,8 +21,11 @@ class Route:
 		self,
 		id: int,
 		airline_id: int,
-		origin: Airport,
-		destination: Airport,
+		# origin and destination are both Airports
+		# sometimes we might only use the string e.g. "LHR"
+		# instead of the actual Airport objects
+		origin: Union[str, Airport],
+		destination: Union[str, Airport],
 		cost: int,
 		popularity: int,
 		offered_at: datetime,

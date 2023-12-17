@@ -1,5 +1,6 @@
 from datetime import datetime
 import logging
+from typing import Union
 import pytz
 
 from app.airport import Airport
@@ -13,7 +14,9 @@ class Airline:
 		self,
 		id: int,
 		name: str,
-		hub: Airport,
+		hub: Union[
+			str, Airport
+		],  # sometimes this is a string representing the airport code, generally it should be the Airport object itself
 		joined_at=None,
 		last_login_at=None,
 		cash=STARTING_CASH,

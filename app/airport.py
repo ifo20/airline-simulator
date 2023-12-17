@@ -1,5 +1,4 @@
 import math
-from typing import List
 
 
 class Airport:
@@ -22,12 +21,13 @@ class Airport:
 		return db.get_airport_by_code(code)
 
 	def can_fly_to(self, other) -> bool:
+		# Cannot fly between Iran and Iraq
 		return (self.country, other.country) not in {
 			("Iran", "Iraq"),
 			("Iraq", "Iran"),
 		}
 
-	def distance_from(self, other):
+	def distance_from(self, other) -> float:
 		"""Returns distance in kilometres"""
 
 		def deg2rad(deg):

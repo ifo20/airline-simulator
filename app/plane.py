@@ -65,8 +65,12 @@ class Plane:
 		self.offered_at = offered_at
 		self.purchased_at = purchased_at
 		self.health = health
+		# A plane may be linked to a route i.e. it is currently flying that route
+		# A route_id is enough to identify whether or not it is flying
 		self.route_id: Union[int, None] = route_id
-		self.route: Union[Plane, None] = None
+		# Sometimes we want access to the full Route object
+		# This should always correspond the Route with id=self.route_id
+		self.route: Union[Route, None] = None
 
 	def __str__(self):
 		return f"<Plane {self.id} belonging to airline {self.airline_id} />"
