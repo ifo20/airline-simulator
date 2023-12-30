@@ -21,11 +21,15 @@ class MockDatabase:
 		self.airlines = {}
 		self.routes = {}
 		self.planes = {}
-
-	def open(self):
 		self.airports = {
 			airport[0]: Airport(*airport) for airport in json.load(open("data/airports.json"))
 		}
+
+		logging.info("MOCKDB init finished")
+
+	def open(self):
+		logging.info("MOCKDB open")
+
 
 	def close(self):
 		pass
@@ -57,7 +61,7 @@ class MockDatabase:
 		return airline_id
 
 	def save_airline(self, airline: Airline):
-		logging.info("save_airline %s %s", airline, airline.cash)
+		logging.info("save_airline %s %s", airline, airline.hub)
 		self.airlines[airline.id] = airline
 
 	def list_offered_routes(self, airline_id: int) -> List[Route]:

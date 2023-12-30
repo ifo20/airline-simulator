@@ -75,6 +75,7 @@ class Airline:
 			logging.info("Created airline %s: %s", airline.id, airline.name)
 		hub_airport = Airport.get_by_code(db, hub)
 		airline.hub = hub_airport
+		logging.info("airlinehub is %s",airline.hub)
 		return airline
 
 	@staticmethod

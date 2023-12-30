@@ -87,6 +87,8 @@ class Route:
 			"Generating %s route offers for (%s) %s", num_offers, airline.id, airline.name,
 		)
 		hub: Airport = airline.hub
+		if hub is None:
+			raise RuntimeError("Can't generate offers without hub.")
 		existing_routes = Route.list_owned(db, airline.id) + existing_offers
 		existing_route_destinations = {r.destination.code for r in existing_routes}
 		all_destinations = [
