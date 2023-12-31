@@ -20,7 +20,7 @@ logging.basicConfig(level=logging.INFO)
 WEBSITE_ROOT = os.path.join(pathlib.Path(__file__).resolve().parent.parent, "website")
 app = Flask(__name__, static_folder=WEBSITE_ROOT)
 
-logging.info("Created app, WEBSITE_ROOT=%s", WEBSITE_ROOT)
+logging.debug("Created app, WEBSITE_ROOT=%s", WEBSITE_ROOT)
 
 MINIMUM_OFFERS = 3
 
@@ -61,7 +61,7 @@ def airline_from_request(request):
 
 class ComplexEncoder(json.JSONEncoder):
 	def default(self, obj):
-		# logging.info("default: %s", obj)
+		logging.debug("default: %s", obj)
 		if isinstance(obj, datetime):
 			return obj.isoformat()
 		if isinstance(obj, (Airport, Airline, Route)):
@@ -150,10 +150,8 @@ def play():
 
 @app.route("/offered_routes", methods=["GET"])
 def offered_routes():
-	logging.info("OFFERED ROUTES GET function")
 	start_ts = timeit.default_timer()
 	airline = airline_from_request(request)
-	logging.info("OFFERED ROUTES GET got airline, hub is %s", airline.hub)
 	offered_routes = Route.list_offered(DB, airline.id)
 	airports = DB.get_airports()
 	if len(offered_routes) < MINIMUM_OFFERS:
@@ -161,12 +159,12 @@ def offered_routes():
 			DB, airports, airline, MINIMUM_OFFERS - len(offered_routes), offered_routes
 		)
 		offered_routes = Route.list_offered(DB, airline.id)
-	logging.info(
+	logging.debug(
 		"TIMER offered_routes took %s for Airline %r",
 		timeit.default_timer() - start_ts,
 		airline.id,
 	)
-	logging.info("offered_routes response:%s", offered_routes)
+	logging.debug("offered_routes response:%s", offered_routes)
 	return jsonify(offered_routes)
 
 
@@ -175,8 +173,8 @@ def owned_routes():
 	start_ts = timeit.default_timer()
 	airline_id = airline_id_from_request(request)
 	owned_routes = Route.list_owned(DB, airline_id)
-	logging.info("TIMER owned_routes took %s", timeit.default_timer() - start_ts)
-	logging.info("owned_routes response:%s", owned_routes)
+	logging.debug("TIMER owned_routes took %s", timeit.default_timer() - start_ts)
+	logging.debug("owned_routes response:%s", owned_routes)
 	return jsonify(owned_routes)
 
 
@@ -202,7 +200,7 @@ def purchase_route():
 	airline.cash -= route.cost
 	DB.save_airline(airline)
 	route.purchase(DB)
-	logging.info("TIMER purchase_route took %s", timeit.default_timer() - start_ts)
+	logging.debug("TIMER purchase_route took %s", timeit.default_timer() - start_ts)
 	return jsonify(
 		{
 			"route": route,
