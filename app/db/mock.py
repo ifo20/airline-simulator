@@ -15,7 +15,7 @@ from app.route import Route
 
 class MockDatabase:
 	def __init__(self):
-		logging.info("Using a mock database ... progress will not be saved")
+		logging.info("MOCKDB INIT: Using a mock database ... progress will not be saved")
 		# Store everything as a dict keyed by primary key
 		self.airports = {}
 		self.airlines = {}
@@ -32,7 +32,7 @@ class MockDatabase:
 
 
 	def close(self):
-		pass
+		logging.info("MOCKDB close")
 
 	def migrate(self):
 		pass
@@ -41,7 +41,9 @@ class MockDatabase:
 		return list(self.airports.values())
 
 	def get_airport_by_code(self, code: str) -> Optional[Airport]:
-		return self.airports.get(code)
+		airport = self.airports.get(code)
+		logging.info("MOCKDB get_airport_by_code: %s hub is: %s", airport, airport.hub if airport else None)
+		return airport
 
 	def get_airlines(self) -> List[Airline]:
 		return list(self.airlines.values())

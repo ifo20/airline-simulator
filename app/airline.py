@@ -36,10 +36,12 @@ class Airline:
 
 	def load_fields(self, db):
 		self.hub = Airport.get_by_code(db, self.hub)
+		logging.info("load_fields: hub is now %s", self.hub)
 
 	@staticmethod
 	def get_by_id(db, airline_id: int):
 		base = db.get_airline_by_id(airline_id)
+		logging.info("got airline by id, hub is %s", base.hub)
 		if base:
 			base.load_fields(db)
 		return base

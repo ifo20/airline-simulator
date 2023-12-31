@@ -150,8 +150,10 @@ def play():
 
 @app.route("/offered_routes", methods=["GET"])
 def offered_routes():
+	logging.info("OFFERED ROUTES GET function")
 	start_ts = timeit.default_timer()
 	airline = airline_from_request(request)
+	logging.info("OFFERED ROUTES GET got airline, hub is %s", airline.hub)
 	offered_routes = Route.list_offered(DB, airline.id)
 	airports = DB.get_airports()
 	if len(offered_routes) < MINIMUM_OFFERS:
