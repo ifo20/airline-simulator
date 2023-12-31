@@ -154,6 +154,56 @@ var OfferedRoute = /** @class */ (function () {
         this.popularity = popularity;
         this.purchaseCost = cost;
     }
+    OfferedRoute.prototype.trHtml = function () {
+        var tr = document.createElement("tr");
+        tr.setAttribute("style", "background-color:#ddcc44aa");
+        // title - distance - pop - cost
+        var titleCell = document.createElement("td");
+        titleCell.innerHTML = "".concat(this.fromAirport.code, " <-> ").concat(this.toAirport.code);
+        tr.appendChild(titleCell);
+        var distanceCell = document.createElement("td");
+        distanceCell.innerHTML = "".concat(this.distance.toLocaleString("en-gb", { maximumFractionDigits: 0 }), "km");
+        tr.appendChild(distanceCell);
+        var pop = document.createElement("td");
+        pop.innerHTML = this.popularity.toLocaleString("en-gb");
+        tr.appendChild(pop);
+        var cost = document.createElement("td");
+        cost.innerHTML = "$".concat(this.purchaseCost.toLocaleString("en-gb"));
+        tr.appendChild(cost);
+        tr.appendChild(document.createElement("td"));
+        var btn = document.createElement("button");
+        btn.innerText = "Purchase";
+        var btnCell = document.createElement("td");
+        var route_id = this.id;
+        btn.addEventListener("click", makeClickWrapper(btn, function () {
+            var airline = gameEngine.airline;
+            setLoader();
+            $.ajax({
+                method: "POST",
+                url: "/purchase_route",
+                data: {
+                    airline_id: airline.id,
+                    route_id: route_id
+                },
+                error: function (x) { return errHandler(x, btn); },
+                success: function (response) {
+                    unsetLoader();
+                    var jresponse = JSON.parse(response);
+                    var route = new Route(jresponse.route);
+                    airline.routes.push(route);
+                    airline.cash = jresponse.cash;
+                    airline.addTransaction(jresponse.transaction);
+                    displayInfo(jresponse.msg);
+                    airline.getRoutesDisplay();
+                    airline.updateStats();
+                    gameEngine.displayRoutesTab();
+                }
+            });
+        }));
+        btnCell.appendChild(btn);
+        tr.appendChild(btnCell);
+        return tr;
+    };
     OfferedRoute.prototype.buttonHtml = function () {
         var btn = document.createElement("button");
         btn.setAttribute("style", "background-color:#ddcc44aa");
@@ -303,7 +353,18 @@ var Route = /** @class */ (function () {
             return;
         }
         div.innerHTML = "";
-        div.appendChild(this.cardHtml());
+        var titleCell = document.createElement("td");
+        titleCell.innerHTML = "".concat(this.fromAirport.code, " <-> ").concat(this.toAirport.code);
+        div.appendChild(titleCell);
+        var distanceCell = document.createElement("td");
+        distanceCell.innerHTML = "".concat(this.distance.toLocaleString("en-gb", { maximumFractionDigits: 0 }), "km");
+        div.appendChild(distanceCell);
+        var popularityCell = document.createElement("td");
+        popularityCell.innerHTML = this.popularity.toLocaleString("en-gb");
+        div.appendChild(popularityCell);
+        var costCell = document.createElement("td");
+        costCell.innerHTML = "$".concat(this.purchaseCost.toLocaleString("en-gb"));
+        div.appendChild(costCell);
         var actionButton = document.createElement("button");
         var statusText = "";
         console.log('updatePurchasedCardContent', this.status);
@@ -340,50 +401,21 @@ var Route = /** @class */ (function () {
             });
             return;
         }
-        var statusDiv = createElement("div", "route-status-".concat(this.id), "p-3 text-center");
+        var statusDiv = createElement("td", "route-status-".concat(this.id), "text-center");
         statusDiv.innerText = statusText;
-        actionButton.className = "p-3 text-center w-100";
+        actionButton.className = "text-center w-100";
         div.appendChild(statusDiv);
-        div.appendChild(actionButton);
+        var actionButtonCell = document.createElement("td");
+        actionButtonCell.appendChild(actionButton);
+        div.appendChild(actionButtonCell);
     };
     Route.prototype.createPurchasedCardHtml = function () {
         var _this = this;
-        var div = createElement("div", "owned-route-".concat(this.id));
-        div.className = "bg-light border-box";
-        var outerElement = document.createElement('div'), innerElement = document.createElement('div');
-        outerElement.style.userSelect = 'none';
-        outerElement.style.webkitUserSelect = 'none';
-        outerElement.style.cursor = 'default';
-        innerElement.style.color = 'red';
-        innerElement.style.backgroundColor = 'blue';
-        innerElement.style.border = '2px solid black';
-        innerElement.style.font = 'normal 12px arial';
-        innerElement.style.lineHeight = '12px';
-        innerElement.style.paddingTop = '2px';
-        innerElement.style.paddingLeft = '4px';
-        innerElement.style.width = '20px';
-        innerElement.style.height = '20px';
-        // add negative margin to inner element
-        // to move the anchor to center of the div
-        innerElement.style.marginTop = '-10px';
-        innerElement.style.marginLeft = '-10px';
-        outerElement.appendChild(innerElement);
-        // Add text to the DOM element
-        innerElement.innerHTML = 'C';
-        function changeOpacity(evt) {
-            evt.target.style.opacity = 0.6;
-        }
-        ;
-        function changeOpacityToOne(evt) {
-            evt.target.style.opacity = 1;
-        }
-        ;
+        var tr = createElement("tr", "owned-route-".concat(this.id));
         //create dom icon and add/remove opacity listeners
-        var domIcon = new H.map.DomIcon(outerElement, {
+        var domIcon = new H.map.DomIcon(tr, {
             // the function is called every time marker enters the viewport
             onAttach: function (clonedElement, domIcon, domMarker) {
-                clonedElement.addEventListener('mouseover', changeOpacity);
-                clonedElement.addEventListener('mouseout', changeOpacityToOne);
                 // // Create an info bubble object at a specific geographic location:
                 var bubble = new H.ui.InfoBubble({ lng: this.toAirport.lon, lat: this.toAirport.lat }, {
                     content: "<b>Route from ".concat(this.fromAirport.name, " to ").concat(this.toAirport.name, "</b>")
@@ -393,19 +425,13 @@ var Route = /** @class */ (function () {
             },
             // the function is called every time marker leaves the viewport
             onDetach: function (clonedElement, domIcon, domMarker) {
-                clonedElement.removeEventListener('mouseover', changeOpacity);
-                clonedElement.removeEventListener('mouseout', changeOpacityToOne);
             }
         });
-        // var toairport = new H.map.DomMarker({lat: this.toAirport.lat, lng: this.toAirport.lon}, {
-        // 	icon: domIcon
-        // });
-        // gameEngine.routeMap.addObject(toairport);
         var marker = new H.map.Marker({ lat: this.toAirport.lat, lng: this.toAirport.lon });
         gameEngine.routeMap.addObject(marker);
         addPolylineToMap(gameEngine.routeMap, this.fromAirport.lat, this.fromAirport.lon, this.toAirport.lat, this.toAirport.lon);
         setTimeout(function () { return _this.updatePurchasedCardContent(); }, 100);
-        return div;
+        return tr;
     };
     Route.prototype.cardHtml = function () {
         var dl = dataLabels([
@@ -810,7 +836,7 @@ var GameEngine = /** @class */ (function () {
                 unsetLoader();
                 offered.innerHTML = "";
                 var routesToDisplay = JSON.parse(response).map(function (r) { return new OfferedRoute(r); });
-                routesToDisplay.forEach(function (r) { return offered.appendChild(r.buttonHtml()); });
+                routesToDisplay.forEach(function (r) { return offered.appendChild(r.trHtml()); });
             }
         });
     };

@@ -45,15 +45,21 @@
 			<div id="main-overview" class="flex flex-column flex-grow"></div>
 			<div id="main-fleet" class="flex flex-column flex-grow"></div>
 			<div id="main-routes" class="flex flex-column flex-grow">
-				<h1>Your Routes</h1>
+				<div id="routes-table">
+					<table class="table w-100">
+						<thead><tr>
+							<th>Route</th>
+							<th>Distance</th>
+							<th>Popularity</th>
+							<th>Purchase Cost</th>
+							<th>Status</th>
+							<th></th>	
+						</tr></thead>
+						<tbody id="owned-routes"></tbody>
+						<tbody id="offered-routes"></tbody>
+					</table>
+				</div>
 				<div id="map">
-				</div>
-				<div id="owned-routes">
-
-				</div>
-				<h1>Routes Available For Purchase</h1>
-				<div id="offered-routes">
-
 				</div>
 			</div>
 			<div id="main-reputation" class="flex flex-column flex-grow"></div>
