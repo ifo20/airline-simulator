@@ -5,12 +5,9 @@ import random
 from typing import List
 
 import pytz
-from app.config import FUEL_COST_PER_KM, PLANE_COST, PLANE_RANGE
-
+from app.config import FUEL_COST_PER_KM, PLANE_COST, PLANE_MINIMUM_FLYING_HEALTH, PLANE_RANGE, PLANE_STARTING_HEALTH
 from app.route import Route
 
-STARTING_HEALTH = 100
-REQUIRED_FLYING_HEALTH = 30
 
 
 def ensure_loaded(planes, db):
@@ -101,7 +98,7 @@ class Plane:
 				cost,
 				now_ts,
 				None,
-				STARTING_HEALTH,
+				PLANE_STARTING_HEALTH,
 				None,
 			)
 			plane.id = db.create_plane(plane)
@@ -120,7 +117,7 @@ class Plane:
 		for plane in Plane.list_owned(db, route.airline_id):
 			if plane.route_id is not None:
 				continue  # can't use, in the sky
-			if plane.health < REQUIRED_FLYING_HEALTH:
+			if plane.health < PLANE_MINIMUM_FLYING_HEALTH:
 				continue  # can't use, in bad shape
 			if plane.max_distance < route.distance:
 				continue  # can't use, not good enough
@@ -137,14 +134,14 @@ class Plane:
 				return f"Flying {self.route.origin.code} <-> {self.route.destination.code}"
 			else:
 				raise RuntimeError("Plane's route was not loaded")
-		if self.health < REQUIRED_FLYING_HEALTH:
+		if self.health < PLANE_MINIMUM_FLYING_HEALTH:
 			return "Requires maintenance"
 		return "Available"
 
 	def purchase(self, db):
 		now_ts = datetime.now(pytz.UTC)
 		self.purchased_at = now_ts
-		self.health = STARTING_HEALTH
+		self.health = PLANE_STARTING_HEALTH
 		db.save_plane(self)
 		logging.info("Purchased plane %s", self.id)
 

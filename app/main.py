@@ -11,6 +11,7 @@ from flask import abort, request, send_from_directory, Flask
 from app.db import get_db
 from app.airline import Airline
 from app.airport import Airport
+from app.config import PLANE_FIX_COST, PLANE_SCRAP_VALUE, pretty_price
 from app.plane import Plane
 from app.route import Route
 
@@ -126,7 +127,11 @@ def leaderboard():
 
 @app.route("/airports")
 def list_airports():
-	return jsonify(DB.get_airports())
+	# It's a bit slow to load all of them. Let's give them a random.... 1,000?
+	airports = DB.get_airports()
+	import random
+	random.shuffle(airports)
+	return jsonify(airports[:1000])
 
 
 @app.route("/play", methods=["POST"])
@@ -255,32 +260,30 @@ def purchase_plane():
 
 @app.route("/plane/fix", methods=["POST"])
 def fix_plane():
-	fix_cost = 100000
 	airline = airline_from_request(request)
 	plane = Plane.get_by_id(DB, int(request.form["plane_id"]))
-	assert airline.cash >= fix_cost, f"Airline cannot afford to fix - requires ${fix_cost}"
+	assert airline.cash >= PLANE_FIX_COST, f"Airline cannot afford to fix - requires ${pretty_price(PLANE_FIX_COST)}"
 	plane.health = 100
 	DB.save_plane(plane)
-	airline.cash -= fix_cost
+	airline.cash -= PLANE_FIX_COST
 	DB.save_airline(airline)
 	planes = Plane.list_owned(DB, airline.id)
 	return jsonify(
 		{
 			"planes": planes,
 			"cash": airline.cash,
-			"msg": f"Plane {plane.name} fixed for $100,000!",
-			"transaction": f"Fixed {plane.name} for $100,000",
+			"msg": f"Plane {plane.name} fixed for {pretty_price(PLANE_FIX_COST)}!",
+			"transaction": f"Fixed {plane.name} for {pretty_price(PLANE_FIX_COST)}",
 		}
 	)
 
 
 @app.route("/plane/scrap", methods=["POST"])
 def scrap_plane():
-	scrap_value = 10000
 	airline = airline_from_request(request)
 	plane = Plane.get_by_id(DB, int(request.form["plane_id"]))
 	assert plane.airline_id == airline.id, f"Airline does not have that plane"
-	airline.cash += scrap_value
+	airline.cash += PLANE_SCRAP_VALUE
 	DB.save_airline(airline)
 	DB.delete_plane(plane.id)
 	planes = [p for p in Plane.list_owned(DB, airline.id) if p.id != plane.id]
@@ -288,8 +291,8 @@ def scrap_plane():
 		{
 			"planes": planes,
 			"cash": airline.cash,
-			"msg": f"Plane {plane.name} sold to Mojave scrapyard for $10,000!",
-			"transaction": f"Sold {plane.name} to scrapyard for $10,000",
+			"msg": f"Plane {plane.name} sold to Mojave scrapyard for {pretty_price(PLANE_SCRAP_VALUE)}!",
+			"transaction": f"Sold {plane.name} to scrapyard for {pretty_price(PLANE_SCRAP_VALUE)}",
 		}
 	)
 

@@ -194,3 +194,26 @@ WHERE id=%s""",
 
 	def delete_plane(self, plane_id):
 		return self.execute("DELETE FROM planes WHERE id=%s", plane_id)
+
+# Sometimes it is convenient to be able to inject a lot of airports into a database:
+# DATABASE_URL="host=localhost user=postgres password=postgres sslmode=disable" PYTHONPATH=. python -c "from app.db.postgresql import inject_airports;inject_airports()"
+def inject_airports(filename="data/airports_full.json"):
+	import json
+	with open(filename, 'r') as f:
+		airports = json.load(f)
+	rows = []
+	for airport in airports:
+		try:
+			code, name, country, lat, lon, popularity = airport
+		except: # this except will catch if we didn't provide enough values
+			# currently we are not providing popularity in that big JSON
+			code, name, country, lat, lon = airport
+			popularity = 50.0
+			
+		rows.append(f"('{code}', '{name}', '{country}', {lat}, {lon}, {popularity})")
+
+	# This is slightly risky. What might go wrong if we are not in control of the JSON file?
+	sql = f"INSERT INTO airports (code, name, country, latitude, longitude, popularity) VALUES {','.join(rows)} ON CONFLICT DO NOTHING"
+	db = PostgresqlDatabase()
+	db.execute(sql)
+	db.close()
