@@ -1,10 +1,15 @@
 To run the backend:
 
 ```
+. venv/bin/activate
+DATABASE_URL="sslmode=disable host=localhost password=postgres user=postgres" PYTHONPATH=. python app/main.py
+```
+
+To set up:
+```
 python3 -m venv venv
 . venv/bin/activate
 pip install -r requirements.txt
-PYTHONPATH=. python app/main.py
 ```
 
 To format python:

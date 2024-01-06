@@ -42,7 +42,7 @@ class MockDatabase:
 
 	def get_airport_by_code(self, code: str) -> Optional[Airport]:
 		airport = self.airports.get(code)
-		logging.info("MOCKDB get_airport_by_code: %s hub is: %s", airport, airport.hub if airport else None)
+		logging.info("MOCKDB get_airport_by_code: %s code was: %s", airport, code)
 		return airport
 
 	def get_airlines(self) -> List[Airline]:

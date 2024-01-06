@@ -24,7 +24,7 @@ class PostgresqlDatabase:
 
 	def open(self):
 		start_ts = timeit.default_timer()
-		self.conn = psycopg2.connect(os.environ["DATABASE_URL"], sslmode="require")
+		self.conn = psycopg2.connect(os.environ["DATABASE_URL"], sslmode="disable")
 		logging.debug("TIMER DB connection took %s", timeit.default_timer() - start_ts)
 
 	def close(self):

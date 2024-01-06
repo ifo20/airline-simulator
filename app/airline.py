@@ -35,6 +35,8 @@ class Airline:
 		return cls(*db_row)
 
 	def load_fields(self, db):
+		if isinstance(self.hub,Airport):
+			return
 		self.hub = Airport.get_by_code(db, self.hub)
 		logging.info("load_fields: hub is now %s", self.hub)
 
