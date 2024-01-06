@@ -269,6 +269,7 @@ dd {
 .w-100 {
     width: 100%;
 }
+.text-left {text-align: left;}
 #info, #error {
     position: absolute;
     bottom: 0;
@@ -316,3 +317,5 @@ dd {
     height: 450px;
     background: grey;
 }
+
+.bgw{background-color: white;}

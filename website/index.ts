@@ -68,23 +68,30 @@ function listLabels(rows: Array<Array<String>>): HTMLElement {
 	})
 	return elem
 }
-function createElement(elementType: string, elementId?: string, className?: string, innerText?: string) {
+type createElementOptions = {
+	id?: string
+	class?: string
+	innerHTML?: string
+	innerText?: string
+}
+function createElement(elementType: string, options: createElementOptions) {
 	var e = document.createElement(elementType)
-	if (elementId) {
-		e.setAttribute("id", elementId)
+	if (options.id) {
+		e.setAttribute("id", options.id)
 	}
-	if (className) {
-		e.setAttribute("class", className)
+	if (options.class) {
+		e.setAttribute("class", options.class)
 	}
-	if (innerText) {
-		e.innerText = innerText
+	if (options.innerText) {
+		e.innerText = options.innerText
+	}
+	if (options.innerHTML) {
+		e.innerHTML = options.innerHTML
 	}
 	return e
 }
-function createTitle(text: string, elementType: string = "h1"): HTMLElement {
-	var h = document.createElement(elementType)
-	h.innerHTML = text
-	return h
+function createTitle(innerHTML: string, elementType: string = "h1"): HTMLElement {
+	return createElement(elementType, {innerHTML})
 }
 function createParagraph(text: string): HTMLParagraphElement {
 	var p = document.createElement("p")
@@ -262,17 +269,16 @@ class OfferedRoute {
 			["Popularity", this.popularity.toLocaleString("en-gb")],
 			["Cost", `$${this.purchaseCost.toLocaleString("en-gb")}`],
 		])
-		var card = document.createElement("div")
-		card.className = "flex flex-column justify-content-between"
-		card.innerHTML = `<h3>${this.fromAirport.code} <-> ${this.toAirport.code}</h3>`
+		var card = createElement("div", {
+			class: "flex flex-column justify-content-between",
+			innerHTML: `<h3>${this.fromAirport.code} <-> ${this.toAirport.code}</h3>`
+		})
 		card.appendChild(dl)
 		var footer = document.createElement("div")
-		var fromAirport = document.createElement("h5")
-		fromAirport.innerHTML = this.fromAirport.name
+		var fromAirport = createElement("h5", {innerHTML: this.fromAirport.name})
 		footer.appendChild(fromAirport)
 		footer.appendChild(document.createElement("hr"))
-		var toAirport = document.createElement("h5")
-		toAirport.innerHTML = this.toAirport.name
+		var toAirport = createElement("h5", {innerHTML: this.toAirport.name})
 		footer.appendChild(toAirport)
 		card.appendChild(footer)
 		return card
@@ -431,7 +437,7 @@ class Route {
 			})
 			return
 		}
-		var statusDiv = createElement("td", `route-status-${this.id}`, "text-center")
+		var statusDiv = createElement("td", {id:`route-status-${this.id}`, class: "text-center"})
 		statusDiv.innerText = statusText
 		actionButton.className = "text-center w-100"
 		div.appendChild(statusDiv)
@@ -440,7 +446,7 @@ class Route {
 		div.appendChild(actionButtonCell)
 	}
 	createPurchasedCardHtml(): HTMLDivElement {
-		var tr = <HTMLTableRowElement>createElement("tr", `owned-route-${this.id}`)
+		var tr = <HTMLTableRowElement>createElement("tr", {id:`owned-route-${this.id}`})
 	
 		//create dom icon and add/remove opacity listeners
 		var domIcon = new H.map.DomIcon(tr, {
@@ -474,9 +480,10 @@ class Route {
 			["Popularity", this.popularity.toLocaleString("en-gb")],
 			["Cost", `$${this.purchaseCost.toLocaleString("en-gb")}`],
 		])
-		var card = document.createElement("div")
-		card.className = "flex flex-column justify-content-between"
-		card.innerHTML = `<h3>${this.fromAirport.code} <-> ${this.toAirport.code}</h3>`
+		var card = createElement("div", {
+			class: "flex flex-column justify-content-between",
+			innerHTML: `<h3>${this.fromAirport.code} <-> ${this.toAirport.code}</h3>`
+		})
 		card.appendChild(dl)
 		var footer = document.createElement("div")
 		var fromAirport = document.createElement("h5")
@@ -630,14 +637,17 @@ class Airline {
 		}
 		const placeholder = <HTMLElement>document.getElementById("airlineStats")
 		placeholder.innerHTML = ""
-		placeholder.appendChild(this.statsHtml())
+		placeholder.appendChild(dataLabels([
+			["Cash", prettyCashString(this.cash)],
+			["Popularity", String(this.popularity)],
+		]))
 	}
 	addTransaction(msg: string): void {
 		this.transactions.push(`${new Date()} ${prettyCashString(this.cash)} ${msg}`)
 	}
 	titleHtml(): HTMLElement {
 		return createTitle(
-			`${this.name}<strong>Hub: ${this.hub.code}</strong> <strong> Joined: ${this.joined.toLocaleDateString()} </strong>`,
+			`${this.name}<strong>Hub: ${this.hub.code}</strong>`,
 			"h2",
 		)
 	}
@@ -648,6 +658,7 @@ class Airline {
 			["Routes", String(this.routes.length)],
 			["Popularity", String(this.popularity)],
 			["Rank", this.rank],
+			["Joined", this.joined.toLocaleDateString()],
 		])
 		return dl
 	}
@@ -712,6 +723,82 @@ class Airline {
 	}
 	getRoutesDisplay(): HTMLElement {
 		const routesContainer = <HTMLElement>document.getElementById("owned-routes")
+		this.getMap();
+		this.routes.forEach(route => {
+			var div = document.getElementById(`owned-route-${route.id}`)
+			if (!div) {
+				routesContainer.appendChild(route.createPurchasedCardHtml())
+			}
+		})
+		return routesContainer
+	}
+	getReputationDisplay(): HTMLElement {
+		var div = document.createElement("div")
+		var heading = createTitle("Reputation and Reviews")
+		div.appendChild(heading)
+
+		var p = createElement("p", {class: "p-3"})
+		var numStars = 0
+		if (this.popularity > 89) {
+			p.innerText = `Customers favorite airline in ${this.hub.country}!`
+			numStars = 5
+		} else if (this.popularity > 69) {
+			p.innerText = `Very reputable airline`
+			numStars = 4
+		} else if (this.popularity > 49) {
+			p.innerText = `Distinctly average`
+			numStars = 3
+		} else if (this.popularity > 39) {
+			p.innerText = `Poor reputation`
+			numStars = 2
+		} else {
+			p.innerText = `Customers least favorite choice`
+			numStars = 1
+		}
+		for (var i = 0; i < 5; i++) {
+			var span = document.createElement("span")
+			span.className = "fa fa-star"
+			if (i < numStars) {
+				span.classList.add("checked")
+			}
+			div.appendChild(span)
+		}
+		div.appendChild(p)
+		return div
+	}
+	getFinanceDisplay(): HTMLElement {
+		var div = document.createElement("div")
+		var heading = createTitle("Finances")
+		div.appendChild(heading)
+		var tbl = createElement("table", {})
+		var tbody = createElement("tbody", {})
+		this.transactions.forEach(t => {
+			var tr = createElement("tr", {class: "bgw"})
+			var td = createElement("td", {innerText: t, class: "text-left"})
+			tr.appendChild(td)
+			tbody.appendChild(tr)
+		})
+		tbl.appendChild(tbody)
+		div.appendChild(tbl)
+		return div
+	}
+	getAccidentsDisplay(): HTMLElement {
+		var div = document.createElement("div")
+		var heading = createTitle("Accidents")
+		div.appendChild(heading)
+		var tbl = createElement("table", {})
+		var tbody = createElement("tbody", {})
+		this.incidents.forEach(t => {
+			var tr = createElement("tr", {class: "bgw"})
+			var td = createElement("td", {innerText: t, class: "text-left"})
+			tr.appendChild(td)
+			tbody.appendChild(tr)
+		})
+		tbl.appendChild(tbody)
+		div.appendChild(tbl)
+		return div
+	}
+	getMap(): H.Map {
 		if (!gameEngine.routeMap) {
 			var platform = new H.service.Platform({
 				'apikey': 'r7U4pzaJCQZVOL0cJLmpjQz0Sqzf3Wlq7LJwg3fbvik'
@@ -743,68 +830,7 @@ class Airline {
 				map.addObject(marker);
 			}, 3000);
 		}
-		this.routes.forEach(route => {
-			var div = document.getElementById(`owned-route-${route.id}`)
-			if (!div) {
-				routesContainer.appendChild(route.createPurchasedCardHtml())
-			}
-		})
-		return routesContainer
-	}
-	getReputationDisplay(): HTMLElement {
-		var div = document.createElement("div")
-		var heading = document.createElement("h2")
-		heading.innerHTML = "Reputation and Reviews"
-		div.appendChild(heading)
-
-		var p = document.createElement("p")
-		var numStars = 0
-		if (this.popularity > 89) {
-			p.innerText = `Customers favorite airline in ${this.hub.country}!`
-			numStars = 5
-		} else if (this.popularity > 69) {
-			p.innerText = `Very reputable airline`
-			numStars = 4
-		} else if (this.popularity > 49) {
-			p.innerText = `Distinctly average`
-			numStars = 3
-		} else if (this.popularity > 39) {
-			p.innerText = `Poor reputation`
-			numStars = 2
-		} else {
-			p.innerText = `Customers least favorite choice`
-			numStars = 1
-		}
-		for (var i = 0; i < 5; i++) {
-			var span = document.createElement("span")
-			span.className = "fa fa-star"
-			if (i < numStars) {
-				span.classList.add("checked")
-			}
-			div.appendChild(span)
-		}
-		div.appendChild(p)
-		return div
-	}
-	getFinanceDisplay(): HTMLElement {
-		var div = document.createElement("div")
-		var heading = document.createElement("h3")
-		heading.innerHTML = "Finances"
-		div.appendChild(heading)
-		this.transactions.forEach(t => {
-			div.appendChild(createParagraph(t))
-		})
-		return div
-	}
-	getAccidentsDisplay(): HTMLElement {
-		var div = document.createElement("div")
-		var heading = document.createElement("h2")
-		heading.innerHTML = "Accidents"
-		div.appendChild(heading)
-		this.incidents.forEach(t => {
-			div.appendChild(createParagraph(t))
-		})
-		return div
+		return gameEngine.routeMap
 	}
 }
 
@@ -820,11 +846,6 @@ class GameEngine {
 		this.airline = airline
 		displayInfo("Please Choose your new route.")
 		this.displayRoutesTab()
-	}
-
-	progressDay(): void {
-		this.days += 1
-		this.today.setDate(this.today.getDate() + 1);
 	}
 	loadAirports(): void {
 		if (this.airports.length === 0) {
@@ -859,8 +880,11 @@ class GameEngine {
 		var airline = <Airline>this.airline
 		var heading = createTitle(airline.name)
 		main.appendChild(heading)
+		main.appendChild(airline.statsHtml())
 		main.appendChild(airline.getReputationDisplay())
 		main.appendChild(airline.getAccidentsDisplay())
+		// This doesn't work - looks like we can only have one map?
+		airline.getMap()
 	}
 	displayFleetTab(): void {
 		this.hideTabs("fleet")
@@ -918,12 +942,12 @@ class GameEngine {
 	createSideMenu(): void {
 		var sideMenu = <HTMLElement>document.getElementById("sidemenu")
 		var buttons = [
-			createElement("button", "viewCompany", "flex-grow dark", `Overview of ${(<Airline>this.airline).name}`),
-			createElement("button", "viewFleet", "flex-grow dark", `Overview of Fleet`),
-			createElement("button", "viewRoutes", "flex-grow dark", `Overview of Routes`),
-			createElement("button", "viewReputation", "flex-grow dark", `Overview of Reputation`),
-			createElement("button", "viewFinance", "flex-grow dark", `Overview of Finance`),
-			createElement("button", "viewAccidents", "flex-grow dark", `Overview of Accidents`),
+			createElement("button", {id:"viewCompany", class: "flex-grow dark", innerText:`Overview of ${(<Airline>this.airline).name}`}),
+			createElement("button", {id:"viewFleet", class: "flex-grow dark", innerText:`Overview of Fleet`}),
+			createElement("button", {id:"viewRoutes", class: "flex-grow dark", innerText:`Overview of Routes`}),
+			createElement("button", {id:"viewReputation", class: "flex-grow dark", innerText:`Overview of Reputation`}),
+			createElement("button", {id:"viewFinance", class: "flex-grow dark", innerText:`Overview of Finance`}),
+			createElement("button", {id:"viewAccidents", class: "flex-grow dark", innerText:`Overview of Accidents`}),
 		]
 		const setScreen = (buttonId: string) => {
 			buttons.forEach(b => {

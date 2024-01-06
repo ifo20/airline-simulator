@@ -68,24 +68,25 @@ function listLabels(rows) {
     });
     return elem;
 }
-function createElement(elementType, elementId, className, innerText) {
+function createElement(elementType, options) {
     var e = document.createElement(elementType);
-    if (elementId) {
-        e.setAttribute("id", elementId);
+    if (options.id) {
+        e.setAttribute("id", options.id);
     }
-    if (className) {
-        e.setAttribute("class", className);
+    if (options["class"]) {
+        e.setAttribute("class", options["class"]);
     }
-    if (innerText) {
-        e.innerText = innerText;
+    if (options.innerText) {
+        e.innerText = options.innerText;
+    }
+    if (options.innerHTML) {
+        e.innerHTML = options.innerHTML;
     }
     return e;
 }
-function createTitle(text, elementType) {
+function createTitle(innerHTML, elementType) {
     if (elementType === void 0) { elementType = "h1"; }
-    var h = document.createElement(elementType);
-    h.innerHTML = text;
-    return h;
+    return createElement(elementType, { innerHTML: innerHTML });
 }
 function createParagraph(text) {
     var p = document.createElement("p");
@@ -242,17 +243,16 @@ var OfferedRoute = /** @class */ (function () {
             ["Popularity", this.popularity.toLocaleString("en-gb")],
             ["Cost", "$".concat(this.purchaseCost.toLocaleString("en-gb"))],
         ]);
-        var card = document.createElement("div");
-        card.className = "flex flex-column justify-content-between";
-        card.innerHTML = "<h3>".concat(this.fromAirport.code, " <-> ").concat(this.toAirport.code, "</h3>");
+        var card = createElement("div", {
+            "class": "flex flex-column justify-content-between",
+            innerHTML: "<h3>".concat(this.fromAirport.code, " <-> ").concat(this.toAirport.code, "</h3>")
+        });
         card.appendChild(dl);
         var footer = document.createElement("div");
-        var fromAirport = document.createElement("h5");
-        fromAirport.innerHTML = this.fromAirport.name;
+        var fromAirport = createElement("h5", { innerHTML: this.fromAirport.name });
         footer.appendChild(fromAirport);
         footer.appendChild(document.createElement("hr"));
-        var toAirport = document.createElement("h5");
-        toAirport.innerHTML = this.toAirport.name;
+        var toAirport = createElement("h5", { innerHTML: this.toAirport.name });
         footer.appendChild(toAirport);
         card.appendChild(footer);
         return card;
@@ -401,7 +401,7 @@ var Route = /** @class */ (function () {
             });
             return;
         }
-        var statusDiv = createElement("td", "route-status-".concat(this.id), "text-center");
+        var statusDiv = createElement("td", { id: "route-status-".concat(this.id), "class": "text-center" });
         statusDiv.innerText = statusText;
         actionButton.className = "text-center w-100";
         div.appendChild(statusDiv);
@@ -411,7 +411,7 @@ var Route = /** @class */ (function () {
     };
     Route.prototype.createPurchasedCardHtml = function () {
         var _this = this;
-        var tr = createElement("tr", "owned-route-".concat(this.id));
+        var tr = createElement("tr", { id: "owned-route-".concat(this.id) });
         //create dom icon and add/remove opacity listeners
         var domIcon = new H.map.DomIcon(tr, {
             // the function is called every time marker enters the viewport
@@ -439,9 +439,10 @@ var Route = /** @class */ (function () {
             ["Popularity", this.popularity.toLocaleString("en-gb")],
             ["Cost", "$".concat(this.purchaseCost.toLocaleString("en-gb"))],
         ]);
-        var card = document.createElement("div");
-        card.className = "flex flex-column justify-content-between";
-        card.innerHTML = "<h3>".concat(this.fromAirport.code, " <-> ").concat(this.toAirport.code, "</h3>");
+        var card = createElement("div", {
+            "class": "flex flex-column justify-content-between",
+            innerHTML: "<h3>".concat(this.fromAirport.code, " <-> ").concat(this.toAirport.code, "</h3>")
+        });
         card.appendChild(dl);
         var footer = document.createElement("div");
         var fromAirport = document.createElement("h5");
@@ -582,13 +583,16 @@ var Airline = /** @class */ (function () {
         }
         var placeholder = document.getElementById("airlineStats");
         placeholder.innerHTML = "";
-        placeholder.appendChild(this.statsHtml());
+        placeholder.appendChild(dataLabels([
+            ["Cash", prettyCashString(this.cash)],
+            ["Popularity", String(this.popularity)],
+        ]));
     };
     Airline.prototype.addTransaction = function (msg) {
         this.transactions.push("".concat(new Date(), " ").concat(prettyCashString(this.cash), " ").concat(msg));
     };
     Airline.prototype.titleHtml = function () {
-        return createTitle("".concat(this.name, "<strong>Hub: ").concat(this.hub.code, "</strong> <strong> Joined: ").concat(this.joined.toLocaleDateString(), " </strong>"), "h2");
+        return createTitle("".concat(this.name, "<strong>Hub: ").concat(this.hub.code, "</strong>"), "h2");
     };
     Airline.prototype.statsHtml = function () {
         var dl = dataLabels([
@@ -597,6 +601,7 @@ var Airline = /** @class */ (function () {
             ["Routes", String(this.routes.length)],
             ["Popularity", String(this.popularity)],
             ["Rank", this.rank],
+            ["Joined", this.joined.toLocaleDateString()],
         ]);
         return dl;
     };
@@ -659,38 +664,8 @@ var Airline = /** @class */ (function () {
         return div;
     };
     Airline.prototype.getRoutesDisplay = function () {
-        var _this = this;
         var routesContainer = document.getElementById("owned-routes");
-        if (!gameEngine.routeMap) {
-            var platform = new H.service.Platform({
-                'apikey': 'r7U4pzaJCQZVOL0cJLmpjQz0Sqzf3Wlq7LJwg3fbvik'
-            });
-            var defaultLayers = platform.createDefaultLayers();
-            //Step 2: initialize a map - this map is centered over Europe
-            var map = new H.Map(document.getElementById('map'), defaultLayers.vector.normal.map, {
-                center: { lat: this.hub.lat, lng: this.hub.lon },
-                zoom: 3,
-                pixelRatio: window.devicePixelRatio || 1
-            });
-            gameEngine.ui = H.ui.UI.createDefault(map, defaultLayers);
-            map.setBaseLayer(defaultLayers.raster.satellite.map);
-            // MapEvents enables the event system
-            // Behavior implements default interactions for pan/zoom (also on mobile touch environments)
-            var behavior = new H.mapevents.Behavior(new H.mapevents.MapEvents(map));
-            // add a resize listener to make sure that the map occupies the whole container
-            window.addEventListener('resize', function () { return map.getViewPort().resize(); });
-            gameEngine.routeMap = map;
-            setTimeout(function () {
-                var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><path fill="#f28bc1" d="M1.9 32c0 13.1 8.4 24.2 20 28.3V3.7C10.3 7.8 1.9 18.9 1.9 32z"/><path fill="#ed4c5c" d="M61.9 32c0-13.1-8.3-24.2-20-28.3v56.6c11.7-4.1 20-15.2 20-28.3"/><path fill="#fff" d="M21.9 60.3c3.1 1.1 6.5 1.7 10 1.7s6.9-.6 10-1.7V3.7C38.8 2.6 35.5 2 31.9 2s-6.9.6-10 1.7v56.6"/></svg>';
-                var marker = new H.map.Marker({
-                    lat: _this.hub.lat,
-                    lng: _this.hub.lon
-                }, {
-                // icon: new H.map.Icon(svg)
-                });
-                map.addObject(marker);
-            }, 3000);
-        }
+        this.getMap();
         this.routes.forEach(function (route) {
             var div = document.getElementById("owned-route-".concat(route.id));
             if (!div) {
@@ -701,10 +676,9 @@ var Airline = /** @class */ (function () {
     };
     Airline.prototype.getReputationDisplay = function () {
         var div = document.createElement("div");
-        var heading = document.createElement("h2");
-        heading.innerHTML = "Reputation and Reviews";
+        var heading = createTitle("Reputation and Reviews");
         div.appendChild(heading);
-        var p = document.createElement("p");
+        var p = createElement("p", { "class": "p-3" });
         var numStars = 0;
         if (this.popularity > 89) {
             p.innerText = "Customers favorite airline in ".concat(this.hub.country, "!");
@@ -739,23 +713,69 @@ var Airline = /** @class */ (function () {
     };
     Airline.prototype.getFinanceDisplay = function () {
         var div = document.createElement("div");
-        var heading = document.createElement("h3");
-        heading.innerHTML = "Finances";
+        var heading = createTitle("Finances");
         div.appendChild(heading);
+        var tbl = createElement("table", {});
+        var tbody = createElement("tbody", {});
         this.transactions.forEach(function (t) {
-            div.appendChild(createParagraph(t));
+            var tr = createElement("tr", { "class": "bgw" });
+            var td = createElement("td", { innerText: t, "class": "text-left" });
+            tr.appendChild(td);
+            tbody.appendChild(tr);
         });
+        tbl.appendChild(tbody);
+        div.appendChild(tbl);
         return div;
     };
     Airline.prototype.getAccidentsDisplay = function () {
         var div = document.createElement("div");
-        var heading = document.createElement("h2");
-        heading.innerHTML = "Accidents";
+        var heading = createTitle("Accidents");
         div.appendChild(heading);
+        var tbl = createElement("table", {});
+        var tbody = createElement("tbody", {});
         this.incidents.forEach(function (t) {
-            div.appendChild(createParagraph(t));
+            var tr = createElement("tr", { "class": "bgw" });
+            var td = createElement("td", { innerText: t, "class": "text-left" });
+            tr.appendChild(td);
+            tbody.appendChild(tr);
         });
+        tbl.appendChild(tbody);
+        div.appendChild(tbl);
         return div;
+    };
+    Airline.prototype.getMap = function () {
+        var _this = this;
+        if (!gameEngine.routeMap) {
+            var platform = new H.service.Platform({
+                'apikey': 'r7U4pzaJCQZVOL0cJLmpjQz0Sqzf3Wlq7LJwg3fbvik'
+            });
+            var defaultLayers = platform.createDefaultLayers();
+            //Step 2: initialize a map - this map is centered over Europe
+            var map = new H.Map(document.getElementById('map'), defaultLayers.vector.normal.map, {
+                center: { lat: this.hub.lat, lng: this.hub.lon },
+                zoom: 3,
+                pixelRatio: window.devicePixelRatio || 1
+            });
+            gameEngine.ui = H.ui.UI.createDefault(map, defaultLayers);
+            map.setBaseLayer(defaultLayers.raster.satellite.map);
+            // MapEvents enables the event system
+            // Behavior implements default interactions for pan/zoom (also on mobile touch environments)
+            var behavior = new H.mapevents.Behavior(new H.mapevents.MapEvents(map));
+            // add a resize listener to make sure that the map occupies the whole container
+            window.addEventListener('resize', function () { return map.getViewPort().resize(); });
+            gameEngine.routeMap = map;
+            setTimeout(function () {
+                var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><path fill="#f28bc1" d="M1.9 32c0 13.1 8.4 24.2 20 28.3V3.7C10.3 7.8 1.9 18.9 1.9 32z"/><path fill="#ed4c5c" d="M61.9 32c0-13.1-8.3-24.2-20-28.3v56.6c11.7-4.1 20-15.2 20-28.3"/><path fill="#fff" d="M21.9 60.3c3.1 1.1 6.5 1.7 10 1.7s6.9-.6 10-1.7V3.7C38.8 2.6 35.5 2 31.9 2s-6.9.6-10 1.7v56.6"/></svg>';
+                var marker = new H.map.Marker({
+                    lat: _this.hub.lat,
+                    lng: _this.hub.lon
+                }, {
+                // icon: new H.map.Icon(svg)
+                });
+                map.addObject(marker);
+            }, 3000);
+        }
+        return gameEngine.routeMap;
     };
     return Airline;
 }());
@@ -770,10 +790,6 @@ var GameEngine = /** @class */ (function () {
         this.airline = airline;
         displayInfo("Please Choose your new route.");
         this.displayRoutesTab();
-    };
-    GameEngine.prototype.progressDay = function () {
-        this.days += 1;
-        this.today.setDate(this.today.getDate() + 1);
     };
     GameEngine.prototype.loadAirports = function () {
         if (this.airports.length === 0) {
@@ -809,8 +825,11 @@ var GameEngine = /** @class */ (function () {
         var airline = this.airline;
         var heading = createTitle(airline.name);
         main.appendChild(heading);
+        main.appendChild(airline.statsHtml());
         main.appendChild(airline.getReputationDisplay());
         main.appendChild(airline.getAccidentsDisplay());
+        // This doesn't work - looks like we can only have one map?
+        airline.getMap();
     };
     GameEngine.prototype.displayFleetTab = function () {
         this.hideTabs("fleet");
@@ -868,12 +887,12 @@ var GameEngine = /** @class */ (function () {
     GameEngine.prototype.createSideMenu = function () {
         var sideMenu = document.getElementById("sidemenu");
         var buttons = [
-            createElement("button", "viewCompany", "flex-grow dark", "Overview of ".concat(this.airline.name)),
-            createElement("button", "viewFleet", "flex-grow dark", "Overview of Fleet"),
-            createElement("button", "viewRoutes", "flex-grow dark", "Overview of Routes"),
-            createElement("button", "viewReputation", "flex-grow dark", "Overview of Reputation"),
-            createElement("button", "viewFinance", "flex-grow dark", "Overview of Finance"),
-            createElement("button", "viewAccidents", "flex-grow dark", "Overview of Accidents"),
+            createElement("button", { id: "viewCompany", "class": "flex-grow dark", innerText: "Overview of ".concat(this.airline.name) }),
+            createElement("button", { id: "viewFleet", "class": "flex-grow dark", innerText: "Overview of Fleet" }),
+            createElement("button", { id: "viewRoutes", "class": "flex-grow dark", innerText: "Overview of Routes" }),
+            createElement("button", { id: "viewReputation", "class": "flex-grow dark", innerText: "Overview of Reputation" }),
+            createElement("button", { id: "viewFinance", "class": "flex-grow dark", innerText: "Overview of Finance" }),
+            createElement("button", { id: "viewAccidents", "class": "flex-grow dark", innerText: "Overview of Accidents" }),
         ];
         var setScreen = function (buttonId) {
             buttons.forEach(function (b) {
