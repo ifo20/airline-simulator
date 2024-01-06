@@ -57,7 +57,7 @@ class PostgresqlDatabase:
 
 	def get_airports(self) -> List[List[Any]]:
 		return [
-			Airport.from_db_row(db_row) for db_row in self.fetch_all("SELECT * FROM airports")
+			Airport.from_db_row(db_row) for db_row in self.fetch_all("SELECT * FROM airports ORDER BY popularity DESC")
 		]
 
 	def get_airport_by_code(self, code: str) -> List[Any]:

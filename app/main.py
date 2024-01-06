@@ -127,11 +127,9 @@ def leaderboard():
 
 @app.route("/airports")
 def list_airports():
-	# It's a bit slow to load all of them. Let's give them a random.... 1,000?
+	# It's a bit slow to load all of them. Let's take the first 300?
 	airports = DB.get_airports()
-	import random
-	random.shuffle(airports)
-	return jsonify(airports[:1000])
+	return jsonify(airports[:300])
 
 
 @app.route("/play", methods=["POST"])
