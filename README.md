@@ -31,3 +31,10 @@ To run the test client (the server should already be running):
 PYTHONPATH=. python client/__init__.py
 ```
 
+We currently have the following objects: 
+- airline
+- airport
+- plane
+- route
+
+The player can make money by running routes.
