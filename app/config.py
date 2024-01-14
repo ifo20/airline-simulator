@@ -14,4 +14,4 @@ FLIGHT_PROFIT_HACK = 0
 import locale
 def pretty_price(price):
     locale.setlocale( locale.LC_ALL, 'en_US.utf-8')
-    return f"${locale.currency(price, grouping=True)}"
+    return f"{locale.currency(price, grouping=True)}"

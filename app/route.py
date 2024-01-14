@@ -193,7 +193,7 @@ class Route:
 		), "These results have already been collected!"
 
 		self.last_resulted_at = datetime.now(pytz.UTC)
-		return route_logic(airline.name)
+		return route_logic(airline.name,self.distance)
 
 	def calculate_distance(self) -> float:
 		def deg2rad(deg):

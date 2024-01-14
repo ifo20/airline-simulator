@@ -1,14 +1,16 @@
 import random
 
-from app.config import DAMAGE_MULTIPLIER, FLIGHT_PROFIT_HACK
+from app.config import DAMAGE_MULTIPLIER, FLIGHT_PROFIT_HACK, pretty_price
 
 
-def route_logic(airline_name):
+def route_logic(airline_name, distance):
     num_passengers = random.randint(100, 500)
-    income = 100 * num_passengers
+    price_per_passenger = 40 + distance/13
+    income = price_per_passenger * num_passengers
     if "Golden" in airline_name:
         income *= 3
-    cost = random.randint(500, 1000)
+    cost_per_passenger = 40 
+    cost = random.randint(500, 1000) + distance + num_passengers * cost_per_passenger
     if "Sturdy" in airline_name or "Robust" in airline_name:
         plane_health_cost = 0
         fire_prob = 0.000001
@@ -39,14 +41,14 @@ def route_logic(airline_name):
     else:
         incident = None
 
-    cash_change = income - cost
+    cash_change = int(income - cost)
     if cash_change >= 0:
         msg = (
-            f"Route completed with {num_passengers} passengers and a profit of ${income - cost}"
+            f"Route completed with {num_passengers} passengers and a profit of {pretty_price(income - cost)}"
         )
     else:
         msg = (
-            f"Route completed with {num_passengers} passengers and a loss of ${cost - income}"
+            f"Route completed with {num_passengers} passengers and a loss of {pretty_price(cost - income)}"
         )
     plane_health_cost *= DAMAGE_MULTIPLIER
     cash_change += FLIGHT_PROFIT_HACK
