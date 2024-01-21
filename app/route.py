@@ -175,7 +175,10 @@ class Route:
 
 	def run(self, airline):
 		self.last_run_at = datetime.now(pytz.UTC)
-		duration = timedelta(seconds=5 + self.distance / 20)
+		kms_per_second = 0.1
+		travelling_time_seconds = self.distance / kms_per_second
+		onboarding_time_seconds = 5
+		duration = timedelta(seconds=onboarding_time_seconds + travelling_time_seconds)
 		duration /= TIME_SPEED
 		if "Speedy" in airline.name:
 			duration /= 2
