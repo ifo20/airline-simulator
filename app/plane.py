@@ -22,21 +22,47 @@ def ensure_loaded(planes, db):
 def generate_name():
 	return random.choice(
 		[
-			"Boeing 737-800",
-			"Boeing 737-900",
-			"Boeing 737 Max 9",
-			"Boeing 747",
-			"Boeing 757",
-			"Boeing 767",
+			"Boeing 737-800NG (Next Generation)",
+   			"Boeing 737-900NG (Next Generation)",
+      		"Boeing 737-900ER (Extended Range)",
+        
+        	"Boeing 737 MAX 7",
+         	"Boeing 737 MAX 8",
+			"Boeing 737 MAX 9",
+   			"Boeing 737 MAX 10",
+      
+			"Boeing 747-400",
+   			"Boeing 747-400ER (Extended Range)",
+
+			"Boeing 757-200"
+   			"Boeing 757-300"
+			"Boeing 757-200ER (Extended Range)",
+    
+			"Boeing 767-200",
+   			"Boeing 767-300",
+      		"Boeing 767-400",
+        	"Boeing 767-200ER (Extended Range)",
+   			"Boeing 767-300ER (Extended Range)",
+   			"Boeing 767-400ER (Extended Range)",
+   
 			"Boeing 777",
 			"Boeing 777-200",
-			"Boeing 777X",
-			"Boeing 777-300",
-			"Boeing 787 Dreamliner",
-			"Airbus A320",
-			"Airbus A330",
-			"Airbus A350",
-			"Airbus A360",
+			"Boeing 777-200",
+   			"Boeing 777-300",
+   			"Boeing 777-300ER (Extended Range)",
+			"Boeing 777-200ER (Extended Range)",
+			"Boeing 777-200LR (Long Range)",
+			
+   			"Boeing 777X",
+   			"Boeing 777-8X",
+			"Boeing 777-9X",
+   			"Boeing 777-10X",
+			
+			"Boeing 787-8 Dreamliner",
+			"Boeing 787-9 Dreamliner",
+			"Boeing 787-10 Dreamliner",
+
+			#TBD: ADD AIRBUS, ATR AND EMBRAER AIRCRAFT
 		]
 	)
 
