@@ -4,14 +4,12 @@ import math
 import random
 import pytz
 from typing import List, Union
-from app.economics import route_logic
 from app.airline import Airline
 from app.airport import Airport
 from app.economics import route_logic
 from app.config import (
 	DAMAGE_MULTIPLIER,
 	FLIGHT_PROFIT_HACK,
-	FUEL_COST_PER_KM,
 	TIME_SPEED,
 )
 
@@ -105,7 +103,7 @@ class Route:
 			popularity = random.randint(10, 100)
 			cost = (
 				popularity * 100
-				+ (destination.distance_from(hub) * FUEL_COST_PER_KM)
+				+ (destination.distance_from(hub) * random.randint(8, 12))
 				+ random.randint(1, 10000)
 			)
 			route = Route(None, airline.id, hub, destination, cost, popularity, now_ts)
@@ -199,7 +197,7 @@ class Route:
 		), "These results have already been collected!"
 
 		self.last_resulted_at = datetime.now(pytz.UTC)
-		return route_logic(airline.name,self.distance)
+		return route_logic(airline.name,self.distance, airline.fuel_efficiency_level)
 
 	def calculate_distance(self) -> float:
 		def deg2rad(deg):
