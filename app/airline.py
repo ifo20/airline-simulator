@@ -21,6 +21,7 @@ class Airline:
 		last_login_at=None,
 		cash=STARTING_CASH,
 		popularity=STARTING_POPULARITY,
+		fuel_efficiency_level=0
 	):
 		self.id = id
 		self.name = name
@@ -29,6 +30,7 @@ class Airline:
 		self.last_login_at = last_login_at or datetime.now(pytz.UTC)
 		self.cash = cash
 		self.popularity = popularity
+		self.fuel_efficiency_level = 0
 
 	@classmethod
 	def from_db_row(cls, db_row):

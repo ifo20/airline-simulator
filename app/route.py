@@ -4,7 +4,6 @@ import math
 import random
 import pytz
 from typing import List, Union
-from app.economics import route_logic
 from app.airline import Airline
 from app.airport import Airport
 from app.economics import route_logic
@@ -198,7 +197,7 @@ class Route:
 		), "These results have already been collected!"
 
 		self.last_resulted_at = datetime.now(pytz.UTC)
-		return route_logic(airline.name,self.distance)
+		return route_logic(airline.name,self.distance, airline.fuel_efficiency_level)
 
 	def calculate_distance(self) -> float:
 		def deg2rad(deg):
