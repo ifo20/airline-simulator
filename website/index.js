@@ -366,6 +366,7 @@ var Route = /** @class */ (function () {
         costCell.innerHTML = "$" + this.purchaseCost.toLocaleString("en-gb");
         div.appendChild(costCell);
         var actionButton = document.createElement("button");
+        actionButton.className = "text-center w-100";
         var statusText = "";
         console.log('updatePurchasedCardContent', this.status);
         if (this.timeRemaining()) {
@@ -383,7 +384,7 @@ var Route = /** @class */ (function () {
             statusText = "Landed at " + this.toAirport.code + "!";
             actionButton.addEventListener("click", makeClickWrapper(actionButton, function () { return _this.getResults(actionButton); }));
             actionButton.innerHTML = "Collect Route";
-            actionButton.className = "collectable";
+            actionButton.classList.add("collectable");
         }
         else {
             statusText = "Retrieving status...";
@@ -404,7 +405,6 @@ var Route = /** @class */ (function () {
         }
         var statusDiv = createElement("td", { id: "route-status-" + this.id, "class": "text-center" });
         statusDiv.innerText = statusText;
-        actionButton.className = "text-center w-100";
         div.appendChild(statusDiv);
         var actionButtonCell = document.createElement("td");
         actionButtonCell.appendChild(actionButton);

@@ -5,7 +5,7 @@ import pytz
 
 from app.airport import Airport
 
-STARTING_CASH = 1000000
+STARTING_CASH = 30000000
 STARTING_POPULARITY = 50
 
 

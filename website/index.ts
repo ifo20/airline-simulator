@@ -7,8 +7,8 @@ function errHandler(err, button?: HTMLButtonElement) {
 	}
 }
 function randomBusinessName(): string {
-	var adjectives: Array<string> = ["Blue", "Red", "Green", "Purple", "Orange", "White", "Trusty", "Speedy", "Enigmatic", "Fly", "Golden", "Sturdy", "Graceful", "Rapid", "Robust", "American", "British", "Asian", "European", "Indian", "Italian", "Australian", "Chinese", "Russian", "Nordic", "Southern", "Northern", "Southwest", "Express", "Paper", "Malaysia", "Thai"]
-	var nouns: Array<string> = ["Planes", "Airways", "Skies", "Air", "Airlines", "Flyers", "Jets", "Pilots", "Air Transport", "Helicopters", "Cargo"]
+	var adjectives: Array<string> = ["Easy", "Budget", "Trusty", "Speedy", "Enigmatic", "Fly", "Golden", "Sturdy", "Graceful", "Rapid", "Robust", "American", "British", "Asian", "European", "Indian", "Italian", "Australian", "Chinese", "Russian", "Nordic", "Southern", "Northern", "Southwest", "Paper", "Malaysian", "Thai", "Smile", ""]
+	var nouns: Array<string> = ["Airways", "Skies", "Air", "Airlines", "Flyers", "Jets", "Pilots", "Air Transport", "Helicopters", "Cargo", "Regional", "Express"]
 	var name: string = `${randomChoice(adjectives)} ${randomChoice(nouns)}`
 	if (Math.random() < 0.3) {
 		var name = randomChoice(adjectives) + ' ' + name
@@ -405,6 +405,7 @@ class Route {
 		div.appendChild(costCell)
 
 		var actionButton = document.createElement("button")
+		actionButton.className = "text-center w-100"
 		var statusText = ""
         console.log('updatePurchasedCardContent', this.status);
 		if (this.timeRemaining()) {
@@ -420,6 +421,7 @@ class Route {
 			statusText = `Landed at ${this.toAirport.code}!`
 			actionButton.addEventListener("click", makeClickWrapper(actionButton, () => this.getResults(actionButton)))
 			actionButton.innerHTML = "Collect Route"
+			actionButton.classList.add("collectable") 
 		} else {
 			statusText = "Retrieving status..."
 			actionButton.innerHTML = ""
@@ -439,7 +441,6 @@ class Route {
 		}
 		var statusDiv = createElement("td", {id:`route-status-${this.id}`, class: "text-center"})
 		statusDiv.innerText = statusText
-		actionButton.className = "text-center w-100"
 		div.appendChild(statusDiv)
 		var actionButtonCell = document.createElement("td")
 		actionButtonCell.appendChild(actionButton)

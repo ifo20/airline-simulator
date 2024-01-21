@@ -1,5 +1,4 @@
 import random
-
 from app.config import DAMAGE_MULTIPLIER, FLIGHT_PROFIT_HACK, pretty_price
 
 def calculate_fuel_cost(distance, num_passengers, fuel_efficiency_level):
@@ -20,9 +19,10 @@ def calculate_fuel_cost(distance, num_passengers, fuel_efficiency_level):
 
 
 def route_logic(airline_name, distance, fuel_efficiency_level=0):
-    num_passengers = random.randint(100, 500)
-    price_per_passenger = 40 + distance/13
+    num_passengers = random.randint(100, 350)
+    price_per_passenger = 75 + distance/13
     income = price_per_passenger * num_passengers
+
     if "Golden" in airline_name:
         income *= 3
     fuel_cost = calculate_fuel_cost(distance, num_passengers, fuel_efficiency_level)
@@ -34,12 +34,14 @@ def route_logic(airline_name, distance, fuel_efficiency_level=0):
         plane_health_cost = 0
         fire_prob = 0.000001
         smoke_prob = 0.01
+
     else:
         plane_health_cost = random.randint(1, 10)
         fire_prob = 0.01
         smoke_prob = 0.1
 
     popularity_change = random.randint(0, 1)  # ev: 0.5
+
     if "Trusty" in airline_name:
         popularity_change += 1
 
@@ -61,6 +63,7 @@ def route_logic(airline_name, distance, fuel_efficiency_level=0):
         incident = None
 
     cash_change = int(income - cost)
+    
     if cash_change >= 0:
         msg = (
             f"Route completed with {num_passengers} passengers and a profit of {pretty_price(income - cost)}"
@@ -69,6 +72,7 @@ def route_logic(airline_name, distance, fuel_efficiency_level=0):
         msg = (
             f"Route completed with {num_passengers} passengers and a loss of {pretty_price(cost - income)}"
         )
+        
     plane_health_cost *= DAMAGE_MULTIPLIER
     cash_change += FLIGHT_PROFIT_HACK
     return cash_change, popularity_change, plane_health_cost, incident, msg
