@@ -2,10 +2,9 @@ from datetime import datetime, timedelta
 import logging
 import math
 import random
-from typing import List, Union
-
 import pytz
-
+from typing import List, Union
+from app.economics import route_logic
 from app.airline import Airline
 from app.airport import Airport
 from app.config import (
@@ -14,8 +13,6 @@ from app.config import (
 	FUEL_COST_PER_KM,
 	TIME_SPEED,
 )
-from app.economics import route_logic
-
 
 class Route:
 	def __init__(
