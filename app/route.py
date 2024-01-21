@@ -173,16 +173,21 @@ class Route:
 
 	def run(self, airline):
 		self.last_run_at = datetime.now(pytz.UTC)
+		duration = self.run_time()
+		if "Super Speedy" in airline.name:
+			duration /= 10
+		elif "Speedy" in airline.name:
+			duration /= 2
+
+		duration /= TIME_SPEED
+		self.next_available_at = self.last_run_at + duration
+
+	def run_time(self):
 		kms_per_second = 0.1
 		travelling_time_seconds = self.distance / kms_per_second
 		onboarding_time_seconds = 5
 		duration = timedelta(seconds=onboarding_time_seconds + travelling_time_seconds)
-		duration /= TIME_SPEED
-		if "Speedy" in airline.name:
-			duration /= 2
-		if "Super Speedy" in airline.name:
-			duration /= 10
-		self.next_available_at = self.last_run_at + duration
+		return duration
 
 	def collect(self, airline):
 		assert self.next_available_at and self.next_available_at < datetime.now(
