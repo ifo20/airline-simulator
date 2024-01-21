@@ -11,7 +11,6 @@ from app.airport import Airport
 from app.config import (
 	DAMAGE_MULTIPLIER,
 	FLIGHT_PROFIT_HACK,
-	FUEL_COST_PER_KM,
 	TIME_SPEED,
 )
 from app.economics import route_logic
@@ -107,7 +106,7 @@ class Route:
 			popularity = random.randint(10, 100)
 			cost = (
 				popularity * 100
-				+ (destination.distance_from(hub) * FUEL_COST_PER_KM)
+				+ (destination.distance_from(hub) * random.randint(8, 12))
 				+ random.randint(1, 10000)
 			)
 			route = Route(None, airline.id, hub, destination, cost, popularity, now_ts)

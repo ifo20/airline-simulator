@@ -5,7 +5,7 @@ import random
 from typing import List
 
 import pytz
-from app.config import FUEL_COST_PER_KM, PLANE_COST, PLANE_MINIMUM_FLYING_HEALTH, PLANE_RANGE, PLANE_STARTING_HEALTH
+from app.config import PLANE_COST, PLANE_MINIMUM_FLYING_HEALTH, PLANE_RANGE, PLANE_STARTING_HEALTH
 from app.route import Route
 
 
@@ -89,7 +89,7 @@ class Plane:
 		now_ts = datetime.now()
 		for _ in range(num_offers):
 			distance = random.randint(PLANE_RANGE["min"], PLANE_RANGE["max"])
-			cost = PLANE_COST["min"] + distance * FUEL_COST_PER_KM
+			cost = PLANE_COST["min"] + distance * random.randint(15, 25)
 			plane = Plane(
 				None,
 				airline_id,
