@@ -7,6 +7,7 @@ from typing import List, Union
 from app.economics import route_logic
 from app.airline import Airline
 from app.airport import Airport
+from app.economics import route_logic
 from app.config import (
 	DAMAGE_MULTIPLIER,
 	FLIGHT_PROFIT_HACK,

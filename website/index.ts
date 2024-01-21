@@ -405,6 +405,7 @@ class Route {
 		div.appendChild(costCell)
 
 		var actionButton = document.createElement("button")
+		actionButton.className = "text-center w-100"
 		var statusText = ""
         console.log('updatePurchasedCardContent', this.status);
 		if (this.timeRemaining()) {
@@ -420,6 +421,7 @@ class Route {
 			statusText = `Landed at ${this.toAirport.code}!`
 			actionButton.addEventListener("click", makeClickWrapper(actionButton, () => this.getResults(actionButton)))
 			actionButton.innerHTML = "Collect Route"
+			actionButton.classList.add("collectable") 
 		} else {
 			statusText = "Retrieving status..."
 			actionButton.innerHTML = ""
@@ -439,7 +441,6 @@ class Route {
 		}
 		var statusDiv = createElement("td", {id:`route-status-${this.id}`, class: "text-center"})
 		statusDiv.innerText = statusText
-		actionButton.className = "text-center w-100"
 		div.appendChild(statusDiv)
 		var actionButtonCell = document.createElement("td")
 		actionButtonCell.appendChild(actionButton)

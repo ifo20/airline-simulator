@@ -2,26 +2,27 @@ import random
 from app.config import DAMAGE_MULTIPLIER, FLIGHT_PROFIT_HACK, pretty_price
 
 def route_logic(airline_name, distance):
-    num_passengers = random.randint(100, 500)
-    price_per_passenger = 40 + distance/13
+    num_passengers = random.randint(100, 350)
+    price_per_passenger = 75 + distance/13
     income = price_per_passenger * num_passengers
-    
+
     if "Golden" in airline_name:
         income *= 3
     cost_per_passenger = 40 
     cost = random.randint(500, 1000) + distance + num_passengers * cost_per_passenger
-    
+
     if "Sturdy" in airline_name or "Robust" in airline_name:
         plane_health_cost = 0
         fire_prob = 0.000001
         smoke_prob = 0.01
+
     else:
         plane_health_cost = random.randint(1, 10)
         fire_prob = 0.01
         smoke_prob = 0.1
 
     popularity_change = random.randint(0, 1)  # ev: 0.5
-    
+
     if "Trusty" in airline_name:
         popularity_change += 1
 
