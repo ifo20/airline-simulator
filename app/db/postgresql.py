@@ -94,13 +94,14 @@ VALUES (%s, %s, now(), now(), %s, %s) RETURNING id
 
 	def save_airline(self, airline):
 		return self.execute(
-			"UPDATE airlines SET name=%s, hub=%s, joined_at=%s, last_login_at=%s, cash=%s, popularity=%s WHERE id=%s",
+			"UPDATE airlines SET name=%s, hub=%s, joined_at=%s, last_login_at=%s, cash=%s, popularity=%s, fuel_efficiency_level=%s WHERE id=%s",
 			airline.name,
 			airline.hub.code,
 			airline.joined_at,
 			airline.last_login_at,
 			airline.cash,
 			airline.popularity,
+			airline.fuel_efficiency_level,
 			airline.id,
 		)
 

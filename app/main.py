@@ -113,14 +113,14 @@ def leaderboard():
 	all_airlines = Airline.leaderboard(DB)
 	rows = "".join(
 		[
-			f"<tr><td>{i}</td><td>{airline.name}</td><td>{airline.joined_at.date()}</td><td>${airline.cash}</td><td>{airline.popularity:.0f}</td></tr>"
+			f"<tr><td>{i}</td><td>{airline.name}</td><td>{airline.joined_at.date()}</td><td>${airline.cash}</td><td>{airline.popularity:.0f}</td><td>{airline.fuel_efficiency_level}</td></tr>"
 			for i, airline in enumerate(all_airlines, start=1)
 		]
 	)
 	return f"""
 <link rel="stylesheet" href="static/index.css">
 <table>
-<thead><tr><th>Rank</th><th>Airline</th><th>Date Joined</th><th>Cash</th><th>Reputation</th></tr></thead>
+<thead><tr><th>Rank</th><th>Airline</th><th>Date Joined</th><th>Cash</th><th>Reputation</th><th>Fuel Efficiency</th></tr></thead>
 <tbody>{rows}</tbody>
 </table>"""
 
@@ -231,6 +231,11 @@ def owned_planes():
 	logging.debug("owned_planes response:%s", planes)
 	return jsonify(planes)
 
+@app.route("/upgrade_fuel_efficiency", methods=["POST"])
+def upgrade_fuel_efficiency():
+    airline = airline_from_request(request)
+    airline.fuel_efficiency_level += 1 
+    DB.save_airline(airline)
 
 @app.route("/purchase_plane", methods=["POST"])
 def purchase_plane():

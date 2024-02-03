@@ -92,4 +92,5 @@ CREATE TABLE IF NOT EXISTS planes (
     CONSTRAINT fk_airline_id FOREIGN KEY (airline_id) REFERENCES airlines(id),
     CONSTRAINT fk_route_id FOREIGN KEY (route_id) REFERENCES routes(id)
 );
+ALTER TABLE airlines ADD COLUMN IF NOT EXISTS fuel_efficiency_level INTEGER NOT NULL DEFAULT 0;
 COMMIT;
