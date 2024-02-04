@@ -7,8 +7,8 @@ function errHandler(err, button) {
     }
 }
 function randomBusinessName() {
-    var adjectives = ["Blue", "Red", "Green", "Purple", "Orange", "White", "Trusty", "Speedy", "Enigmatic", "Fly", "Golden", "Sturdy", "Graceful", "Rapid", "Robust", "American", "British", "Asian", "European", "Indian", "Italian", "Australian", "Chinese", "Russian", "Nordic", "Southern", "Northern", "Southwest", "Express", "Paper", "Malaysia", "Thai"];
-    var nouns = ["Planes", "Airways", "Skies", "Air", "Airlines", "Flyers", "Jets", "Pilots", "Air Transport", "Helicopters", "Cargo"];
+    var adjectives = ["Easy", "Budget", "Trusty", "Speedy", "Enigmatic", "Fly", "Golden", "Sturdy", "Graceful", "Rapid", "Robust", "American", "British", "Asian", "European", "Indian", "Italian", "Australian", "Chinese", "Russian", "Nordic", "Southern", "Northern", "Southwest", "Paper", "Malaysian", "Thai", "Smile", ""];
+    var nouns = ["Airways", "Skies", "Air", "Airlines", "Flyers", "Jets", "Pilots", "Air Transport", "Helicopters", "Cargo", "Regional", "Express"];
     var name = randomChoice(adjectives) + " " + randomChoice(nouns);
     if (Math.random() < 0.3) {
         var name = randomChoice(adjectives) + ' ' + name;
@@ -860,6 +860,25 @@ var GameEngine = /** @class */ (function () {
             }
         });
     };
+    GameEngine.prototype.displayUpgradesTab = function () {
+        this.hideTabs("upgrades");
+        var airline = this.airline;
+        $.ajax({
+            method: "GET",
+            url: "/upgrades",
+            data: {
+                airline_id: airline.id
+            },
+            error: function (x) { return errHandler(x); },
+            success: function (response) {
+                unsetLoader();
+                var main = document.getElementById("main-upgrades");
+                var jresponse = JSON.parse(response);
+                var title = jresponse["title"];
+                main.innerHTML = title;
+            }
+        });
+    };
     GameEngine.prototype.displayReputationTab = function () {
         this.hideTabs("reputation");
         var main = document.getElementById("main-reputation");
@@ -891,6 +910,7 @@ var GameEngine = /** @class */ (function () {
             createElement("button", { id: "viewCompany", "class": "flex-grow dark", innerText: "Overview of " + this.airline.name }),
             createElement("button", { id: "viewFleet", "class": "flex-grow dark", innerText: "Overview of Fleet" }),
             createElement("button", { id: "viewRoutes", "class": "flex-grow dark", innerText: "Overview of Routes" }),
+            createElement("button", { id: "viewUpgrades", "class": "flex-grow dark", innerText: "Overview of Upgrades" }),
             createElement("button", { id: "viewReputation", "class": "flex-grow dark", innerText: "Overview of Reputation" }),
             createElement("button", { id: "viewFinance", "class": "flex-grow dark", innerText: "Overview of Finance" }),
             createElement("button", { id: "viewAccidents", "class": "flex-grow dark", innerText: "Overview of Accidents" }),
@@ -913,6 +933,9 @@ var GameEngine = /** @class */ (function () {
                     break;
                 case "viewRoutes":
                     gameEngine.displayRoutesTab();
+                    break;
+                case "viewUpgrades":
+                    gameEngine.displayUpgradesTab();
                     break;
                 case "viewReputation":
                     gameEngine.displayReputationTab();

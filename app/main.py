@@ -233,9 +233,22 @@ def owned_planes():
 
 @app.route("/upgrade_fuel_efficiency", methods=["POST"])
 def upgrade_fuel_efficiency():
-    airline = airline_from_request(request)
-    airline.fuel_efficiency_level += 1 
-    DB.save_airline(airline)
+	airline = airline_from_request(request)
+	airline.fuel_efficiency_level += 1 
+	DB.save_airline(airline)
+	
+@app.route("/upgrades", methods=["GET"])
+def get_upgraded():
+	airline = airline_from_request(request)
+	upgrades = [
+		{
+			"title": "Fuel Efficiency",
+			"current_level": airline.fuel_efficiency_level,
+			"upgrade_cost": 10000,
+			"upgrade_enabled": airline.cash > 10000,
+		}
+	]
+	return upgrades
 
 @app.route("/purchase_plane", methods=["POST"])
 def purchase_plane():

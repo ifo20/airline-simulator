@@ -915,6 +915,25 @@ class GameEngine {
 			}
 		})
 	}
+	displayUpgradesTab(): void {
+		this.hideTabs("upgrades")
+		var airline = <Airline>this.airline
+		$.ajax({
+			method: "GET",
+			url: "/upgrades",
+			data: {
+				airline_id: airline.id,
+			},
+			error: (x) => errHandler(x),
+			success: function(response) {
+				unsetLoader()
+				const main = <HTMLElement>document.getElementById("main-upgrades")
+				const jresponse = JSON.parse(response)
+				const title = jresponse["title"]
+				main.innerHTML = title
+			}
+		})
+	}
 	displayReputationTab(): void {
 		this.hideTabs("reputation")
 		const main = <HTMLElement>document.getElementById("main-reputation")
@@ -946,6 +965,7 @@ class GameEngine {
 			createElement("button", {id:"viewCompany", class: "flex-grow dark", innerText:`Overview of ${(<Airline>this.airline).name}`}),
 			createElement("button", {id:"viewFleet", class: "flex-grow dark", innerText:`Overview of Fleet`}),
 			createElement("button", {id:"viewRoutes", class: "flex-grow dark", innerText:`Overview of Routes`}),
+			createElement("button", {id:"viewUpgrades", class: "flex-grow dark", innerText:`Overview of Upgrades`}),
 			createElement("button", {id:"viewReputation", class: "flex-grow dark", innerText:`Overview of Reputation`}),
 			createElement("button", {id:"viewFinance", class: "flex-grow dark", innerText:`Overview of Finance`}),
 			createElement("button", {id:"viewAccidents", class: "flex-grow dark", innerText:`Overview of Accidents`}),
@@ -967,6 +987,9 @@ class GameEngine {
 					break;
 				case "viewRoutes":
 					gameEngine.displayRoutesTab()
+					break;
+				case "viewUpgrades":
+					gameEngine.displayUpgradesTab()
 					break;
 				case "viewReputation":
 					gameEngine.displayReputationTab()
