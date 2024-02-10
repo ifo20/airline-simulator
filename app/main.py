@@ -240,6 +240,12 @@ def upgrade_fuel_efficiency():
 @app.route("/upgrades", methods=["GET"])
 def get_upgraded():
 	airline = airline_from_request(request)
+	placeholder_upgrade = {
+		"title": "Coming Soon!",
+		"current_level": 0,
+		"upgrade_cost": 0,
+		"upgrade_enabled": False,
+	}
 	upgrades = [
 		{
 			"title": "Fuel Efficiency",
@@ -247,8 +253,8 @@ def get_upgraded():
 			"upgrade_cost": 10000,
 			"upgrade_enabled": airline.cash > 10000,
 		}
-	]
-	return upgrades
+	] + [placeholder_upgrade] * 8
+	return jsonify(upgrades)
 
 @app.route("/purchase_plane", methods=["POST"])
 def purchase_plane():

@@ -317,6 +317,6 @@ dd {
     height: 450px;
     background: grey;
 }
-
+.mb-1{margin-bottom:1rem;}
 .bgw{background-color: white;}
 .collectable{background-color: rgb(255, 255, 255);}

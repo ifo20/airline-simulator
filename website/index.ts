@@ -918,6 +918,8 @@ class GameEngine {
 	displayUpgradesTab(): void {
 		this.hideTabs("upgrades")
 		var airline = <Airline>this.airline
+		setLoader()
+		const main = <HTMLElement>document.getElementById("main-upgrades")
 		$.ajax({
 			method: "GET",
 			url: "/upgrades",
@@ -927,10 +929,42 @@ class GameEngine {
 			error: (x) => errHandler(x),
 			success: function(response) {
 				unsetLoader()
-				const main = <HTMLElement>document.getElementById("main-upgrades")
-				const jresponse = JSON.parse(response)
-				const title = jresponse["title"]
-				main.innerHTML = title
+				const parentContainer = createElement("div", {class: ""})
+				const upgradeCategories = JSON.parse(response).forEach(category => {
+					const categoryContainer = createElement("div", {class: "bg-light border-box p-3"})
+					categoryContainer.appendChild(createElement("h4", {innerText: category["title"], class:"mb-1"}))
+					categoryContainer.appendChild(listLabels([
+						["Current Level", category["fuel_efficiency_level"]],
+						["Upgrade Cost", category["upgrade_cost"]],
+					]))
+					const btn_class = category["upgrade_enabled"] ? "" : "disabled"
+					const btn = createElement("button", {innerText: "Upgrade", class: btn_class})
+
+					if (category["upgrade_enabled"]) {
+						btn.addEventListener("click", () => {
+							btn.setAttribute("disabled", "")
+							btn.innerHTML = "..."
+							$.ajax({
+								method: "POST",
+								url: "/upgrade_fuel_efficiency",
+								data: {
+									airline_id: airline.id,
+									from_level: category["fuel_efficiency_level"],
+								},
+								error: (x) => errHandler(x),
+								success: function(response) {
+									// TODO: we need to refresh this div and the airline's cash
+									// displayUpgradesTab()
+								}
+							})
+						})
+					} else {
+						btn.setAttribute("disabled", "")
+					}
+					categoryContainer.appendChild(btn)
+					parentContainer.appendChild(categoryContainer)
+				})
+				main.appendChild(parentContainer)
 			}
 		})
 	}

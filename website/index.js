@@ -863,6 +863,8 @@ var GameEngine = /** @class */ (function () {
     GameEngine.prototype.displayUpgradesTab = function () {
         this.hideTabs("upgrades");
         var airline = this.airline;
+        setLoader();
+        var main = document.getElementById("main-upgrades");
         $.ajax({
             method: "GET",
             url: "/upgrades",
@@ -872,10 +874,42 @@ var GameEngine = /** @class */ (function () {
             error: function (x) { return errHandler(x); },
             success: function (response) {
                 unsetLoader();
-                var main = document.getElementById("main-upgrades");
-                var jresponse = JSON.parse(response);
-                var title = jresponse["title"];
-                main.innerHTML = title;
+                var parentContainer = createElement("div", { "class": "" });
+                var upgradeCategories = JSON.parse(response).forEach(function (category) {
+                    var categoryContainer = createElement("div", { "class": "bg-light border-box p-3" });
+                    categoryContainer.appendChild(createElement("h4", { innerText: category["title"], "class": "mb-1" }));
+                    categoryContainer.appendChild(listLabels([
+                        ["Current Level", category["fuel_efficiency_level"]],
+                        ["Upgrade Cost", category["upgrade_cost"]],
+                    ]));
+                    var btn_class = category["upgrade_enabled"] ? "" : "disabled";
+                    var btn = createElement("button", { innerText: "Upgrade", "class": btn_class });
+                    if (category["upgrade_enabled"]) {
+                        btn.addEventListener("click", function () {
+                            btn.setAttribute("disabled", "");
+                            btn.innerHTML = "...";
+                            $.ajax({
+                                method: "POST",
+                                url: "/upgrade_fuel_efficiency",
+                                data: {
+                                    airline_id: airline.id,
+                                    from_level: category["fuel_efficiency_level"]
+                                },
+                                error: function (x) { return errHandler(x); },
+                                success: function (response) {
+                                    // TODO: we need to refresh this div and the airline's cash
+                                    // displayUpgradesTab()
+                                }
+                            });
+                        });
+                    }
+                    else {
+                        btn.setAttribute("disabled", "");
+                    }
+                    categoryContainer.appendChild(btn);
+                    parentContainer.appendChild(categoryContainer);
+                });
+                main.appendChild(parentContainer);
             }
         });
     };
