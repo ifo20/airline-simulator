@@ -35,7 +35,10 @@ def before_request_func():
 
 @app.teardown_request
 def teardown_request_func(error=None):
-	DB.close()
+	try:
+		DB.close()
+	except:
+		pass
 
 
 def airline_id_from_request(request):
@@ -236,6 +239,12 @@ def upgrade_fuel_efficiency():
 	airline = airline_from_request(request)
 	airline.fuel_efficiency_level += 1 
 	DB.save_airline(airline)
+	return jsonify({
+			"title": "Fuel Efficiency",
+			"current_level": airline.fuel_efficiency_level,
+			"upgrade_cost": 10000,
+			"upgrade_enabled": airline.cash > 10000,
+		})
 	
 @app.route("/upgrades", methods=["GET"])
 def get_upgraded():

@@ -1,5 +1,5 @@
 //////// HELPING FUNCTIONS
-function errHandler(err, button?: HTMLButtonElement) {
+function errHandler(err: JQuery.jqXHR<any>, button?: HTMLButtonElement) {
 	unsetLoader()
 	displayError(err.responseText)
 	if (button) {
@@ -113,7 +113,7 @@ function unsetLoader() {
 		$("#loader").hide()
 	}
 }
-function makeClickWrapper(btn: HTMLButtonElement, handler) {
+function makeClickWrapper(btn: HTMLButtonElement, handler: { (): void; (): void; (): boolean; (): void; (): void; (): void; (): void; }) {
 	// disable, show spinner until response
 	console.log('buttonClickWrapper ', btn, handler)
 	function completeHandler(this: HTMLElement, ev: MouseEvent) {
@@ -170,7 +170,7 @@ class OfferedRoute {
 	toAirport: Airport
 	popularity: number
 	purchaseCost: number
-	constructor(data) {
+	constructor(data: { id: any; distance: any; origin: any; destination: any; popularity: any; cost: any; }) {
 		const { id, distance, origin, destination, popularity, cost } = data
 		this.id = id
 		this.distance = distance
@@ -295,7 +295,7 @@ class Route {
 	lastResultedAt?: Date
 	nextAvailableAt?: Date
 	status: string
-	constructor(data) {
+	constructor(data: { id: any; distance: any; origin: any; destination: any; popularity: any; cost: any; last_run_at: any; last_resulted_at: any; next_available_at: any; status: any; }) {
 		const { id, distance, origin, destination, popularity, cost, last_run_at, last_resulted_at, next_available_at, status } = data
 		this.id = id
 		console.log('created route id', this.id)
@@ -340,7 +340,7 @@ class Route {
 				route.status = jresponse.status
 				route.lastRunAt = new Date(jresponse.last_run_at)
 				route.nextAvailableAt = new Date(jresponse.next_available_at)
-				airline.planes = jresponse.planes.map(p => new Plane(p))
+				airline.planes = jresponse.planes.map((p: any) => new Plane(p))
 				airline.updateStats()
 				route.updatePurchasedCardContent()
 				displayInfo(jresponse.msg)
@@ -372,7 +372,7 @@ class Route {
 					airline.incidents.push(jresponse.incident)
 				}
 				route.status = jresponse.status
-				airline.planes = jresponse.planes.map(p => new Plane(p))
+				airline.planes = jresponse.planes.map((p: any) => new Plane(p))
 				airline.popularity = jresponse.popularity
 				airline.updateStats(jresponse.cash)
 				route.updatePurchasedCardContent()
@@ -506,7 +506,7 @@ class Plane {
 	health: number
 	maxDistance: number
 	cost: number
-	constructor(data) {
+	constructor(data: { id: any; name: any; status: any; health: any; max_distance: any; cost: any; }) {
 		const { id, name, status, health, max_distance, cost } = data
 		this.id = id
 		this.name = name
@@ -564,7 +564,7 @@ class Plane {
 				error: (x) => errHandler(x, btn),
 				success: function(response) {
 					var jresponse = JSON.parse(response)
-					airline.planes = jresponse.planes.map(p => new Plane(p))
+					airline.planes = jresponse.planes.map((p: any) => new Plane(p))
 					airline.cash = jresponse.cash
 					airline.addTransaction(jresponse.transaction)
 					displayInfo(jresponse.msg)
@@ -587,7 +587,7 @@ class Plane {
 				error: (x) => errHandler(x, btn),
 				success: function(response) {
 					var jresponse = JSON.parse(response)
-					airline.planes = jresponse.planes.map(p => new Plane(p))
+					airline.planes = jresponse.planes.map((p: any) => new Plane(p))
 					airline.addTransaction(jresponse.transaction)
 					airline.cash = jresponse.cash
 					displayInfo(jresponse.msg)
@@ -620,8 +620,8 @@ class Airline {
 		this.joined = new Date(joined_at)
 		this.cash = cash
 		this.rank = rank
-		this.planes = (planes || []).map(p => new Plane(p))
-		this.routes = (routes || []).map(r => new Route(r))
+		this.planes = (planes || []).map((p: any) => new Plane(p))
+		this.routes = (routes || []).map((r: any) => new Route(r))
 		this.popularity = popularity
 		this.transactions = transactions || []
 		this.incidents = incidents || []
@@ -682,7 +682,7 @@ class Airline {
 			},
 			error: (x) => errHandler(x),
 			success: function(response) {
-				JSON.parse(response).map(p => {
+				JSON.parse(response).map((p: any) => {
 					unsetLoader()
 					var plane = new Plane(p)
 					var button = document.createElement("button")
@@ -858,7 +858,7 @@ class GameEngine {
 				error: (x) => errHandler(x),
 				success: function(response) {
 					unsetLoader()
-					airs = JSON.parse(response).map(a => new Airport(a))
+					airs = JSON.parse(response).map((a: any) => new Airport(a))
 					ge.airports = airs
 					loadHubSelect(airs)
 				}
@@ -910,7 +910,7 @@ class GameEngine {
 			success: function(response) {
 				unsetLoader()
 				offered.innerHTML = ""
-				var routesToDisplay = JSON.parse(response).map(r => new OfferedRoute(r))
+				var routesToDisplay = JSON.parse(response).map((r: any) => new OfferedRoute(r))
 				routesToDisplay.forEach((r: OfferedRoute) => offered.appendChild(r.trHtml()))
 			}
 		})
@@ -920,6 +920,7 @@ class GameEngine {
 		var airline = <Airline>this.airline
 		setLoader()
 		const main = <HTMLElement>document.getElementById("main-upgrades")
+		main.innerHTML = ""
 		$.ajax({
 			method: "GET",
 			url: "/upgrades",
@@ -930,11 +931,11 @@ class GameEngine {
 			success: function(response) {
 				unsetLoader()
 				const parentContainer = createElement("div", {class: ""})
-				const upgradeCategories = JSON.parse(response).forEach(category => {
+				const upgradeCategories = JSON.parse(response).forEach((category: { [x: string]: any; }) => {
 					const categoryContainer = createElement("div", {class: "bg-light border-box p-3"})
 					categoryContainer.appendChild(createElement("h4", {innerText: category["title"], class:"mb-1"}))
 					categoryContainer.appendChild(listLabels([
-						["Current Level", category["fuel_efficiency_level"]],
+						["Current Level", category["current_level"]],
 						["Upgrade Cost", category["upgrade_cost"]],
 					]))
 					const btn_class = category["upgrade_enabled"] ? "" : "disabled"
@@ -1066,7 +1067,6 @@ function loadHubSelect(airports: Array<Airport>) {
 	hubRow.appendChild(hubLabel)
 	hubRow.appendChild(hubSelect)
 }
-
 
 window.onload = () => {
 	// Creating form to enter business name and to choose hub

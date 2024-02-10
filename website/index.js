@@ -865,6 +865,7 @@ var GameEngine = /** @class */ (function () {
         var airline = this.airline;
         setLoader();
         var main = document.getElementById("main-upgrades");
+        main.innerHTML = "";
         $.ajax({
             method: "GET",
             url: "/upgrades",
@@ -879,7 +880,7 @@ var GameEngine = /** @class */ (function () {
                     var categoryContainer = createElement("div", { "class": "bg-light border-box p-3" });
                     categoryContainer.appendChild(createElement("h4", { innerText: category["title"], "class": "mb-1" }));
                     categoryContainer.appendChild(listLabels([
-                        ["Current Level", category["fuel_efficiency_level"]],
+                        ["Current Level", category["current_level"]],
                         ["Upgrade Cost", category["upgrade_cost"]],
                     ]));
                     var btn_class = category["upgrade_enabled"] ? "" : "disabled";
