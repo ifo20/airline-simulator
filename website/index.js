@@ -811,7 +811,7 @@ var GameEngine = /** @class */ (function () {
         }
     };
     GameEngine.prototype.hideTabs = function (except) {
-        ["overview", "fleet", "routes", "reputation", "finance", "accidents"].forEach(function (k) {
+        ["overview", "fleet", "routes", "reputation", "finance", "accidents", "upgrades"].forEach(function (k) {
             if (k === except) {
                 $("#main-" + k).show();
             }

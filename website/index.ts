@@ -867,7 +867,7 @@ class GameEngine {
 		}
 	}
 	hideTabs(except: string): void {
-		["overview", "fleet", "routes", "reputation", "finance", "accidents"].forEach(k => {
+		["overview", "fleet", "routes", "reputation", "finance", "accidents","upgrades"].forEach(k => {
 			if (k === except) {
 				$(`#main-${k}`).show()
 			} else {
