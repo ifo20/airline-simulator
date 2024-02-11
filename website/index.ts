@@ -113,15 +113,16 @@ function unsetLoader() {
 		$("#loader").hide()
 	}
 }
-function makeClickWrapper(btn: HTMLButtonElement, handler: { (): void; (): void; (): boolean; (): void; (): void; (): void; (): void; }) {
+function makeClickWrapper(btn: HTMLButtonElement, handler: (ev:MouseEvent)=>any) {
 	// disable, show spinner until response
 	console.log('buttonClickWrapper ', btn, handler)
-	function completeHandler(this: HTMLElement, ev: MouseEvent) {
+	function completeHandler(this: void, ev: MouseEvent) {
 		console.log('completeHandler enter', this, ev)
 		btn.setAttribute("disabled", "")
 		btn.innerHTML = '...'
-		handler()
+		handler(ev)
 		console.log('completeHandler exit', this, ev)
+		return this
 	}
 	return completeHandler
 }
@@ -201,7 +202,7 @@ class OfferedRoute {
 		btn.innerText = "Purchase"
 		var btnCell = document.createElement("td")
 		var route_id = this.id
-		btn.addEventListener("click", makeClickWrapper(btn, () => {
+		btn.addEventListener("click", makeClickWrapper(btn, (ev:MouseEvent) => {
 			var airline = <Airline>gameEngine.airline
 			setLoader()
 			$.ajax({
@@ -237,7 +238,7 @@ class OfferedRoute {
 		btn.setAttribute("class", "flex-grow")
 		btn.appendChild(this.cardHtml())
 		const route_id = this.id
-		btn.addEventListener("click", makeClickWrapper(btn, () => {
+		btn.addEventListener("click", makeClickWrapper(btn, (ev:MouseEvent) => {
 			var airline = <Airline>gameEngine.airline
 			setLoader()
 			$.ajax({
@@ -415,11 +416,11 @@ class Route {
 			setTimeout(() => this.updatePurchasedCardContent(), 1000)
 		} else if (this.status === "ready") {
 			statusText = "Ready to run!"
-			actionButton.addEventListener("click", makeClickWrapper(actionButton, () => this.run(actionButton)))
+			actionButton.addEventListener("click", makeClickWrapper(actionButton, (ev:MouseEvent) => this.run(actionButton)))
 			actionButton.innerHTML = "Run Route"
 		} else if (this.status === "landed") {
 			statusText = `Landed at ${this.toAirport.code}!`
-			actionButton.addEventListener("click", makeClickWrapper(actionButton, () => this.getResults(actionButton)))
+			actionButton.addEventListener("click", makeClickWrapper(actionButton, (ev:MouseEvent) => this.getResults(actionButton)))
 			actionButton.innerHTML = "Collect Route"
 			actionButton.classList.add("collectable") 
 		} else {
@@ -553,7 +554,7 @@ class Plane {
 		var btn = document.createElement("button")
 		btn.innerText = "Fix for $100,000"
 		div.appendChild(btn)
-		btn.addEventListener("click", makeClickWrapper(btn, () => {
+		btn.addEventListener("click", makeClickWrapper(btn, (ev:MouseEvent) => {
 			$.ajax({
 				method: "POST",
 				url: "/plane/fix",
@@ -576,7 +577,7 @@ class Plane {
 		var btn = document.createElement("button")
 		btn.innerText = "Sell to  Mojave scrapyard for $10,000"
 		div.appendChild(btn)
-		btn.addEventListener("click", makeClickWrapper(btn, () => {
+		btn.addEventListener("click", makeClickWrapper(btn, (ev:MouseEvent) => {
 			$.ajax({
 				method: "POST",
 				url: "/plane/scrap",

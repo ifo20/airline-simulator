@@ -115,8 +115,9 @@ function makeClickWrapper(btn, handler) {
         console.log('completeHandler enter', this, ev);
         btn.setAttribute("disabled", "");
         btn.innerHTML = '...';
-        handler();
+        handler(ev);
         console.log('completeHandler exit', this, ev);
+        return this;
     }
     return completeHandler;
 }
@@ -176,7 +177,7 @@ var OfferedRoute = /** @class */ (function () {
         btn.innerText = "Purchase";
         var btnCell = document.createElement("td");
         var route_id = this.id;
-        btn.addEventListener("click", makeClickWrapper(btn, function () {
+        btn.addEventListener("click", makeClickWrapper(btn, function (ev) {
             var airline = gameEngine.airline;
             setLoader();
             $.ajax({
@@ -211,7 +212,7 @@ var OfferedRoute = /** @class */ (function () {
         btn.setAttribute("class", "flex-grow");
         btn.appendChild(this.cardHtml());
         var route_id = this.id;
-        btn.addEventListener("click", makeClickWrapper(btn, function () {
+        btn.addEventListener("click", makeClickWrapper(btn, function (ev) {
             var airline = gameEngine.airline;
             setLoader();
             $.ajax({
@@ -377,12 +378,12 @@ var Route = /** @class */ (function () {
         }
         else if (this.status === "ready") {
             statusText = "Ready to run!";
-            actionButton.addEventListener("click", makeClickWrapper(actionButton, function () { return _this.run(actionButton); }));
+            actionButton.addEventListener("click", makeClickWrapper(actionButton, function (ev) { return _this.run(actionButton); }));
             actionButton.innerHTML = "Run Route";
         }
         else if (this.status === "landed") {
             statusText = "Landed at " + this.toAirport.code + "!";
-            actionButton.addEventListener("click", makeClickWrapper(actionButton, function () { return _this.getResults(actionButton); }));
+            actionButton.addEventListener("click", makeClickWrapper(actionButton, function (ev) { return _this.getResults(actionButton); }));
             actionButton.innerHTML = "Collect Route";
             actionButton.classList.add("collectable");
         }
@@ -506,7 +507,7 @@ var Plane = /** @class */ (function () {
         var btn = document.createElement("button");
         btn.innerText = "Fix for $100,000";
         div.appendChild(btn);
-        btn.addEventListener("click", makeClickWrapper(btn, function () {
+        btn.addEventListener("click", makeClickWrapper(btn, function (ev) {
             $.ajax({
                 method: "POST",
                 url: "/plane/fix",
@@ -529,7 +530,7 @@ var Plane = /** @class */ (function () {
         var btn = document.createElement("button");
         btn.innerText = "Sell to  Mojave scrapyard for $10,000";
         div.appendChild(btn);
-        btn.addEventListener("click", makeClickWrapper(btn, function () {
+        btn.addEventListener("click", makeClickWrapper(btn, function (ev) {
             $.ajax({
                 method: "POST",
                 url: "/plane/scrap",
