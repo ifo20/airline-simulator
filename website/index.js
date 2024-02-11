@@ -749,7 +749,7 @@ var Airline = /** @class */ (function () {
         var _this = this;
         if (!gameEngine.routeMap) {
             var platform = new H.service.Platform({
-                'apikey': 'r7U4pzaJCQZVOL0cJLmpjQz0Sqzf3Wlq7LJwg3fbvik'
+                'apikey': 'neEmKYaMLvpsoM_LWP-j9qFEtsMLiBeDI9Ajqxu99Js'
             });
             var defaultLayers = platform.createDefaultLayers();
             //Step 2: initialize a map - this map is centered over Europe
