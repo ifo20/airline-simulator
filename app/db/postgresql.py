@@ -81,13 +81,14 @@ class PostgresqlDatabase:
 		logging.info("Inserting airline %s ...", airline)
 		[inserted_id] = self.fetch_one(
 			"""
-INSERT INTO airlines (name, hub, joined_at, last_login_at, cash, popularity)
-VALUES (%s, %s, now(), now(), %s, %s) RETURNING id
+INSERT INTO airlines (name, hub, joined_at, last_login_at, cash, popularity, password)
+VALUES (%s, %s, now(), now(), %s, %s, %s) RETURNING id
 """,
 			airline.name,
 			airline.hub,
 			airline.cash,
 			airline.popularity,
+			airline.password,
 		)
 		logging.info("Inserted airline %s: %s", inserted_id, airline)
 		return inserted_id

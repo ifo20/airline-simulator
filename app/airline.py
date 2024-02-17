@@ -21,7 +21,8 @@ class Airline:
 		last_login_at=None,
 		cash=STARTING_CASH,
 		popularity=STARTING_POPULARITY,
-		fuel_efficiency_level=0
+		fuel_efficiency_level=0,
+		password="password",
 	):
 		self.id = id
 		self.name = name
@@ -31,6 +32,7 @@ class Airline:
 		self.cash = cash
 		self.popularity = popularity
 		self.fuel_efficiency_level = fuel_efficiency_level
+		self.password = password
 
 	@classmethod
 	def from_db_row(cls, db_row):
