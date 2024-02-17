@@ -135,11 +135,11 @@ def list_airports():
 	return jsonify(airports[:300])
 
 
-@app.route("/play", methods=["POST"])
+@app.route("/signup", methods=["POST"])
 def play():
 	start_ts = timeit.default_timer()
 	airline_name = airline_name_from_request(request)
-	airline = Airline.login(DB, airline_name, request.form["hub"])
+	airline = Airline.create(DB, airline_name, request.form["hub"])
 	j: Dict = json.loads(jsonify(airline))
 	j["routes"] = Route.list_owned(DB, airline.id)
 	j["planes"] = Plane.list_owned(DB, airline.id)

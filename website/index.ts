@@ -1071,11 +1071,11 @@ function loadHubSelect(airports: Array<Airport>) {
 
 window.onload = () => {
 	// Creating form to enter business name and to choose hub
-	const form = <HTMLFormElement>document.getElementById("playForm")
+	const form = <HTMLFormElement>document.getElementById("SignUp")
 	var nameRow = document.createElement("div")
 	var nameLabel = document.createElement("label")
 	nameLabel.setAttribute("for", "businessName")
-	nameLabel.textContent = "What is your airline called?"
+	nameLabel.textContent = "What do you want your airline to be called?" 
 	var nameInput: HTMLInputElement = document.createElement("input")
 	nameInput.setAttribute("type", "text")
 	nameInput.setAttribute("name", "businessName")
@@ -1087,7 +1087,7 @@ window.onload = () => {
 	hubRow.setAttribute("id", "hubRow")
 	var playBtn = document.createElement("button")
 	playBtn.setAttribute("type", "submit")
-	playBtn.textContent = "Play Now"
+	playBtn.textContent = "Create"
 	playBtn.className = "primary"
 	form.innerHTML = ""
 	form.appendChild(nameRow)
@@ -1097,21 +1097,20 @@ window.onload = () => {
 	form.addEventListener("submit", (e) => {
 		var hubSelect = <HTMLSelectElement>document.getElementById("hubSelect")
 		e.preventDefault()
-		hideElement(form)
 		setLoader()
 		$.ajax({
 			method: "POST",
-			url: "/play",
+			url: "/signup",
 			data: {
 				businessName: nameInput.value,
 				hub: hubSelect.value,
 			},
 			error: (x) => errHandler(x),
 			success: function(response) {
+				hideElement(form)
 				unsetLoader()
 				// console.log(response)
 				var airline = new Airline(JSON.parse(response))
-				console.log('Logged in, airline=', airline)
 				displayInfo(airline.name + " joins the aviation industry!")
 				gameEngine.registerAirline(airline)
 				const header = document.getElementsByTagName("header")[0]

@@ -58,6 +58,30 @@ class Airline:
 		return base
 
 	@classmethod
+	def create(cls, db, airline_name: str, hub: str):
+		logging.info("CREATE airline_name=%s hub=%s", airline_name, hub)
+		now_ts = datetime.now()
+		if Airline.get_by_name(db, airline_name):
+			raise AssertionError("Name is already taken. Please choose another one.")
+		airline = cls(
+			id=None,
+			name=airline_name,
+			hub=hub,
+			joined_at=now_ts,
+			last_login_at=now_ts,
+			cash=STARTING_CASH,
+			popularity=STARTING_POPULARITY,
+		)
+		airline_id = db.create_airline(airline)
+		airline.id = airline_id
+		logging.info("Created airline %s: %s", airline.id, airline.name)
+		hub_airport = Airport.get_by_code(db, hub)
+		airline.hub = hub_airport
+		logging.info("airlinehub is %s",airline.hub)
+		return airline
+
+ 
+	@classmethod
 	def login(cls, db, airline_name: str, hub: str):
 		"""For now, we simply register if the airline does not yet exist"""
 		logging.info("LOGIN airline_name=%s hub=%s", airline_name, hub)

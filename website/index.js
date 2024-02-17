@@ -749,7 +749,7 @@ var Airline = /** @class */ (function () {
         var _this = this;
         if (!gameEngine.routeMap) {
             var platform = new H.service.Platform({
-                'apikey': 'neEmKYaMLvpsoM_LWP-j9qFEtsMLiBeDI9Ajqxu99Js'
+                'apikey': 'r7U4pzaJCQZVOL0cJLmpjQz0Sqzf3Wlq7LJwg3fbvik'
             });
             var defaultLayers = platform.createDefaultLayers();
             //Step 2: initialize a map - this map is centered over Europe
@@ -1015,11 +1015,11 @@ function loadHubSelect(airports) {
 }
 window.onload = function () {
     // Creating form to enter business name and to choose hub
-    var form = document.getElementById("playForm");
+    var form = document.getElementById("SignUp");
     var nameRow = document.createElement("div");
     var nameLabel = document.createElement("label");
     nameLabel.setAttribute("for", "businessName");
-    nameLabel.textContent = "What is your airline called?";
+    nameLabel.textContent = "What do you want your airline to be called?";
     var nameInput = document.createElement("input");
     nameInput.setAttribute("type", "text");
     nameInput.setAttribute("name", "businessName");
@@ -1030,7 +1030,7 @@ window.onload = function () {
     hubRow.setAttribute("id", "hubRow");
     var playBtn = document.createElement("button");
     playBtn.setAttribute("type", "submit");
-    playBtn.textContent = "Play Now";
+    playBtn.textContent = "Create";
     playBtn.className = "primary";
     form.innerHTML = "";
     form.appendChild(nameRow);
@@ -1040,21 +1040,20 @@ window.onload = function () {
     form.addEventListener("submit", function (e) {
         var hubSelect = document.getElementById("hubSelect");
         e.preventDefault();
-        hideElement(form);
         setLoader();
         $.ajax({
             method: "POST",
-            url: "/play",
+            url: "/signup",
             data: {
                 businessName: nameInput.value,
                 hub: hubSelect.value
             },
             error: function (x) { return errHandler(x); },
             success: function (response) {
+                hideElement(form);
                 unsetLoader();
                 // console.log(response)
                 var airline = new Airline(JSON.parse(response));
-                console.log('Logged in, airline=', airline);
                 displayInfo(airline.name + " joins the aviation industry!");
                 gameEngine.registerAirline(airline);
                 var header = document.getElementsByTagName("header")[0];
