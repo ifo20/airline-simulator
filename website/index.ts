@@ -1069,26 +1069,21 @@ function loadHubSelect(airports: Array<Airport>) {
 	hubRow.appendChild(hubSelect)
 }
 
-window.onload = () => {
+const renderSignupForm = () => {
 	// Creating form to enter business name and to choose hub
 	const form = <HTMLFormElement>document.getElementById("SignUp")
 	var nameRow = document.createElement("div")
-	var nameLabel = document.createElement("label")
+	var nameLabel = createElement("label", {innerText: "What do you want your airline to be called?"})
 	nameLabel.setAttribute("for", "businessName")
-	nameLabel.textContent = "What do you want your airline to be called?" 
 	var nameInput: HTMLInputElement = document.createElement("input")
 	nameInput.setAttribute("type", "text")
 	nameInput.setAttribute("name", "businessName")
 	nameInput.setAttribute("required", "")
 	nameRow.appendChild(nameLabel)
 	nameRow.appendChild(nameInput)
-
-	var hubRow = document.createElement("div")
-	hubRow.setAttribute("id", "hubRow")
-	var playBtn = document.createElement("button")
+	var hubRow = createElement("div", {id: "hubRow"})
+	var playBtn = createElement("button", {class: "primary", innerText: "Create"})
 	playBtn.setAttribute("type", "submit")
-	playBtn.textContent = "Create"
-	playBtn.className = "primary"
 	form.innerHTML = ""
 	form.appendChild(nameRow)
 	form.appendChild(hubRow)
@@ -1107,9 +1102,9 @@ window.onload = () => {
 			},
 			error: (x) => errHandler(x),
 			success: function(response) {
-				hideElement(form)
+				hideElement(<HTMLFormElement>document.getElementById("Login"))
+				hideElement(<HTMLFormElement>document.getElementById("SignUp"))
 				unsetLoader()
-				// console.log(response)
 				var airline = new Airline(JSON.parse(response))
 				displayInfo(airline.name + " joins the aviation industry!")
 				gameEngine.registerAirline(airline)
@@ -1124,6 +1119,15 @@ window.onload = () => {
 			}
 		})
 	})
+}
+
+const renderLoginForm = () => {
+	// TODO write code here - very similar to above function renderSignupForm
+}
+
+window.onload = () => {
+	renderSignupForm()
+	renderLoginForm()
 	gameEngine.loadAirports()
 	gameEngine.hideTabs("")
 	var logoImg = <HTMLImageElement>document.getElementById("logo")
