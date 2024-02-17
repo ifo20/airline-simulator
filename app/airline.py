@@ -82,30 +82,14 @@ class Airline:
 
  
 	@classmethod
-	def login(cls, db, airline_name: str, hub: str):
-		"""For now, we simply register if the airline does not yet exist"""
-		logging.info("LOGIN airline_name=%s hub=%s", airline_name, hub)
+	def login(cls, db, airline_name: str):
+		logging.info("LOGIN airline_name=%s", airline_name)
 		now_ts = datetime.now()
 		airline = Airline.get_by_name(db, airline_name)
-		if airline:
-			airline.last_login_at = now_ts
-			db.save_airline(airline)
-		else:
-			airline = cls(
-				id=None,
-				name=airline_name,
-				hub=hub,
-				joined_at=now_ts,
-				last_login_at=now_ts,
-				cash=STARTING_CASH,
-				popularity=STARTING_POPULARITY,
-			)
-			airline_id = db.create_airline(airline)
-			airline.id = airline_id
-			logging.info("Created airline %s: %s", airline.id, airline.name)
-		hub_airport = Airport.get_by_code(db, hub)
-		airline.hub = hub_airport
-		logging.info("airlinehub is %s",airline.hub)
+		if not airline:
+			raise AssertionError("That airline does not exist")
+		airline.last_login_at = now_ts
+		db.save_airline(airline)
 		return airline
 
 	@staticmethod

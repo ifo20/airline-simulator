@@ -136,8 +136,7 @@ def list_airports():
 
 
 @app.route("/signup", methods=["POST"])
-def play():
-	start_ts = timeit.default_timer()
+def signup():
 	airline_name = airline_name_from_request(request)
 	airline = Airline.create(DB, airline_name, request.form["hub"])
 	j: Dict = json.loads(jsonify(airline))
@@ -150,9 +149,23 @@ def play():
 			this_rank = idx
 	j["rank"] = f"#{this_rank} / {n}"
 	response = jsonify(j)
-	logging.debug("TIMER play took %s", timeit.default_timer() - start_ts)
 	return response
 
+@app.route("/login", methods=["POST"])
+def login():
+	airline_name = airline_name_from_request(request)
+	airline = Airline.login(DB, airline_name)
+	j: Dict = json.loads(jsonify(airline))
+	j["routes"] = Route.list_owned(DB, airline.id)
+	j["planes"] = Plane.list_owned(DB, airline.id)
+	all_airlines = Airline.leaderboard(DB)
+	n = len(all_airlines)
+	for idx, leaderboard_airline in enumerate(all_airlines, start=1):
+		if leaderboard_airline.id == airline.id:
+			this_rank = idx
+	j["rank"] = f"#{this_rank} / {n}"
+	response = jsonify(j)
+	return response
 
 @app.route("/offered_routes", methods=["GET"])
 def offered_routes():
