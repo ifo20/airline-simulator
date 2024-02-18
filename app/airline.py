@@ -84,12 +84,14 @@ class Airline:
 
  
 	@classmethod
-	def login(cls, db, airline_name: str):
+	def login(cls, db, airline_name: str, password: str): 
 		logging.info("LOGIN airline_name=%s", airline_name)
 		now_ts = datetime.now()
 		airline = Airline.get_by_name(db, airline_name)
 		if not airline:
-			raise AssertionError("That airline does not exist")
+			raise AssertionError("That airline does not exist.")
+		if airline.password != password:
+			raise AssertionError("Incorrect Password.")
 		airline.last_login_at = now_ts
 		db.save_airline(airline)
 		return airline

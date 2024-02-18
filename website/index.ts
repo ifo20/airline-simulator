@@ -1122,7 +1122,58 @@ const renderSignupForm = () => {
 }
 
 const renderLoginForm = () => {
-	// TODO write code here - very similar to above function renderSignupForm
+	// Creating form to enter business name and to choose hub
+	const form = <HTMLFormElement>document.getElementById("Login")
+	var nameRow = document.createElement("div")
+	var nameLabel = createElement("label", {innerText: "Please Enter Your Airline Name."})
+	nameLabel.setAttribute("for", "businessName")
+	var nameInput: HTMLInputElement = document.createElement("input")
+	nameInput.setAttribute("type", "text")
+	nameInput.setAttribute("name", "businessName")
+	nameInput.setAttribute("required", "")
+	nameRow.appendChild(nameLabel)
+	nameRow.appendChild(nameInput)
+	var passwordinput: HTMLInputElement = document.createElement("input")
+	passwordinput.setAttribute("type", "text")
+	passwordinput.setAttribute("name", "password")
+	passwordinput.setAttribute("required", "")
+	var playBtn = createElement("button", {class: "primary", innerText: "Login"})
+	playBtn.setAttribute("type", "submit")
+	form.innerHTML = ""
+	form.appendChild(nameRow)
+	form.appendChild(passwordinput)
+	form.appendChild(playBtn)
+	nameInput.setAttribute("value", randomBusinessName())
+	form.addEventListener("submit", (e) => {
+		var hubSelect = <HTMLSelectElement>document.getElementById("hubSelect")
+		e.preventDefault()
+		setLoader()
+		$.ajax({
+			method: "POST",
+			url: "/login",
+			data: {
+				businessName: nameInput.value,
+				password: passwordinput.value,
+			},
+			error: (x) => errHandler(x),
+			success: function(response) {
+				hideElement(<HTMLFormElement>document.getElementById("Login"))
+				hideElement(<HTMLFormElement>document.getElementById("SignUp"))
+				unsetLoader()
+				var airline = new Airline(JSON.parse(response))
+				displayInfo( "Welcome back " + airline.name + "!")
+				gameEngine.registerAirline(airline)
+				const header = document.getElementsByTagName("header")[0]
+				header?.classList.remove("justify-content-center")
+				header?.classList.remove("flex-column")
+				header?.classList.add("justify-content-between")
+				gameEngine.createSideMenu()
+				airline.updateTitle()
+				airline.updateStats()
+				$("#logo").show()
+			}
+		})
+	})
 }
 
 window.onload = () => {

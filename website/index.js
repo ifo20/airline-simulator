@@ -1013,25 +1013,21 @@ function loadHubSelect(airports) {
     hubRow.appendChild(hubLabel);
     hubRow.appendChild(hubSelect);
 }
-window.onload = function () {
+var renderSignupForm = function () {
     // Creating form to enter business name and to choose hub
     var form = document.getElementById("SignUp");
     var nameRow = document.createElement("div");
-    var nameLabel = document.createElement("label");
+    var nameLabel = createElement("label", { innerText: "What do you want your airline to be called?" });
     nameLabel.setAttribute("for", "businessName");
-    nameLabel.textContent = "What do you want your airline to be called?";
     var nameInput = document.createElement("input");
     nameInput.setAttribute("type", "text");
     nameInput.setAttribute("name", "businessName");
     nameInput.setAttribute("required", "");
     nameRow.appendChild(nameLabel);
     nameRow.appendChild(nameInput);
-    var hubRow = document.createElement("div");
-    hubRow.setAttribute("id", "hubRow");
-    var playBtn = document.createElement("button");
+    var hubRow = createElement("div", { id: "hubRow" });
+    var playBtn = createElement("button", { "class": "primary", innerText: "Create" });
     playBtn.setAttribute("type", "submit");
-    playBtn.textContent = "Create";
-    playBtn.className = "primary";
     form.innerHTML = "";
     form.appendChild(nameRow);
     form.appendChild(hubRow);
@@ -1050,9 +1046,9 @@ window.onload = function () {
             },
             error: function (x) { return errHandler(x); },
             success: function (response) {
-                hideElement(form);
+                hideElement(document.getElementById("Login"));
+                hideElement(document.getElementById("SignUp"));
                 unsetLoader();
-                // console.log(response)
                 var airline = new Airline(JSON.parse(response));
                 displayInfo(airline.name + " joins the aviation industry!");
                 gameEngine.registerAirline(airline);
@@ -1067,6 +1063,64 @@ window.onload = function () {
             }
         });
     });
+};
+var renderLoginForm = function () {
+    // Creating form to enter business name and to choose hub
+    var form = document.getElementById("Login");
+    var nameRow = document.createElement("div");
+    var nameLabel = createElement("label", { innerText: "Please Enter Your Airline Name." });
+    nameLabel.setAttribute("for", "businessName");
+    var nameInput = document.createElement("input");
+    nameInput.setAttribute("type", "text");
+    nameInput.setAttribute("name", "businessName");
+    nameInput.setAttribute("required", "");
+    nameRow.appendChild(nameLabel);
+    nameRow.appendChild(nameInput);
+    var passwordinput = document.createElement("input");
+    passwordinput.setAttribute("type", "text");
+    passwordinput.setAttribute("name", "password");
+    passwordinput.setAttribute("required", "");
+    var playBtn = createElement("button", { "class": "primary", innerText: "Login" });
+    playBtn.setAttribute("type", "submit");
+    form.innerHTML = "";
+    form.appendChild(nameRow);
+    form.appendChild(passwordinput);
+    form.appendChild(playBtn);
+    nameInput.setAttribute("value", randomBusinessName());
+    form.addEventListener("submit", function (e) {
+        var hubSelect = document.getElementById("hubSelect");
+        e.preventDefault();
+        setLoader();
+        $.ajax({
+            method: "POST",
+            url: "/login",
+            data: {
+                businessName: nameInput.value,
+                password: passwordinput.value
+            },
+            error: function (x) { return errHandler(x); },
+            success: function (response) {
+                hideElement(document.getElementById("Login"));
+                hideElement(document.getElementById("SignUp"));
+                unsetLoader();
+                var airline = new Airline(JSON.parse(response));
+                displayInfo("Welcome back " + airline.name + "!");
+                gameEngine.registerAirline(airline);
+                var header = document.getElementsByTagName("header")[0];
+                header === null || header === void 0 ? void 0 : header.classList.remove("justify-content-center");
+                header === null || header === void 0 ? void 0 : header.classList.remove("flex-column");
+                header === null || header === void 0 ? void 0 : header.classList.add("justify-content-between");
+                gameEngine.createSideMenu();
+                airline.updateTitle();
+                airline.updateStats();
+                $("#logo").show();
+            }
+        });
+    });
+};
+window.onload = function () {
+    renderSignupForm();
+    renderLoginForm();
     gameEngine.loadAirports();
     gameEngine.hideTabs("");
     var logoImg = document.getElementById("logo");

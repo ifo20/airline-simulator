@@ -154,7 +154,7 @@ def signup():
 @app.route("/login", methods=["POST"])
 def login():
 	airline_name = airline_name_from_request(request)
-	airline = Airline.login(DB, airline_name)
+	airline = Airline.login(DB, airline_name, request.form["password"])
 	j: Dict = json.loads(jsonify(airline))
 	j["routes"] = Route.list_owned(DB, airline.id)
 	j["planes"] = Plane.list_owned(DB, airline.id)
