@@ -1025,11 +1025,16 @@ var renderSignupForm = function () {
     nameInput.setAttribute("required", "");
     nameRow.appendChild(nameLabel);
     nameRow.appendChild(nameInput);
+    var passwordinput = document.createElement("input");
+    passwordinput.setAttribute("type", "text");
+    passwordinput.setAttribute("name", "password");
+    passwordinput.setAttribute("required", "");
     var hubRow = createElement("div", { id: "hubRow" });
     var playBtn = createElement("button", { "class": "primary", innerText: "Create" });
     playBtn.setAttribute("type", "submit");
     form.innerHTML = "";
     form.appendChild(nameRow);
+    form.appendChild(passwordinput);
     form.appendChild(hubRow);
     form.appendChild(playBtn);
     nameInput.setAttribute("value", randomBusinessName());
@@ -1042,7 +1047,8 @@ var renderSignupForm = function () {
             url: "/signup",
             data: {
                 businessName: nameInput.value,
-                hub: hubSelect.value
+                hub: hubSelect.value,
+                password: passwordinput.value
             },
             error: function (x) { return errHandler(x); },
             success: function (response) {

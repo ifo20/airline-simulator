@@ -1,4 +1,9 @@
-"""A python client to demonstrate what one can do, and also to run tests with (rather than having to repeat experiments in the browser)"""
+"""
+A python client to demonstrate what one can do, 
+and also to run tests with (rather than having to repeat experiments in the browser)"""
+# TODO for justin: this has not been updated since we implemented proper signup+login
+# i.e. it does not provide a password
+# This means it will not work and needs updating...
 import random
 import requests
 

@@ -1081,11 +1081,16 @@ const renderSignupForm = () => {
 	nameInput.setAttribute("required", "")
 	nameRow.appendChild(nameLabel)
 	nameRow.appendChild(nameInput)
+	var passwordinput: HTMLInputElement = document.createElement("input")
+	passwordinput.setAttribute("type", "text")
+	passwordinput.setAttribute("name", "password")
+	passwordinput.setAttribute("required", "")
 	var hubRow = createElement("div", {id: "hubRow"})
 	var playBtn = createElement("button", {class: "primary", innerText: "Create"})
 	playBtn.setAttribute("type", "submit")
 	form.innerHTML = ""
 	form.appendChild(nameRow)
+	form.appendChild(passwordinput)
 	form.appendChild(hubRow)
 	form.appendChild(playBtn)
 	nameInput.setAttribute("value", randomBusinessName())
@@ -1099,6 +1104,7 @@ const renderSignupForm = () => {
 			data: {
 				businessName: nameInput.value,
 				hub: hubSelect.value,
+				password: passwordinput.value,
 			},
 			error: (x) => errHandler(x),
 			success: function(response) {
