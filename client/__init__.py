@@ -97,8 +97,11 @@ class JIASClient:
 	def get_airports(self):
 		return self.get("airports")
 
-	def create_airline_or_login(self, name, hub):
-		return self.post("play", {"businessName": name, "hub": hub})
+	def signup(self, name, hub, password):
+		return self.post("signup", {"businessName": name, "hub": hub, "password": password})
+
+	def login(self, name, password):
+		return self.post("login", {"businessName": name, "password": password})
 
 	def get_offered_planes(self, airline_id):
 		return self.get("offered_planes", {"airline_id": airline_id})
@@ -128,7 +131,7 @@ c = JIASClient()
 my_hub = random.choice(c.get_airports())
 # we should be able to create an airline with any advertised hub
 airline_name = generate_airline_name()
-airline_response = c.create_airline_or_login(airline_name, my_hub["code"])
+airline_response = c.signup(airline_name, my_hub["code"], "123")
 airline_id = airline_response["id"]
 assert isinstance(airline_id, int)
 print("Checking planes...")
@@ -172,5 +175,5 @@ for r_id, p_id in live_flights:
 print("Route check complete")
 
 print("Checking finances...")
-latest_airline = c.create_airline_or_login(airline_name, my_hub["code"])
+latest_airline = c.login(airline_name, "123")
 assert latest_airline["cash"] < STARTING_CASH
