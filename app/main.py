@@ -129,8 +129,7 @@ def list_airports():
 @app.route("/signup", methods=["POST"])
 def signup():
 	airline_name = airline_name_from_request(request)
-	# TODO justin: "password" is now available in request.form - use it!
-	airline = Airline.create(DB, airline_name, request.form["hub"])
+	airline = Airline.create(DB, airline_name, request.form["hub"], request.form["password"])
 	j: Dict = json.loads(jsonify(airline))
 	j["routes"] = Route.list_owned(DB, airline.id)
 	j["planes"] = Plane.list_owned(DB, airline.id)

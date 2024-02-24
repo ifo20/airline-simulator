@@ -60,7 +60,7 @@ class Airline:
 		return base
 
 	@classmethod
-	def create(cls, db, airline_name: str, hub: str):
+	def create(cls, db, airline_name: str, hub: str, password: str):
 		logging.info("CREATE airline_name=%s hub=%s", airline_name, hub)
 		now_ts = datetime.now()
 		if Airline.get_by_name(db, airline_name):
@@ -73,6 +73,7 @@ class Airline:
 			last_login_at=now_ts,
 			cash=STARTING_CASH,
 			popularity=STARTING_POPULARITY,
+			password=password,
 		)
 		airline_id = db.create_airline(airline)
 		airline.id = airline_id
