@@ -42,12 +42,12 @@ class Airline:
 		if isinstance(self.hub,Airport):
 			return
 		self.hub = Airport.get_by_code(db, self.hub)
-		logging.info("load_fields: hub is now %s", self.hub)
+		logging.debug("load_fields: hub is now %s", self.hub)
 
 	@staticmethod
 	def get_by_id(db, airline_id: int):
 		base = db.get_airline_by_id(airline_id)
-		logging.info("got airline by id, hub is %s", base.hub)
+		logging.debug("got airline by id, hub is %s", base.hub)
 		if base:
 			base.load_fields(db)
 		return base
@@ -79,13 +79,13 @@ class Airline:
 		logging.info("Created airline %s: %s", airline.id, airline.name)
 		hub_airport = Airport.get_by_code(db, hub)
 		airline.hub = hub_airport
-		logging.info("airlinehub is %s",airline.hub)
+		logging.debug("airlinehub is %s",airline.hub)
 		return airline
 
  
 	@classmethod
 	def login(cls, db, airline_name: str, password: str): 
-		logging.info("LOGIN airline_name=%s", airline_name)
+		logging.debug("LOGIN airline_name=%s", airline_name)
 		now_ts = datetime.now()
 		airline = Airline.get_by_name(db, airline_name)
 		if not airline:

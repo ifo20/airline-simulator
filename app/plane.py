@@ -169,7 +169,7 @@ class Plane:
 		self.purchased_at = now_ts
 		self.health = PLANE_STARTING_HEALTH
 		db.save_plane(self)
-		logging.info("Purchased plane %s", self.id)
+		logging.debug("Purchased plane %s", self.id)
 
 	def available_for_route(self, route):
 		return self.route is None and self.max_distance > route.distance
@@ -177,9 +177,9 @@ class Plane:
 	def reserve(self, db, route_id: int):
 		self.route_id = route_id
 		self.load_route(db)
-		logging.info("Reserved plane %s for route %s", self.id, route_id)
+		logging.debug("Reserved plane %s for route %s", self.id, route_id)
 
 	def free(self):
 		self.route_id = None
 		self.route = None
-		logging.info("Freed plane %s", self.id)
+		logging.debug("Freed plane %s", self.id)

@@ -7,11 +7,7 @@ from typing import List, Union
 from app.airline import Airline
 from app.airport import Airport
 from app.economics import route_logic
-from app.config import (
-	DAMAGE_MULTIPLIER,
-	FLIGHT_PROFIT_HACK,
-	TIME_SPEED,
-)
+from app.config import TIME_SPEED
 
 class Route:
 	def __init__(
@@ -80,7 +76,7 @@ class Route:
 	def generate_offers(
 		db, airports: List[Airport], airline: Airline, num_offers: int, existing_offers
 	):
-		logging.info(
+		logging.debug(
 			"Generating %s route offers for (%s) %s", num_offers, airline.id, airline.name,
 		)
 		hub: Airport = airline.hub
@@ -108,7 +104,7 @@ class Route:
 			)
 			route = Route(None, airline.id, hub, destination, cost, popularity, now_ts)
 			db.create_route(route)
-			logging.info(
+			logging.debug(
 				"Created Route offer for (%s) %s: %s - %s. Route ID is %s",
 				airline.id,
 				airline.name,

@@ -63,7 +63,7 @@ class MockDatabase:
 		return airline_id
 
 	def save_airline(self, airline: Airline):
-		logging.info("save_airline %s %s", airline, airline.hub)
+		logging.debug("save_airline %s %s", airline, airline.hub)
 		self.airlines[airline.id] = airline
 
 	def list_offered_routes(self, airline_id: int) -> List[Route]:

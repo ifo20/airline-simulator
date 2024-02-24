@@ -11,22 +11,15 @@ from flask import abort, request, send_from_directory, Flask
 from app.db import get_db
 from app.airline import Airline
 from app.airport import Airport
-from app.config import PLANE_FIX_COST, PLANE_SCRAP_VALUE, pretty_price
+from app.config import PLANE_FIX_COST, PLANE_SCRAP_VALUE, NUM_OFFERS, pretty_price
 from app.plane import Plane
 from app.route import Route
 
 
 logging.basicConfig(level=logging.INFO)
-
 WEBSITE_ROOT = os.path.join(pathlib.Path(__file__).resolve().parent.parent, "website")
 app = Flask(__name__, static_folder=WEBSITE_ROOT)
-
-logging.debug("Created app, WEBSITE_ROOT=%s", WEBSITE_ROOT)
-
-MINIMUM_OFFERS = 3
-
 DB = get_db()
-
 
 @app.before_request
 def before_request_func():
@@ -39,7 +32,6 @@ def teardown_request_func(error=None):
 		DB.close()
 	except:
 		pass
-
 
 def airline_id_from_request(request):
 	try:
@@ -92,7 +84,6 @@ def handle_exception(e):
 
 @app.route("/static/<path:filename>")
 def serve_static(filename):
-	logging.info("serve_static filename=%s ROOT=%s", filename, WEBSITE_ROOT)
 	return send_from_directory(WEBSITE_ROOT, filename)
 
 
@@ -173,9 +164,9 @@ def offered_routes():
 	airline = airline_from_request(request)
 	offered_routes = Route.list_offered(DB, airline.id)
 	airports = DB.get_airports()
-	if len(offered_routes) < MINIMUM_OFFERS:
+	if len(offered_routes) < NUM_OFFERS:
 		Route.generate_offers(
-			DB, airports, airline, MINIMUM_OFFERS - len(offered_routes), offered_routes
+			DB, airports, airline, NUM_OFFERS - len(offered_routes), offered_routes
 		)
 		offered_routes = Route.list_offered(DB, airline.id)
 	logging.debug(
@@ -234,8 +225,8 @@ def purchase_route():
 def offered_planes():
 	airline_id = airline_id_from_request(request)
 	planes_for_sale = Plane.list_offered(DB, airline_id)
-	if len(planes_for_sale) < MINIMUM_OFFERS:
-		Plane.generate_offers(DB, airline_id, MINIMUM_OFFERS - len(planes_for_sale))
+	if len(planes_for_sale) < NUM_OFFERS:
+		Plane.generate_offers(DB, airline_id, NUM_OFFERS - len(planes_for_sale))
 		planes_for_sale = Plane.list_offered(DB, airline_id)
 	logging.debug("offered_planes response:%s", planes_for_sale)
 	return jsonify(planes_for_sale)
@@ -250,7 +241,7 @@ def owned_planes():
 @app.route("/upgrade_fuel_efficiency", methods=["POST"])
 def upgrade_fuel_efficiency():
 	airline = airline_from_request(request)
-	airline.fuel_efficiency_level += 1 
+	airline.fuel_efficiency_level += 1
 	DB.save_airline(airline)
 	return jsonify({
 			"title": "Fuel Efficiency",
@@ -258,7 +249,7 @@ def upgrade_fuel_efficiency():
 			"upgrade_cost": 10000,
 			"upgrade_enabled": airline.cash > 10000,
 		})
-	
+
 @app.route("/upgrades", methods=["GET"])
 def get_upgraded():
 	airline = airline_from_request(request)
