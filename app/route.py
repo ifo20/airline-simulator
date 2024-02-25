@@ -63,7 +63,7 @@ class Route:
 					self.status = "ready"
 			else:
 				self.status = "ready"
-
+	#todo: Ian fix landed bug when last run at is null and map issue 
 	@staticmethod
 	def list_offered(db, airline_id: int):
 		return db.list_offered_routes(airline_id)

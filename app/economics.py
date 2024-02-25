@@ -3,6 +3,8 @@ from app.config import DAMAGE_MULTIPLIER, FLIGHT_PROFIT_HACK, pretty_price
 
 def calculate_fuel_cost(distance, num_passengers, fuel_efficiency_level):
     # Nowadays the fuel consumption is usually around 3 to 4 liters per passenger per 100 kilometers,
+    fuel_efficiency_level = min(fuel_efficiency_level,5)
+    fuel_efficiency_level = max(fuel_efficiency_level,0)
     FUEL_LITRES_PER_PERSON_PER_100_KM = {
         # upgraded_levels: litres per passenger per 100 km
         0: 6,

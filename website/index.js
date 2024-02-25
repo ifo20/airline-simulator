@@ -132,6 +132,9 @@ var RequestClient = /** @class */ (function () {
     function RequestClient(engine) {
         this.engine = engine;
     }
+    // TODO iain: many things result in the cash/header bar being out-of-date.
+    // maybe all responses that involve a transaction should return the same shape;
+    // and then we call updateStats() on each of the responses?
     RequestClient.prototype.upgradeFuelEfficiency = function (airline_id, from_level) {
         var engine = this.engine;
         $.ajax({
