@@ -832,7 +832,7 @@ class Airline {
 				// 'apikey': 'r7U4pzaJCQZVOL0cJLmpjQz0Sqzf3Wlq7LJwg3fbvik'
 			});
 			var defaultLayers = platform.createDefaultLayers();
-			//Step 2: initialize a map - this map is centered over Europe
+			//Step 2: initialize a map - centered over our hub
 			var map = new H.Map(document.getElementById('map'),
 			defaultLayers.vector.normal.map,{
 				center: {lat: this.hub.lat, lng:this.hub.lon},

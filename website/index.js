@@ -1,4 +1,3 @@
-//////// HELPING FUNCTIONS
 function errHandler(err, button) {
     unsetLoader();
     displayError(err.responseText);
@@ -9,7 +8,7 @@ function errHandler(err, button) {
 function randomBusinessName() {
     var adjectives = ["Easy", "Budget", "Trusty", "Speedy", "Enigmatic", "Fly", "Golden", "Sturdy", "Graceful", "Rapid", "Robust", "American", "British", "Asian", "European", "Indian", "Italian", "Australian", "Chinese", "Russian", "Nordic", "Southern", "Northern", "Southwest", "Paper", "Malaysian", "Thai", "Smile", ""];
     var nouns = ["Airways", "Skies", "Air", "Airlines", "Flyers", "Jets", "Pilots", "Air Transport", "Helicopters", "Cargo", "Regional", "Express"];
-    var name = randomChoice(adjectives) + " " + randomChoice(nouns);
+    var name = "".concat(randomChoice(adjectives), " ").concat(randomChoice(nouns));
     if (Math.random() < 0.3) {
         var name = randomChoice(adjectives) + ' ' + name;
     }
@@ -63,7 +62,7 @@ function listLabels(rows) {
     var elem = document.createElement("ul");
     rows.forEach(function (r) {
         var li = document.createElement("li");
-        li.innerHTML = "<strong>" + r[0] + ":</strong>" + r[1];
+        li.innerHTML = "<strong>".concat(r[0], ":</strong>").concat(r[1]);
         elem.appendChild(li);
     });
     return elem;
@@ -73,8 +72,8 @@ function createElement(elementType, options) {
     if (options.id) {
         e.setAttribute("id", options.id);
     }
-    if (options["class"]) {
-        e.setAttribute("class", options["class"]);
+    if (options.class) {
+        e.setAttribute("class", options.class);
     }
     if (options.innerText) {
         e.innerText = options.innerText;
@@ -109,7 +108,6 @@ function unsetLoader() {
     }
 }
 function makeClickWrapper(btn, handler) {
-    // disable, show spinner until response
     console.log('buttonClickWrapper ', btn, handler);
     function completeHandler(ev) {
         console.log('completeHandler enter', this, ev);
@@ -127,14 +125,10 @@ function addPolylineToMap(map, startinglat, startinglon, endinglat, endinglon) {
     lineString.pushPoint({ lat: endinglat, lng: endinglon });
     map.addObject(new H.map.Polyline(lineString, { style: { lineWidth: 4 } }));
 }
-//////// A request client? A typescript version of client/__init__.py
-var RequestClient = /** @class */ (function () {
+var RequestClient = (function () {
     function RequestClient(engine) {
         this.engine = engine;
     }
-    // TODO iain: many things result in the cash/header bar being out-of-date.
-    // maybe all responses that involve a transaction should return the same shape;
-    // and then we call updateStats() on each of the responses?
     RequestClient.prototype.upgradeFuelEfficiency = function (airline_id, from_level) {
         var engine = this.engine;
         $.ajax({
@@ -142,7 +136,7 @@ var RequestClient = /** @class */ (function () {
             url: "/upgrade_fuel_efficiency",
             data: {
                 airline_id: airline_id,
-                from_level: from_level
+                from_level: from_level,
             },
             error: function (x) { return errHandler(x); },
             success: function (response) {
@@ -152,7 +146,7 @@ var RequestClient = /** @class */ (function () {
     };
     return RequestClient;
 }());
-var Airport = /** @class */ (function () {
+var Airport = (function () {
     function Airport(data) {
         var code = data.code, name = data.name, country = data.country, lat = data.lat, lon = data.lon, popularity = data.popularity;
         this.code = code;
@@ -171,7 +165,7 @@ var Airport = /** @class */ (function () {
     };
     return Airport;
 }());
-var OfferedRoute = /** @class */ (function () {
+var OfferedRoute = (function () {
     function OfferedRoute(data) {
         var id = data.id, distance = data.distance, origin = data.origin, destination = data.destination, popularity = data.popularity, cost = data.cost;
         this.id = id;
@@ -184,18 +178,17 @@ var OfferedRoute = /** @class */ (function () {
     OfferedRoute.prototype.trHtml = function () {
         var tr = document.createElement("tr");
         tr.setAttribute("style", "background-color:#ddcc44aa");
-        // title - distance - pop - cost
         var titleCell = document.createElement("td");
-        titleCell.innerHTML = this.fromAirport.code + " <-> " + this.toAirport.code;
+        titleCell.innerHTML = "".concat(this.fromAirport.code, " <-> ").concat(this.toAirport.code);
         tr.appendChild(titleCell);
         var distanceCell = document.createElement("td");
-        distanceCell.innerHTML = this.distance.toLocaleString("en-gb", { maximumFractionDigits: 0 }) + "km";
+        distanceCell.innerHTML = "".concat(this.distance.toLocaleString("en-gb", { maximumFractionDigits: 0 }), "km");
         tr.appendChild(distanceCell);
         var pop = document.createElement("td");
         pop.innerHTML = this.popularity.toLocaleString("en-gb");
         tr.appendChild(pop);
         var cost = document.createElement("td");
-        cost.innerHTML = "$" + this.purchaseCost.toLocaleString("en-gb");
+        cost.innerHTML = "$".concat(this.purchaseCost.toLocaleString("en-gb"));
         tr.appendChild(cost);
         tr.appendChild(document.createElement("td"));
         var btn = document.createElement("button");
@@ -210,7 +203,7 @@ var OfferedRoute = /** @class */ (function () {
                 url: "/purchase_route",
                 data: {
                     airline_id: airline.id,
-                    route_id: route_id
+                    route_id: route_id,
                 },
                 error: function (x) { return errHandler(x, btn); },
                 success: function (response) {
@@ -245,7 +238,7 @@ var OfferedRoute = /** @class */ (function () {
                 url: "/purchase_route",
                 data: {
                     airline_id: airline.id,
-                    route_id: route_id
+                    route_id: route_id,
                 },
                 error: function (x) { return errHandler(x, btn); },
                 success: function (response) {
@@ -265,13 +258,13 @@ var OfferedRoute = /** @class */ (function () {
     };
     OfferedRoute.prototype.cardHtml = function () {
         var dl = dataLabels([
-            ["Distance", this.distance.toLocaleString("en-gb", { maximumFractionDigits: 0 }) + "km"],
+            ["Distance", "".concat(this.distance.toLocaleString("en-gb", { maximumFractionDigits: 0 }), "km")],
             ["Popularity", this.popularity.toLocaleString("en-gb")],
-            ["Cost", "$" + this.purchaseCost.toLocaleString("en-gb")],
+            ["Cost", "$".concat(this.purchaseCost.toLocaleString("en-gb"))],
         ]);
         var card = createElement("div", {
-            "class": "flex flex-column justify-content-between",
-            innerHTML: "<h3>" + this.fromAirport.code + " <-> " + this.toAirport.code + "</h3>"
+            class: "flex flex-column justify-content-between",
+            innerHTML: "<h3>".concat(this.fromAirport.code, " <-> ").concat(this.toAirport.code, "</h3>")
         });
         card.appendChild(dl);
         var footer = document.createElement("div");
@@ -285,7 +278,7 @@ var OfferedRoute = /** @class */ (function () {
     };
     return OfferedRoute;
 }());
-var Route = /** @class */ (function () {
+var Route = (function () {
     function Route(data) {
         var id = data.id, distance = data.distance, origin = data.origin, destination = data.destination, popularity = data.popularity, cost = data.cost, last_run_at = data.last_run_at, last_resulted_at = data.last_resulted_at, next_available_at = data.next_available_at, status = data.status;
         this.id = id;
@@ -319,7 +312,7 @@ var Route = /** @class */ (function () {
             url: "/fly_route",
             data: {
                 airline_id: airline.id,
-                route_id: this.id
+                route_id: this.id,
             },
             error: function (x) {
                 errHandler(x, btn);
@@ -348,7 +341,7 @@ var Route = /** @class */ (function () {
             url: "/collect",
             data: {
                 airline_id: airline.id,
-                route_id: this.id
+                route_id: this.id,
             },
             error: function (x) {
                 errHandler(x, btn);
@@ -372,24 +365,24 @@ var Route = /** @class */ (function () {
     };
     Route.prototype.updatePurchasedCardContent = function () {
         var _this = this;
-        var div = document.getElementById("owned-route-" + this.id);
+        var div = document.getElementById("owned-route-".concat(this.id));
         if (!div) {
-            console.log("Failed to find element", "owned-route-" + this.id);
+            console.log("Failed to find element", "owned-route-".concat(this.id));
             setTimeout(function () { return _this.updatePurchasedCardContent(); }, 1000);
             return;
         }
         div.innerHTML = "";
         var titleCell = document.createElement("td");
-        titleCell.innerHTML = this.fromAirport.code + " <-> " + this.toAirport.code;
+        titleCell.innerHTML = "".concat(this.fromAirport.code, " <-> ").concat(this.toAirport.code);
         div.appendChild(titleCell);
         var distanceCell = document.createElement("td");
-        distanceCell.innerHTML = this.distance.toLocaleString("en-gb", { maximumFractionDigits: 0 }) + "km";
+        distanceCell.innerHTML = "".concat(this.distance.toLocaleString("en-gb", { maximumFractionDigits: 0 }), "km");
         div.appendChild(distanceCell);
         var popularityCell = document.createElement("td");
         popularityCell.innerHTML = this.popularity.toLocaleString("en-gb");
         div.appendChild(popularityCell);
         var costCell = document.createElement("td");
-        costCell.innerHTML = "$" + this.purchaseCost.toLocaleString("en-gb");
+        costCell.innerHTML = "$".concat(this.purchaseCost.toLocaleString("en-gb"));
         div.appendChild(costCell);
         var actionButton = document.createElement("button");
         actionButton.className = "text-center w-100";
@@ -398,7 +391,7 @@ var Route = /** @class */ (function () {
         if (this.timeRemaining()) {
             actionButton.setAttribute("disabled", "");
             actionButton.innerHTML = "Collect Results";
-            statusText = "Current route running, ready in " + this.timeRemaining() + " seconds";
+            statusText = "Current route running, ready in ".concat(this.timeRemaining(), " seconds");
             setTimeout(function () { return _this.updatePurchasedCardContent(); }, 1000);
         }
         else if (this.status === "ready") {
@@ -407,7 +400,7 @@ var Route = /** @class */ (function () {
             actionButton.innerHTML = "Run Route";
         }
         else if (this.status === "landed") {
-            statusText = "Landed at " + this.toAirport.code + "!";
+            statusText = "Landed at ".concat(this.toAirport.code, "!");
             actionButton.addEventListener("click", makeClickWrapper(actionButton, function (ev) { return _this.getResults(actionButton); }));
             actionButton.innerHTML = "Collect Route";
             actionButton.classList.add("collectable");
@@ -418,7 +411,7 @@ var Route = /** @class */ (function () {
             var route = this;
             $.ajax({
                 method: "GET",
-                url: "/route/" + this.id,
+                url: "/route/".concat(this.id),
                 data: {},
                 error: function (x) { return errHandler(x); },
                 success: function (response) {
@@ -429,7 +422,7 @@ var Route = /** @class */ (function () {
             });
             return;
         }
-        var statusDiv = createElement("td", { id: "route-status-" + this.id, "class": "text-center" });
+        var statusDiv = createElement("td", { id: "route-status-".concat(this.id), class: "text-center" });
         statusDiv.innerText = statusText;
         div.appendChild(statusDiv);
         var actionButtonCell = document.createElement("td");
@@ -438,19 +431,14 @@ var Route = /** @class */ (function () {
     };
     Route.prototype.createPurchasedCardHtml = function () {
         var _this = this;
-        var tr = createElement("tr", { id: "owned-route-" + this.id });
-        //create dom icon and add/remove opacity listeners
+        var tr = createElement("tr", { id: "owned-route-".concat(this.id) });
         var domIcon = new H.map.DomIcon(tr, {
-            // the function is called every time marker enters the viewport
             onAttach: function (clonedElement, domIcon, domMarker) {
-                // // Create an info bubble object at a specific geographic location:
                 var bubble = new H.ui.InfoBubble({ lng: this.toAirport.lon, lat: this.toAirport.lat }, {
-                    content: "<b>Route from " + this.fromAirport.name + " to " + this.toAirport.name + "</b>"
+                    content: "<b>Route from ".concat(this.fromAirport.name, " to ").concat(this.toAirport.name, "</b>")
                 });
-                // // Add info bubble to the UI:
                 gameEngine.ui.addBubble(bubble);
             },
-            // the function is called every time marker leaves the viewport
             onDetach: function (clonedElement, domIcon, domMarker) {
             }
         });
@@ -462,13 +450,13 @@ var Route = /** @class */ (function () {
     };
     Route.prototype.cardHtml = function () {
         var dl = dataLabels([
-            ["Distance", this.distance.toLocaleString("en-gb", { maximumFractionDigits: 0 }) + "km"],
+            ["Distance", "".concat(this.distance.toLocaleString("en-gb", { maximumFractionDigits: 0 }), "km")],
             ["Popularity", this.popularity.toLocaleString("en-gb")],
-            ["Cost", "$" + this.purchaseCost.toLocaleString("en-gb")],
+            ["Cost", "$".concat(this.purchaseCost.toLocaleString("en-gb"))],
         ]);
         var card = createElement("div", {
-            "class": "flex flex-column justify-content-between",
-            innerHTML: "<h3>" + this.fromAirport.code + " <-> " + this.toAirport.code + "</h3>"
+            class: "flex flex-column justify-content-between",
+            innerHTML: "<h3>".concat(this.fromAirport.code, " <-> ").concat(this.toAirport.code, "</h3>")
         });
         card.appendChild(dl);
         var footer = document.createElement("div");
@@ -484,7 +472,7 @@ var Route = /** @class */ (function () {
     };
     return Route;
 }());
-var Plane = /** @class */ (function () {
+var Plane = (function () {
     function Plane(data) {
         var id = data.id, name = data.name, status = data.status, health = data.health, max_distance = data.max_distance, cost = data.cost;
         this.id = id;
@@ -498,19 +486,19 @@ var Plane = /** @class */ (function () {
         var div = document.createElement("div");
         div.className = "bg-light border-box";
         var dl = dataLabels([
-            ["Name", "" + this.name],
-            ["Status", "" + this.status],
-            ["Max distance", "" + this.maxDistance],
+            ["Name", "".concat(this.name)],
+            ["Status", "".concat(this.status)],
+            ["Max distance", "".concat(this.maxDistance)],
             ["Health", this.health.toLocaleString("en-gb")],
         ]);
         var card = document.createElement("div");
-        card.innerHTML = "<h3>" + this.name + " </h3>";
+        card.innerHTML = "<h3>".concat(this.name, " </h3>");
         card.appendChild(dl);
         div.appendChild(card);
         if (this.status.indexOf("aintenance") > -1) {
             card.appendChild(this.maintenanceHtml());
         }
-        card.className = "flex flex-column justify-content-between " + this.status;
+        card.className = "flex flex-column justify-content-between ".concat(this.status);
         card.appendChild(createParagraph(this.status));
         return div;
     };
@@ -579,7 +567,7 @@ var Plane = /** @class */ (function () {
     };
     return Plane;
 }());
-var Airline = /** @class */ (function () {
+var Airline = (function () {
     function Airline(data) {
         this.planes = [];
         this.routes = [];
@@ -616,10 +604,10 @@ var Airline = /** @class */ (function () {
         ]));
     };
     Airline.prototype.addTransaction = function (msg) {
-        this.transactions.push(new Date() + " " + prettyCashString(this.cash) + " " + msg);
+        this.transactions.push("".concat(new Date(), " ").concat(prettyCashString(this.cash), " ").concat(msg));
     };
     Airline.prototype.titleHtml = function () {
-        return createTitle(this.name + "<strong>Hub: " + this.hub.code + "</strong>", "h2");
+        return createTitle("".concat(this.name, "<strong>Hub: ").concat(this.hub.code, "</strong>"), "h2");
     };
     Airline.prototype.statsHtml = function () {
         var dl = dataLabels([
@@ -640,7 +628,7 @@ var Airline = /** @class */ (function () {
             planesContainer.appendChild(plane.purchasedCardHtml());
         });
         div.appendChild(planesContainer);
-        div.appendChild(createParagraph("You have " + this.planes.length + " planes in your fleet"));
+        div.appendChild(createParagraph("You have ".concat(this.planes.length, " planes in your fleet")));
         var airline = this;
         setLoader();
         $.ajax({
@@ -657,10 +645,10 @@ var Airline = /** @class */ (function () {
                     var button = document.createElement("button");
                     button.setAttribute("style", "margin: 0.5rem");
                     var airplaneCost = plane.cost;
-                    div.appendChild(createParagraph("You can buy " + plane.name + ", which flies up to " + plane.maxDistance.toLocaleString("en-gb", { maximumFractionDigits: 0 }) + "km, for " + prettyCashString(airplaneCost)));
-                    button.innerHTML = "Buy plane for " + prettyCashString(airplaneCost).toLocaleString();
+                    div.appendChild(createParagraph("You can buy ".concat(plane.name, ", which flies up to ").concat(plane.maxDistance.toLocaleString("en-gb", { maximumFractionDigits: 0 }), "km, for ").concat(prettyCashString(airplaneCost))));
+                    button.innerHTML = "Buy plane for ".concat(prettyCashString(airplaneCost).toLocaleString());
                     button.addEventListener("click", function () {
-                        var confirmed = confirm("Are you sure you want to buy " + plane.name + "?\nThis will cost " + prettyCashString(airplaneCost).toLocaleString());
+                        var confirmed = confirm("Are you sure you want to buy ".concat(plane.name, "?\nThis will cost ").concat(prettyCashString(airplaneCost).toLocaleString()));
                         if (!confirmed) {
                             return;
                         }
@@ -671,7 +659,7 @@ var Airline = /** @class */ (function () {
                             url: "/purchase_plane",
                             data: {
                                 airline_id: airline.id,
-                                plane_id: plane.id
+                                plane_id: plane.id,
                             },
                             error: function (x) { return errHandler(x); },
                             success: function (response) {
@@ -694,7 +682,7 @@ var Airline = /** @class */ (function () {
         var routesContainer = document.getElementById("owned-routes");
         this.getMap();
         this.routes.forEach(function (route) {
-            var div = document.getElementById("owned-route-" + route.id);
+            var div = document.getElementById("owned-route-".concat(route.id));
             if (!div) {
                 routesContainer.appendChild(route.createPurchasedCardHtml());
             }
@@ -705,10 +693,10 @@ var Airline = /** @class */ (function () {
         var div = document.createElement("div");
         var heading = createTitle("Reputation and Reviews");
         div.appendChild(heading);
-        var p = createElement("p", { "class": "p-3" });
+        var p = createElement("p", { class: "p-3" });
         var numStars = 0;
         if (this.popularity > 89) {
-            p.innerText = "Customers favorite airline in " + this.hub.country + "!";
+            p.innerText = "Customers favorite airline in ".concat(this.hub.country, "!");
             numStars = 5;
         }
         else if (this.popularity > 69) {
@@ -745,8 +733,8 @@ var Airline = /** @class */ (function () {
         var tbl = createElement("table", {});
         var tbody = createElement("tbody", {});
         this.transactions.forEach(function (t) {
-            var tr = createElement("tr", { "class": "bgw" });
-            var td = createElement("td", { innerText: t, "class": "text-left" });
+            var tr = createElement("tr", { class: "bgw" });
+            var td = createElement("td", { innerText: t, class: "text-left" });
             tr.appendChild(td);
             tbody.appendChild(tr);
         });
@@ -761,8 +749,8 @@ var Airline = /** @class */ (function () {
         var tbl = createElement("table", {});
         var tbody = createElement("tbody", {});
         this.incidents.forEach(function (t) {
-            var tr = createElement("tr", { "class": "bgw" });
-            var td = createElement("td", { innerText: t, "class": "text-left" });
+            var tr = createElement("tr", { class: "bgw" });
+            var td = createElement("td", { innerText: t, class: "text-left" });
             tr.appendChild(td);
             tbody.appendChild(tr);
         });
@@ -775,10 +763,8 @@ var Airline = /** @class */ (function () {
         if (!gameEngine.routeMap) {
             var platform = new H.service.Platform({
                 'apikey': 'neEmKYaMLvpsoM_LWP-j9qFEtsMLiBeDI9Ajqxu99Js'
-                // 'apikey': 'r7U4pzaJCQZVOL0cJLmpjQz0Sqzf3Wlq7LJwg3fbvik'
             });
             var defaultLayers = platform.createDefaultLayers();
-            //Step 2: initialize a map - this map is centered over Europe
             var map = new H.Map(document.getElementById('map'), defaultLayers.vector.normal.map, {
                 center: { lat: this.hub.lat, lng: this.hub.lon },
                 zoom: 3,
@@ -786,20 +772,15 @@ var Airline = /** @class */ (function () {
             });
             gameEngine.ui = H.ui.UI.createDefault(map, defaultLayers);
             map.setBaseLayer(defaultLayers.raster.satellite.map);
-            // MapEvents enables the event system
-            // Behavior implements default interactions for pan/zoom (also on mobile touch environments)
             var behavior = new H.mapevents.Behavior(new H.mapevents.MapEvents(map));
-            // add a resize listener to make sure that the map occupies the whole container
             window.addEventListener('resize', function () { return map.getViewPort().resize(); });
             gameEngine.routeMap = map;
             setTimeout(function () {
                 var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><path fill="#f28bc1" d="M1.9 32c0 13.1 8.4 24.2 20 28.3V3.7C10.3 7.8 1.9 18.9 1.9 32z"/><path fill="#ed4c5c" d="M61.9 32c0-13.1-8.3-24.2-20-28.3v56.6c11.7-4.1 20-15.2 20-28.3"/><path fill="#fff" d="M21.9 60.3c3.1 1.1 6.5 1.7 10 1.7s6.9-.6 10-1.7V3.7C38.8 2.6 35.5 2 31.9 2s-6.9.6-10 1.7v56.6"/></svg>';
                 var marker = new H.map.Marker({
                     lat: _this.hub.lat,
-                    lng: _this.hub.lon
-                }, {
-                // icon: new H.map.Icon(svg)
-                });
+                    lng: _this.hub.lon,
+                }, {});
                 map.addObject(marker);
             }, 3000);
         }
@@ -807,7 +788,7 @@ var Airline = /** @class */ (function () {
     };
     return Airline;
 }());
-var GameEngine = /** @class */ (function () {
+var GameEngine = (function () {
     function GameEngine() {
         this.airports = [];
         this.routes = [];
@@ -839,10 +820,10 @@ var GameEngine = /** @class */ (function () {
     GameEngine.prototype.hideTabs = function (except) {
         ["overview", "fleet", "routes", "reputation", "finance", "accidents", "upgrades"].forEach(function (k) {
             if (k === except) {
-                $("#main-" + k).show();
+                $("#main-".concat(k)).show();
             }
             else {
-                $("#main-" + k).hide();
+                $("#main-".concat(k)).hide();
             }
         });
     };
@@ -856,7 +837,6 @@ var GameEngine = /** @class */ (function () {
         main.appendChild(airline.statsHtml());
         main.appendChild(airline.getReputationDisplay());
         main.appendChild(airline.getAccidentsDisplay());
-        // This doesn't work - looks like we can only have one map?
         airline.getMap();
     };
     GameEngine.prototype.displayFleetTab = function () {
@@ -876,7 +856,7 @@ var GameEngine = /** @class */ (function () {
             method: "GET",
             url: "/offered_routes",
             data: {
-                airline_id: airline.id
+                airline_id: airline.id,
             },
             error: function (x) { return errHandler(x); },
             success: function (response) {
@@ -897,21 +877,21 @@ var GameEngine = /** @class */ (function () {
             method: "GET",
             url: "/upgrades",
             data: {
-                airline_id: airline.id
+                airline_id: airline.id,
             },
             error: function (x) { return errHandler(x); },
             success: function (response) {
                 unsetLoader();
-                var parentContainer = createElement("div", { "class": "" });
+                var parentContainer = createElement("div", { class: "" });
                 var upgradeCategories = JSON.parse(response).forEach(function (category) {
-                    var categoryContainer = createElement("div", { "class": "bg-light border-box p-3" });
-                    categoryContainer.appendChild(createElement("h4", { innerText: category["title"], "class": "mb-1" }));
+                    var categoryContainer = createElement("div", { class: "bg-light border-box p-3" });
+                    categoryContainer.appendChild(createElement("h4", { innerText: category["title"], class: "mb-1" }));
                     categoryContainer.appendChild(listLabels([
                         ["Current Level", category["current_level"]],
                         ["Upgrade Cost", category["upgrade_cost"]],
                     ]));
                     var btn_class = category["upgrade_enabled"] ? "" : "disabled";
-                    var btn = createElement("button", { innerText: "Upgrade", "class": btn_class });
+                    var btn = createElement("button", { innerText: "Upgrade", class: btn_class });
                     if (category["upgrade_enabled"]) {
                         btn.addEventListener("click", function () {
                             btn.setAttribute("disabled", "");
@@ -957,13 +937,13 @@ var GameEngine = /** @class */ (function () {
     GameEngine.prototype.createSideMenu = function () {
         var sideMenu = document.getElementById("sidemenu");
         var buttons = [
-            createElement("button", { id: "viewCompany", "class": "flex-grow dark", innerText: "Overview of " + this.airline.name }),
-            createElement("button", { id: "viewFleet", "class": "flex-grow dark", innerText: "Overview of Fleet" }),
-            createElement("button", { id: "viewRoutes", "class": "flex-grow dark", innerText: "Overview of Routes" }),
-            createElement("button", { id: "viewUpgrades", "class": "flex-grow dark", innerText: "Overview of Upgrades" }),
-            createElement("button", { id: "viewReputation", "class": "flex-grow dark", innerText: "Overview of Reputation" }),
-            createElement("button", { id: "viewFinance", "class": "flex-grow dark", innerText: "Overview of Finance" }),
-            createElement("button", { id: "viewAccidents", "class": "flex-grow dark", innerText: "Overview of Accidents" }),
+            createElement("button", { id: "viewCompany", class: "flex-grow dark", innerText: "Overview of ".concat(this.airline.name) }),
+            createElement("button", { id: "viewFleet", class: "flex-grow dark", innerText: "Overview of Fleet" }),
+            createElement("button", { id: "viewRoutes", class: "flex-grow dark", innerText: "Overview of Routes" }),
+            createElement("button", { id: "viewUpgrades", class: "flex-grow dark", innerText: "Overview of Upgrades" }),
+            createElement("button", { id: "viewReputation", class: "flex-grow dark", innerText: "Overview of Reputation" }),
+            createElement("button", { id: "viewFinance", class: "flex-grow dark", innerText: "Overview of Finance" }),
+            createElement("button", { id: "viewAccidents", class: "flex-grow dark", innerText: "Overview of Accidents" }),
         ];
         var setScreen = function (buttonId) {
             buttons.forEach(function (b) {
@@ -1007,7 +987,6 @@ var GameEngine = /** @class */ (function () {
     };
     return GameEngine;
 }());
-//////// SETUP
 var gameEngine = new GameEngine();
 var client = new RequestClient(gameEngine);
 function loadHubSelect(airports) {
@@ -1021,7 +1000,7 @@ function loadHubSelect(airports) {
     airports.map(function (airport) {
         var opt = document.createElement("option");
         opt.setAttribute("value", airport.code);
-        opt.textContent = airport.name + " (" + airport.code + ")";
+        opt.textContent = "".concat(airport.name, " (").concat(airport.code, ")");
         hubSelect.appendChild(opt);
         return opt;
     });
@@ -1029,7 +1008,6 @@ function loadHubSelect(airports) {
     hubRow.appendChild(hubSelect);
 }
 var renderSignupForm = function () {
-    // Creating form to enter business name and to choose hub
     var form = document.getElementById("SignUp");
     var nameRow = document.createElement("div");
     var nameLabel = createElement("label", { innerText: "What do you want your airline to be called?" });
@@ -1041,12 +1019,11 @@ var renderSignupForm = function () {
     nameRow.appendChild(nameLabel);
     nameRow.appendChild(nameInput);
     var passwordinput = document.createElement("input");
-    // TODO justin: what happens if we change the type below from "text" to "password"?
     passwordinput.setAttribute("type", "text");
     passwordinput.setAttribute("name", "password");
     passwordinput.setAttribute("required", "");
     var hubRow = createElement("div", { id: "hubRow" });
-    var playBtn = createElement("button", { "class": "primary", innerText: "Create" });
+    var playBtn = createElement("button", { class: "primary", innerText: "Create" });
     playBtn.setAttribute("type", "submit");
     form.innerHTML = "";
     form.appendChild(nameRow);
@@ -1064,7 +1041,7 @@ var renderSignupForm = function () {
             data: {
                 businessName: nameInput.value,
                 hub: hubSelect.value,
-                password: passwordinput.value
+                password: passwordinput.value,
             },
             error: function (x) { return errHandler(x); },
             success: function (response) {
@@ -1087,7 +1064,6 @@ var renderSignupForm = function () {
     });
 };
 var renderLoginForm = function () {
-    // Creating form to enter business name and to choose hub
     var form = document.getElementById("Login");
     var nameRow = document.createElement("div");
     var nameLabel = createElement("label", { innerText: "Please Enter Your Airline Name." });
@@ -1099,11 +1075,10 @@ var renderLoginForm = function () {
     nameRow.appendChild(nameLabel);
     nameRow.appendChild(nameInput);
     var passwordinput = document.createElement("input");
-    // TODO justin: what happens if we change the type below from "text" to "password"?
     passwordinput.setAttribute("type", "text");
     passwordinput.setAttribute("name", "password");
     passwordinput.setAttribute("required", "");
-    var playBtn = createElement("button", { "class": "primary", innerText: "Login" });
+    var playBtn = createElement("button", { class: "primary", innerText: "Login" });
     playBtn.setAttribute("type", "submit");
     form.innerHTML = "";
     form.appendChild(nameRow);
@@ -1119,7 +1094,7 @@ var renderLoginForm = function () {
             url: "/login",
             data: {
                 businessName: nameInput.value,
-                password: passwordinput.value
+                password: passwordinput.value,
             },
             error: function (x) { return errHandler(x); },
             success: function (response) {

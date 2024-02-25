@@ -51,19 +51,17 @@ class Route:
 		return base
 
 	def update_status(self):
-		if self.purchased_at:
-			if self.next_available_at:
-				if self.next_available_at > datetime.now(pytz.UTC):
-					self.status = "flying"
-				elif (
-					self.last_resulted_at is None or self.next_available_at > self.last_resulted_at
-				):
-					self.status = "landed"
-				else:
-					self.status = "ready"
-			else:
-				self.status = "ready"
-	#todo: Ian fix landed bug when last run at is null and map issue 
+		if self.purchased_at is None:
+			self.status = None # status is only applicable to owned routes
+		elif self.last_run_at is None:
+			self.status = "ready" # never flown before
+		elif self.next_available_at is None or self.next_available_at > datetime.now(pytz.UTC):
+			self.status = "flying"
+		elif self.last_resulted_at is None or self.last_resulted_at < self.next_available_at:
+			self.status = "landed"
+		else: # flown, collected, and available again
+			self.status = "ready"
+
 	@staticmethod
 	def list_offered(db, airline_id: int):
 		return db.list_offered_routes(airline_id)

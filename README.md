@@ -9,17 +9,16 @@ Quickstart (backend):
 DATABASE_URL="sslmode=disable host=localhost password=postgres user=postgres" PYTHONPATH=. python app/main.py
 ```
 
-Compile frontend (from inside website folder):
+Compile frontend:
 ```
-tsc index.ts
+tsc -p website/tsconfig.json
 ```
 
 First-time set up:
 ```
 python3 -m venv venv
-. venv/bin/activate
-pip install -r requirements.txt
-cd website && npm install && tsc index.ts
+. venv/bin/activate && pip install -r requirements.txt
+cd website && npm install && cd .. && tsc -p website/tsconfig.json
 ```
 
 To run the test client (the server should already be running):
