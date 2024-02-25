@@ -47,7 +47,23 @@
 		<div class="flex flex-column flex-grow">
 			<!-- Main game content goes in here -->
 			<div id="main-overview" class="flex flex-column flex-grow"></div>
-			<div id="main-fleet" class="flex flex-column flex-grow"></div>
+			<div id="main-fleet" class="flex flex-column flex-grow">
+				<div id="fleet-header"></div>
+				<div id="planes-table">
+					<table class="table w-100">
+						<thead><tr>
+							<th>Name</th>
+							<th>Max Distance</th>
+							<th>Purchase Cost</th>
+							<th>Status</th>
+							<th>Health</th>
+							<th></th>	
+						</tr></thead>
+						<tbody id="owned-planes"></tbody>
+						<tbody id="offered-planes"></tbody>
+					</table>
+				</div>
+			</div>
 			<div id="main-routes" class="flex flex-column flex-grow">
 				<div id="routes-table">
 					<table class="table w-100">

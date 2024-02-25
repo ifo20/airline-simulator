@@ -206,25 +206,14 @@ class OfferedRoute {
 		this.purchaseCost = cost
 	}
 	trHtml(): HTMLTableRowElement {
-		var tr = document.createElement("tr")
-		tr.setAttribute("style", "background-color:#ddcc44aa")
-		// title - distance - pop - cost
-		var titleCell = document.createElement("td")
-		titleCell.innerHTML = `${this.fromAirport.code} <-> ${this.toAirport.code}`
-		tr.appendChild(titleCell)
-
-		var distanceCell = document.createElement("td")
-		distanceCell.innerHTML = `${this.distance.toLocaleString("en-gb", { maximumFractionDigits: 0 })}km`
-		tr.appendChild(distanceCell)
-		var pop = document.createElement("td")
-		pop.innerHTML = this.popularity.toLocaleString("en-gb")
-		tr.appendChild(pop)
-		var cost = document.createElement("td")
-		cost.innerHTML = `$${this.purchaseCost.toLocaleString("en-gb")}`
-		tr.appendChild(cost)
-		tr.appendChild(document.createElement("td"))
-		var btn = document.createElement("button")
-		btn.innerText = "Purchase"
+		var tr = <HTMLTableRowElement>createElement("tr", {class: "bg-offered"})
+		// title - distance - popularity - cost
+		tr.appendChild(createElement("td", {innerHTML: `${this.fromAirport.code} <-> ${this.toAirport.code}`}))
+		tr.appendChild(createElement("td", {innerHTML:`${this.distance.toLocaleString("en-gb", { maximumFractionDigits: 0 })}km`}))
+		tr.appendChild(createElement("td", {innerHTML:this.popularity.toLocaleString("en-gb")}))
+		tr.appendChild(createElement("td", {innerHTML:this.purchaseCost.toLocaleString("en-gb")}))
+		tr.appendChild(createElement("td", {}))
+		var btn = <HTMLButtonElement>createElement("button", {innerText: "Purchase"})
 		var btnCell = document.createElement("td")
 		var route_id = this.id
 		btn.addEventListener("click", makeClickWrapper(btn, (ev:MouseEvent) => {
@@ -542,24 +531,18 @@ class Plane {
 		this.cost = cost
 	}
 	purchasedCardHtml(): HTMLElement {
-		var div = document.createElement("div")
-		div.className = "bg-light border-box"
-		var dl = dataLabels([
-			["Name", `${this.name}`],
-			["Status", `${this.status}`],
-			["Max distance", `${this.maxDistance}`],
-			["Health", this.health.toLocaleString("en-gb")],
-		])
-		var card = document.createElement("div")
-		card.innerHTML = `<h3>${this.name} </h3>`
-		card.appendChild(dl)
-		div.appendChild(card)
+		var tr = createElement("tr", {class: "bgw"})
+		tr.appendChild(createElement("td", {innerHTML: this.name}))
+		tr.appendChild(createElement("td", {innerHTML: this.maxDistance.toLocaleString("en-gb", { maximumFractionDigits: 0 }) + "km"}))
+		tr.appendChild(createElement("td", {innerHTML: prettyCashString(this.cost)}))
+		tr.appendChild(createElement("td", {innerHTML: this.status}))
+		tr.appendChild(createElement("td", {innerHTML: this.health.toLocaleString("en-gb")}))
+		var td = createElement("td", {})
 		if (this.status.indexOf("aintenance") > -1) {
-			card.appendChild(this.maintenanceHtml())
+			td.appendChild(this.maintenanceHtml())
 		}
-		card.className = `flex flex-column justify-content-between ${this.status}`
-		card.appendChild(createParagraph(this.status))
-		return div
+		tr.appendChild(td)
+		return tr
 
 	}
 	displayHtml(): HTMLElement {
@@ -573,11 +556,11 @@ class Plane {
 		]))
 		return div
 	}
+	// TODO iain: costs etc should all be from server
 	maintenanceHtml(): HTMLElement {
 		var airline = <Airline>gameEngine.airline
 		var div = this.displayHtml()
-		var btn = document.createElement("button")
-		btn.innerText = "Fix for $100,000"
+		var btn = <HTMLButtonElement>createElement("button", {innerText: "Fix for $100,000"})
 		div.appendChild(btn)
 		btn.addEventListener("click", makeClickWrapper(btn, (ev:MouseEvent) => {
 			$.ajax({
@@ -599,8 +582,7 @@ class Plane {
 				}
 			})
 		}))
-		var btn = document.createElement("button")
-		btn.innerText = "Sell to  Mojave scrapyard for $10,000"
+		var btn = <HTMLButtonElement>createElement("button", {innerText: "Sell to  Mojave scrapyard for $10,000"})
 		div.appendChild(btn)
 		btn.addEventListener("click", makeClickWrapper(btn, (ev:MouseEvent) => {
 			$.ajax({
@@ -689,15 +671,18 @@ class Airline {
 		])
 		return dl
 	}
-	getFleetDisplay(): HTMLElement {
-		var div = document.createElement("div")
-		div.appendChild(createTitle("Your Fleet"))
-		var planesContainer = document.createElement("div")
+	getFleetDisplay(): void {
+		var header = <HTMLElement>document.getElementById("fleet-header")
+		header.innerHTML = ""
+		var owned_tbody = <HTMLElement>document.getElementById("owned-planes")
+		var offered_tbody = <HTMLElement>document.getElementById("offered-planes")
+		owned_tbody.innerHTML = ""
+		offered_tbody.innerHTML = ""
+		header.appendChild(createTitle("Your Fleet"))
 		this.planes.forEach(plane => {
-		planesContainer.appendChild(plane.purchasedCardHtml())
+			owned_tbody.appendChild(plane.purchasedCardHtml())
 		})
-		div.appendChild(planesContainer)
-		div.appendChild(createParagraph(`You have ${this.planes.length} planes in your fleet`))
+		header.appendChild(createParagraph(`You have ${this.planes.length} planes in your fleet`))
 		var airline = this
 		setLoader()
 		$.ajax({
@@ -710,11 +695,11 @@ class Airline {
 			success: function(response) {
 				JSON.parse(response).map((p: any) => {
 					unsetLoader()
+					var tr = createElement("tr", {class: "bg-offered"})
 					var plane = new Plane(p)
 					var button = document.createElement("button")
 					button.setAttribute("style", "margin: 0.5rem")
 					const airplaneCost = plane.cost
-					div.appendChild(createParagraph(`You can buy ${plane.name}, which flies up to ${plane.maxDistance.toLocaleString("en-gb", { maximumFractionDigits: 0 })}km, for ${prettyCashString(airplaneCost)}`))
 					button.innerHTML = `Buy plane for ${prettyCashString(airplaneCost).toLocaleString()}`
 					button.addEventListener("click", () => {
 						var confirmed = confirm(`Are you sure you want to buy ${plane.name}?\nThis will cost ${prettyCashString(airplaneCost).toLocaleString()}`)
@@ -741,12 +726,19 @@ class Airline {
 							}
 						})
 					})
-					div.appendChild(button)
+					tr.appendChild(createElement("td", {innerHTML: plane.name}))
+					const maxDistanceString = plane.maxDistance.toLocaleString("en-gb", { maximumFractionDigits: 0 }) + "km"
+					tr.appendChild(createElement("td", {innerHTML: maxDistanceString}))
+					tr.appendChild(createElement("td", {innerHTML: prettyCashString(airplaneCost)}))
+					tr.appendChild(createElement("td", {innerHTML: ""})) // status: n/a
+					tr.appendChild(createElement("td", {innerHTML: ""})) // health: n/a
+					var td = createElement("td", {})
+					td.appendChild(button)
+					tr.appendChild(td)
+					offered_tbody.appendChild(tr)
 				})
 			}
 		})
-
-		return div
 	}
 	getRoutesDisplay(): HTMLElement {
 		const routesContainer = <HTMLElement>document.getElementById("owned-routes")
@@ -916,10 +908,8 @@ class GameEngine {
 	}
 	displayFleetTab(): void {
 		this.hideTabs("fleet")
-		const main = <HTMLElement>document.getElementById("main-fleet")
-		main.innerHTML = ""
 		var airline = <Airline>this.airline
-		main.appendChild(airline.getFleetDisplay())
+		airline.getFleetDisplay()
 	}
 	displayRoutesTab(): void {
 		this.hideTabs("routes")
