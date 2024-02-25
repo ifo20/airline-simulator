@@ -241,13 +241,18 @@ def owned_planes():
 @app.route("/upgrade_fuel_efficiency", methods=["POST"])
 def upgrade_fuel_efficiency():
 	airline = airline_from_request(request)
+	upgrade_cost = 10000
+	if airline.cash < upgrade_cost:
+		raise AssertionError("You do not have enough to cash to purchase this upgrade")
+	# TODO jusin: we need to update the airline's cash,
+	# and also check that we're not going above the max upgrade level
 	airline.fuel_efficiency_level += 1
 	DB.save_airline(airline)
 	return jsonify({
 			"title": "Fuel Efficiency",
 			"current_level": airline.fuel_efficiency_level,
-			"upgrade_cost": 10000,
-			"upgrade_enabled": airline.cash > 10000,
+			"upgrade_cost": upgrade_cost,
+			"upgrade_enabled": airline.cash > upgrade_cost,
 		})
 
 @app.route("/upgrades", methods=["GET"])
