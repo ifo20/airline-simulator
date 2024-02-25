@@ -128,13 +128,38 @@ function makeClickWrapper(btn: HTMLButtonElement, handler: (ev:MouseEvent)=>any)
 }
 function addPolylineToMap(map: H.Map, startinglat: number, startinglon: number, endinglat: number, endinglon: number) {
     var lineString = new H.geo.LineString();
-  
+
     lineString.pushPoint({lat:startinglat, lng:startinglon});
     lineString.pushPoint({lat:endinglat, lng:endinglon});
-  
+
     map.addObject(new H.map.Polyline(
       lineString, { style: { lineWidth: 4 }}
     ));
+}
+//////// A request client? A typescript version of client/__init__.py
+class RequestClient {
+	engine: GameEngine
+	constructor(engine: GameEngine) {
+		this.engine = engine
+	}
+	// TODO iain: many things result in the cash/header bar being out-of-date.
+	// maybe all responses that involve a transaction should return the same shape;
+	// and then we call updateStats() on each of the responses?
+	upgradeFuelEfficiency(airline_id: number, from_level: number) {
+		var engine = this.engine;
+		$.ajax({
+			method: "POST",
+			url: "/upgrade_fuel_efficiency",
+			data: {
+				airline_id,
+				from_level,
+			},
+			error: (x) => errHandler(x),
+			success: function(response) {
+				engine.displayUpgradesTab()
+			}
+		})
+	}
 }
 //////// OUR TYPES & CLASSES (THINGS)
 type AirportCode = string
@@ -422,7 +447,7 @@ class Route {
 			statusText = `Landed at ${this.toAirport.code}!`
 			actionButton.addEventListener("click", makeClickWrapper(actionButton, (ev:MouseEvent) => this.getResults(actionButton)))
 			actionButton.innerHTML = "Collect Route"
-			actionButton.classList.add("collectable") 
+			actionButton.classList.add("collectable")
 		} else {
 			statusText = "Retrieving status..."
 			actionButton.innerHTML = ""
@@ -449,7 +474,7 @@ class Route {
 	}
 	createPurchasedCardHtml(): HTMLDivElement {
 		var tr = <HTMLTableRowElement>createElement("tr", {id:`owned-route-${this.id}`})
-	
+
 		//create dom icon and add/remove opacity listeners
 		var domIcon = new H.map.DomIcon(tr, {
 		// the function is called every time marker enters the viewport
@@ -467,7 +492,7 @@ class Route {
 		onDetach: function(clonedElement, domIcon, domMarker) {
 		}
 		});
-	
+
 		var marker = new H.map.Marker({lat:this.toAirport.lat, lng:this.toAirport.lon});
 		gameEngine.routeMap.addObject(marker);
 		addPolylineToMap(gameEngine.routeMap, this.fromAirport.lat,  this.fromAirport.lon, this.toAirport.lat, this.toAirport.lon)
@@ -946,19 +971,7 @@ class GameEngine {
 						btn.addEventListener("click", () => {
 							btn.setAttribute("disabled", "")
 							btn.innerHTML = "..."
-							$.ajax({
-								method: "POST",
-								url: "/upgrade_fuel_efficiency",
-								data: {
-									airline_id: airline.id,
-									from_level: category["fuel_efficiency_level"],
-								},
-								error: (x) => errHandler(x),
-								success: function(response) {
-									// TODO: we need to refresh this div and the airline's cash
-									// displayUpgradesTab()
-								}
-							})
+							client.upgradeFuelEfficiency(airline.id, category["fuel_efficiency_level"])
 						})
 					} else {
 						btn.setAttribute("disabled", "")
@@ -1049,6 +1062,7 @@ class GameEngine {
 
 //////// SETUP
 var gameEngine: GameEngine = new GameEngine()
+var client = new RequestClient(gameEngine)
 
 function loadHubSelect(airports: Array<Airport>) {
 	var hubRow = document.getElementById("hubRow")
@@ -1082,6 +1096,7 @@ const renderSignupForm = () => {
 	nameRow.appendChild(nameLabel)
 	nameRow.appendChild(nameInput)
 	var passwordinput: HTMLInputElement = document.createElement("input")
+	// TODO justin: what happens if we change the type below from "text" to "password"?
 	passwordinput.setAttribute("type", "text")
 	passwordinput.setAttribute("name", "password")
 	passwordinput.setAttribute("required", "")
@@ -1140,6 +1155,7 @@ const renderLoginForm = () => {
 	nameRow.appendChild(nameLabel)
 	nameRow.appendChild(nameInput)
 	var passwordinput: HTMLInputElement = document.createElement("input")
+	// TODO justin: what happens if we change the type below from "text" to "password"?
 	passwordinput.setAttribute("type", "text")
 	passwordinput.setAttribute("name", "password")
 	passwordinput.setAttribute("required", "")

@@ -127,6 +127,28 @@ function addPolylineToMap(map, startinglat, startinglon, endinglat, endinglon) {
     lineString.pushPoint({ lat: endinglat, lng: endinglon });
     map.addObject(new H.map.Polyline(lineString, { style: { lineWidth: 4 } }));
 }
+//////// A request client? A typescript version of client/__init__.py
+var RequestClient = /** @class */ (function () {
+    function RequestClient(engine) {
+        this.engine = engine;
+    }
+    RequestClient.prototype.upgradeFuelEfficiency = function (airline_id, from_level) {
+        var engine = this.engine;
+        $.ajax({
+            method: "POST",
+            url: "/upgrade_fuel_efficiency",
+            data: {
+                airline_id: airline_id,
+                from_level: from_level
+            },
+            error: function (x) { return errHandler(x); },
+            success: function (response) {
+                engine.displayUpgradesTab();
+            }
+        });
+    };
+    return RequestClient;
+}());
 var Airport = /** @class */ (function () {
     function Airport(data) {
         var code = data.code, name = data.name, country = data.country, lat = data.lat, lon = data.lon, popularity = data.popularity;
@@ -890,19 +912,7 @@ var GameEngine = /** @class */ (function () {
                         btn.addEventListener("click", function () {
                             btn.setAttribute("disabled", "");
                             btn.innerHTML = "...";
-                            $.ajax({
-                                method: "POST",
-                                url: "/upgrade_fuel_efficiency",
-                                data: {
-                                    airline_id: airline.id,
-                                    from_level: category["fuel_efficiency_level"]
-                                },
-                                error: function (x) { return errHandler(x); },
-                                success: function (response) {
-                                    // TODO: we need to refresh this div and the airline's cash
-                                    // displayUpgradesTab()
-                                }
-                            });
+                            client.upgradeFuelEfficiency(airline.id, category["fuel_efficiency_level"]);
                         });
                     }
                     else {
@@ -995,6 +1005,7 @@ var GameEngine = /** @class */ (function () {
 }());
 //////// SETUP
 var gameEngine = new GameEngine();
+var client = new RequestClient(gameEngine);
 function loadHubSelect(airports) {
     var hubRow = document.getElementById("hubRow");
     var hubLabel = document.createElement("label");
@@ -1026,6 +1037,7 @@ var renderSignupForm = function () {
     nameRow.appendChild(nameLabel);
     nameRow.appendChild(nameInput);
     var passwordinput = document.createElement("input");
+    // TODO justin: what happens if we change the type below from "text" to "password"?
     passwordinput.setAttribute("type", "text");
     passwordinput.setAttribute("name", "password");
     passwordinput.setAttribute("required", "");
@@ -1083,6 +1095,7 @@ var renderLoginForm = function () {
     nameRow.appendChild(nameLabel);
     nameRow.appendChild(nameInput);
     var passwordinput = document.createElement("input");
+    // TODO justin: what happens if we change the type below from "text" to "password"?
     passwordinput.setAttribute("type", "text");
     passwordinput.setAttribute("name", "password");
     passwordinput.setAttribute("required", "");
