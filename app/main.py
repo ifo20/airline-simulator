@@ -287,7 +287,7 @@ def get_upgraded():
 			"upgrade_cost": 10000,
 			"upgrade_enabled": airline.cash > 10000,
 		}
-	] + [placeholder_upgrade] * 8
+	] + [placeholder_upgrade] * 5
 	return jsonify(upgrades)
 
 @app.route("/purchase_plane", methods=["POST"])
@@ -329,6 +329,8 @@ def fix_plane():
 			"planes": planes,
 			"cash": airline.cash,
 			"msg": f"Plane {plane.name} fixed for {pretty_price(PLANE_FIX_COST)}!",
+			# TODO iain and justin: this response includes a transaction that can be seen on the Finance page
+			# If you refresh and log back in, can you see your old transactions?
 			"transaction": f"Fixed {plane.name} for {pretty_price(PLANE_FIX_COST)}",
 		}
 	)

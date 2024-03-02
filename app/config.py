@@ -6,7 +6,7 @@ PLANE_FIX_COST = 100000
 PLANE_SCRAP_VALUE = 300000
 NUM_OFFERS = 3 # how many routes/planes are available to buy at a given time
 
-TIME_SPEED = 1.0
+TIME_SPEED = 1000.0
 DAMAGE_MULTIPLIER = 1.8
 FLIGHT_PROFIT_HACK = 0
 
