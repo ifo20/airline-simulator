@@ -94,7 +94,7 @@ function createElement(elementType: string, options: createElementOptions) {
 	return e
 }
 function createTitleBanner(innerHTML: string, elementType: string = "h1"): HTMLElement {
-	return createElement(elementType, {innerHTML, class: "bgwf p-2"})
+	return createElement(elementType, {innerHTML, class: "bgwf p-2 mb-1"})
 }
 function hideElement(elem: HTMLElement): void {
 	elem.style.display = 'none'
@@ -1069,8 +1069,7 @@ const renderSignupForm = () => {
 			},
 			error: defaultErrHandler(),
 			success: function(response) {
-				hideElement(<HTMLFormElement>document.getElementById("Login"))
-				hideElement(<HTMLFormElement>document.getElementById("SignUp"))
+				hideElement(<HTMLFormElement>document.getElementById("landing"))
 				unsetLoader()
 				var airline = new Airline(JSON.parse(response))
 				displayInfo(airline.name + " joins the aviation industry!")
@@ -1132,8 +1131,7 @@ const renderLoginForm = () => {
 			},
 			error: defaultErrHandler(),
 			success: function(response) {
-				hideElement(<HTMLFormElement>document.getElementById("Login"))
-				hideElement(<HTMLFormElement>document.getElementById("SignUp"))
+				hideElement(<HTMLFormElement>document.getElementById("landing"))
 				unsetLoader()
 				var airline = new Airline(JSON.parse(response))
 				displayInfo( "Welcome back " + airline.name + "!")
@@ -1161,5 +1159,17 @@ window.onload = () => {
 		if (newSrc) {
 			logoImg.src = newSrc
 		}
+	})
+
+	$.ajax({
+		method: "GET",
+		url: "/meta",
+		success: function(response) {
+			const { total, online } = JSON.parse(response)
+			const div = <HTMLElement>document.getElementById("placeholder")
+			div.appendChild(createElement("p", {innerText: `Compete with ${total} other airlines!`}))
+			div.appendChild(createElement("p", {innerText: `${online} players currently online!`}))
+		},
+		error: defaultErrHandler(),
 	})
 }

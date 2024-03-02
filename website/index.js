@@ -88,7 +88,7 @@ function createElement(elementType, options) {
 }
 function createTitleBanner(innerHTML, elementType) {
     if (elementType === void 0) { elementType = "h1"; }
-    return createElement(elementType, { innerHTML: innerHTML, class: "bgwf p-2" });
+    return createElement(elementType, { innerHTML: innerHTML, class: "bgwf p-2 mb-1" });
 }
 function hideElement(elem) {
     elem.style.display = 'none';
@@ -850,6 +850,10 @@ var GameEngine = (function () {
             createElement("button", { id: "viewCompany", class: "flex-grow dark", innerText: "Overview of ".concat(this.airline.name) }),
             createElement("button", { id: "viewFleet", class: "flex-grow dark", innerText: "Overview of Fleet" }),
             createElement("button", { id: "viewRoutes", class: "flex-grow dark", innerText: "Overview of Routes" }),
+            createElement("button", { id: "viewUpgrades", class: "flex-grow dark", innerText: "Overview of Upgrades" }),
+            createElement("button", { id: "viewReputation", class: "flex-grow dark", innerText: "Overview of Reputation" }),
+            createElement("button", { id: "viewFinance", class: "flex-grow dark", innerText: "Overview of Finance" }),
+            createElement("button", { id: "viewAccidents", class: "flex-grow dark", innerText: "Overview of Accidents" }),
         ];
         var setScreen = function (buttonId) {
             buttons.forEach(function (b) {
@@ -964,8 +968,7 @@ var renderSignupForm = function () {
             },
             error: defaultErrHandler(),
             success: function (response) {
-                hideElement(document.getElementById("Login"));
-                hideElement(document.getElementById("SignUp"));
+                hideElement(document.getElementById("landing"));
                 unsetLoader();
                 var airline = new Airline(JSON.parse(response));
                 displayInfo(airline.name + " joins the aviation industry!");
@@ -1022,8 +1025,7 @@ var renderLoginForm = function () {
             },
             error: defaultErrHandler(),
             success: function (response) {
-                hideElement(document.getElementById("Login"));
-                hideElement(document.getElementById("SignUp"));
+                hideElement(document.getElementById("landing"));
                 unsetLoader();
                 var airline = new Airline(JSON.parse(response));
                 displayInfo("Welcome back " + airline.name + "!");
@@ -1049,5 +1051,16 @@ window.onload = function () {
         if (newSrc) {
             logoImg.src = newSrc;
         }
+    });
+    $.ajax({
+        method: "GET",
+        url: "/meta",
+        success: function (response) {
+            var _a = JSON.parse(response), total = _a.total, online = _a.online;
+            var div = document.getElementById("placeholder");
+            div.appendChild(createElement("p", { innerText: "Compete with ".concat(total, " other airlines!") }));
+            div.appendChild(createElement("p", { innerText: "".concat(online, " players currently online!") }));
+        },
+        error: defaultErrHandler(),
     });
 };

@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import os
 import pathlib
@@ -7,6 +7,7 @@ from typing import Dict
 import timeit
 
 from flask import abort, request, send_from_directory, Flask
+import pytz
 
 from app.db import get_db
 from app.airline import Airline
@@ -126,6 +127,20 @@ def list_airports():
 	airports = DB.get_airports()
 	return jsonify(airports[:300])
 
+# This is an endpoint to show how many airlines are registered/currently online!
+@app.route("/meta", methods=["GET"])
+def meta():
+	all_airlines = Airline.leaderboard(DB)
+	num_online = 0
+	time_now = datetime.now(pytz.UTC)
+	for airline in all_airlines:
+		# TODO justin: is this an accurate way of counting number of currently-online players?
+		if time_now - airline.last_login_at <= timedelta(hours=2):
+			num_online += 1
+	return jsonify({
+		"total": len(all_airlines),
+		"online": num_online
+	})
 
 @app.route("/signup", methods=["POST"])
 def signup():
