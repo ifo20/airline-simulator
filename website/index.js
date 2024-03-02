@@ -560,10 +560,8 @@ var Airline = (function () {
                     unsetLoader();
                     var tr = createElement("tr", { class: "bg-offered" });
                     var plane = new Plane(p);
-                    var btn = document.createElement("button");
-                    btn.setAttribute("style", "margin: 0.5rem");
                     var airplaneCost = plane.cost;
-                    btn.innerHTML = "Buy plane for ".concat(prettyCashString(airplaneCost).toLocaleString());
+                    var btn = createElement("button", { innerHTML: "Buy plane for ".concat(prettyCashString(airplaneCost).toLocaleString()) });
                     function onSuccess(response) {
                         var r = JSON.parse(response);
                         displayInfo(r.msg);
@@ -844,56 +842,33 @@ var GameEngine = (function () {
         var main = document.getElementById("main");
         main.innerHTML = "<h1 style='color:red;'>GAMEOVER</h1>";
     };
-    GameEngine.prototype.createSideMenu = function () {
+    GameEngine.prototype.createTopMenu = function () {
+        var topMenu = document.getElementById("topmenu");
+        var buttons = [
+            createElement("button", { id: "viewCompany", class: "screen-btn flex-grow dark", innerText: "Overview" }),
+            createElement("button", { id: "viewFleet", class: "screen-btn flex-grow dark", innerText: "Fleet" }),
+            createElement("button", { id: "viewRoutes", class: "screen-btn flex-grow dark", innerText: "Routes" }),
+            createElement("button", { id: "viewUpgrades", class: "screen-btn flex-grow dark", innerText: "Upgrades" }),
+            createElement("button", { id: "viewReputation", class: "screen-btn flex-grow dark", innerText: "Reputation" }),
+            createElement("button", { id: "viewFinance", class: "screen-btn flex-grow dark", innerText: "Finance" }),
+            createElement("button", { id: "viewAccidents", class: "screen-btn flex-grow dark", innerText: "Accidents" }),
+        ];
+        buttons.forEach(function (b) { return topMenu.appendChild(b); });
+        return buttons;
+    };
+    GameEngine.prototype.createSideMenu = function (airline) {
         var sideMenu = document.getElementById("sidemenu");
         var buttons = [
-            createElement("button", { id: "viewCompany", class: "flex-grow dark", innerText: "Overview of ".concat(this.airline.name) }),
-            createElement("button", { id: "viewFleet", class: "flex-grow dark", innerText: "Overview of Fleet" }),
-            createElement("button", { id: "viewRoutes", class: "flex-grow dark", innerText: "Overview of Routes" }),
-            createElement("button", { id: "viewUpgrades", class: "flex-grow dark", innerText: "Overview of Upgrades" }),
-            createElement("button", { id: "viewReputation", class: "flex-grow dark", innerText: "Overview of Reputation" }),
-            createElement("button", { id: "viewFinance", class: "flex-grow dark", innerText: "Overview of Finance" }),
-            createElement("button", { id: "viewAccidents", class: "flex-grow dark", innerText: "Overview of Accidents" }),
+            createElement("button", { id: "viewCompany", class: "screen-btn flex-grow dark", innerText: "Overview of ".concat(airline.name) }),
+            createElement("button", { id: "viewFleet", class: "screen-btn flex-grow dark", innerText: "Overview of Fleet" }),
+            createElement("button", { id: "viewRoutes", class: "screen-btn flex-grow dark", innerText: "Overview of Routes" }),
+            createElement("button", { id: "viewUpgrades", class: "screen-btn flex-grow dark", innerText: "Overview of Upgrades" }),
+            createElement("button", { id: "viewReputation", class: "screen-btn flex-grow dark", innerText: "Overview of Reputation" }),
+            createElement("button", { id: "viewFinance", class: "screen-btn flex-grow dark", innerText: "Overview of Finance" }),
+            createElement("button", { id: "viewAccidents", class: "screen-btn flex-grow dark", innerText: "Overview of Accidents" }),
         ];
-        var setScreen = function (buttonId) {
-            buttons.forEach(function (b) {
-                if (b.id === buttonId) {
-                    b.classList.add("light");
-                }
-                else {
-                    b.classList.remove("light");
-                }
-            });
-            switch (buttonId) {
-                case "viewCompany":
-                    gameEngine.displaySummaryTab();
-                    break;
-                case "viewFleet":
-                    gameEngine.displayFleetTab();
-                    break;
-                case "viewRoutes":
-                    gameEngine.displayRoutesTab();
-                    break;
-                case "viewUpgrades":
-                    gameEngine.displayUpgradesTab();
-                    break;
-                case "viewReputation":
-                    gameEngine.displayReputationTab();
-                    break;
-                case "viewFinance":
-                    gameEngine.displayFinanceTab();
-                    break;
-                case "viewAccidents":
-                    gameEngine.displayAccidentsTab();
-                    break;
-                default:
-                    console.error("Unexpected buttonId:", buttonId);
-            }
-        };
-        buttons.forEach(function (b) {
-            b.addEventListener("click", function () { return setScreen(b.id); });
-            sideMenu.appendChild(b);
-        });
+        buttons.forEach(function (b) { return sideMenu.appendChild(b); });
+        return buttons;
     };
     return GameEngine;
 }());
@@ -917,11 +892,55 @@ function loadHubSelect(airports) {
     hubRow.appendChild(hubLabel);
     hubRow.appendChild(hubSelect);
 }
-function loadGameHeader() {
+function loadGameScreen(airline) {
     var homeHeader = document.getElementById("homeHeader");
     var gameHeader = document.getElementById("gameHeader");
     hideElement(homeHeader);
     gameHeader.style.display = "flex";
+    var buttons = gameEngine.createTopMenu();
+    loadMenuButtons(buttons);
+    airline.updateTitle();
+    airline.updateStats();
+}
+function loadMenuButtons(buttons) {
+    var setScreen = function (buttonId) {
+        buttons.forEach(function (b) {
+            if (b.id === buttonId) {
+                b.classList.add("light");
+            }
+            else {
+                b.classList.remove("light");
+            }
+        });
+        switch (buttonId) {
+            case "viewCompany":
+                gameEngine.displaySummaryTab();
+                break;
+            case "viewFleet":
+                gameEngine.displayFleetTab();
+                break;
+            case "viewRoutes":
+                gameEngine.displayRoutesTab();
+                break;
+            case "viewUpgrades":
+                gameEngine.displayUpgradesTab();
+                break;
+            case "viewReputation":
+                gameEngine.displayReputationTab();
+                break;
+            case "viewFinance":
+                gameEngine.displayFinanceTab();
+                break;
+            case "viewAccidents":
+                gameEngine.displayAccidentsTab();
+                break;
+            default:
+                console.error("Unexpected buttonId:", buttonId);
+        }
+    };
+    buttons.forEach(function (b) {
+        b.addEventListener("click", function () { return setScreen(b.id); });
+    });
 }
 var renderSignupForm = function () {
     var form = document.getElementById("SignUp");
@@ -973,10 +992,7 @@ var renderSignupForm = function () {
                 var airline = new Airline(JSON.parse(response));
                 displayInfo(airline.name + " joins the aviation industry!");
                 gameEngine.registerAirline(airline);
-                loadGameHeader();
-                gameEngine.createSideMenu();
-                airline.updateTitle();
-                airline.updateStats();
+                loadGameScreen(airline);
                 $("#logo").show();
             }
         });
@@ -1030,10 +1046,7 @@ var renderLoginForm = function () {
                 var airline = new Airline(JSON.parse(response));
                 displayInfo("Welcome back " + airline.name + "!");
                 gameEngine.registerAirline(airline);
-                loadGameHeader();
-                gameEngine.createSideMenu();
-                airline.updateTitle();
-                airline.updateStats();
+                loadGameScreen(airline);
                 $("#logo").show();
             }
         });

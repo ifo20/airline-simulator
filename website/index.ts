@@ -642,10 +642,8 @@ class Airline {
 					unsetLoader()
 					var tr = createElement("tr", {class: "bg-offered"})
 					var plane = new Plane(p)
-					var btn = document.createElement("button")
-					btn.setAttribute("style", "margin: 0.5rem")
 					const airplaneCost = plane.cost
-					btn.innerHTML = `Buy plane for ${prettyCashString(airplaneCost).toLocaleString()}`
+					var btn = <HTMLButtonElement>createElement("button", {innerHTML: `Buy plane for ${prettyCashString(airplaneCost).toLocaleString()}`})
 					function onSuccess(response: string) {
 						var r = JSON.parse(response)
 						displayInfo(r.msg)
@@ -938,55 +936,34 @@ class GameEngine {
 		const main = <HTMLElement>document.getElementById("main")
 		main.innerHTML = "<h1 style='color:red;'>GAMEOVER</h1>"
 	}
-	createSideMenu(): void {
+	createTopMenu(): HTMLButtonElement[] {
+		var topMenu = <HTMLElement>document.getElementById("topmenu")
+		var buttons = [
+			<HTMLButtonElement>createElement("button", {id:"viewCompany", class: "screen-btn flex-grow dark", innerText:`Overview`}),
+			<HTMLButtonElement>createElement("button", {id:"viewFleet", class: "screen-btn flex-grow dark", innerText:`Fleet`}),
+			<HTMLButtonElement>createElement("button", {id:"viewRoutes", class: "screen-btn flex-grow dark", innerText:`Routes`}),
+			<HTMLButtonElement>createElement("button", {id:"viewUpgrades", class: "screen-btn flex-grow dark", innerText:`Upgrades`}),
+			<HTMLButtonElement>createElement("button", {id:"viewReputation", class: "screen-btn flex-grow dark", innerText:`Reputation`}),
+			<HTMLButtonElement>createElement("button", {id:"viewFinance", class: "screen-btn flex-grow dark", innerText:`Finance`}),
+			<HTMLButtonElement>createElement("button", {id:"viewAccidents", class: "screen-btn flex-grow dark", innerText:`Accidents`}),
+		]
+		buttons.forEach((b) => topMenu.appendChild(b))
+		return buttons
+	}
+	createSideMenu(airline: Airline): HTMLButtonElement[] {
 		var sideMenu = <HTMLElement>document.getElementById("sidemenu")
 		var buttons = [
-			createElement("button", {id:"viewCompany", class: "flex-grow dark", innerText:`Overview of ${(<Airline>this.airline).name}`}),
-			createElement("button", {id:"viewFleet", class: "flex-grow dark", innerText:`Overview of Fleet`}),
-			createElement("button", {id:"viewRoutes", class: "flex-grow dark", innerText:`Overview of Routes`}),
-			createElement("button", {id:"viewUpgrades", class: "flex-grow dark", innerText:`Overview of Upgrades`}),
-			createElement("button", {id:"viewReputation", class: "flex-grow dark", innerText:`Overview of Reputation`}),
-			createElement("button", {id:"viewFinance", class: "flex-grow dark", innerText:`Overview of Finance`}),
-			createElement("button", {id:"viewAccidents", class: "flex-grow dark", innerText:`Overview of Accidents`}),
+			<HTMLButtonElement>createElement("button", {id:"viewCompany", class: "screen-btn flex-grow dark", innerText:`Overview of ${airline.name}`}),
+			<HTMLButtonElement>createElement("button", {id:"viewFleet", class: "screen-btn flex-grow dark", innerText:`Overview of Fleet`}),
+			<HTMLButtonElement>createElement("button", {id:"viewRoutes", class: "screen-btn flex-grow dark", innerText:`Overview of Routes`}),
+			<HTMLButtonElement>createElement("button", {id:"viewUpgrades", class: "screen-btn flex-grow dark", innerText:`Overview of Upgrades`}),
+			<HTMLButtonElement>createElement("button", {id:"viewReputation", class: "screen-btn flex-grow dark", innerText:`Overview of Reputation`}),
+			<HTMLButtonElement>createElement("button", {id:"viewFinance", class: "screen-btn flex-grow dark", innerText:`Overview of Finance`}),
+			<HTMLButtonElement>createElement("button", {id:"viewAccidents", class: "screen-btn flex-grow dark", innerText:`Overview of Accidents`}),
 		]
-		const setScreen = (buttonId: string) => {
-			buttons.forEach(b => {
-				if (b.id === buttonId) {
-					b.classList.add("light")
-				} else {
-					b.classList.remove("light")
-				}
-			})
-			switch (buttonId) {
-				case "viewCompany":
-					gameEngine.displaySummaryTab()
-					break;
-				case "viewFleet":
-					gameEngine.displayFleetTab()
-					break;
-				case "viewRoutes":
-					gameEngine.displayRoutesTab()
-					break;
-				case "viewUpgrades":
-					gameEngine.displayUpgradesTab()
-					break;
-				case "viewReputation":
-					gameEngine.displayReputationTab()
-					break;
-				case "viewFinance":
-					gameEngine.displayFinanceTab()
-					break;
-				case "viewAccidents":
-					gameEngine.displayAccidentsTab()
-					break;
-				default:
-					console.error("Unexpected buttonId:", buttonId)
-			}
-		}
-		buttons.forEach(b => {
-			b.addEventListener("click", () => setScreen(b.id))
-			sideMenu.appendChild(b)
-		})
+		buttons.forEach((b) => sideMenu.appendChild(b))
+
+		return buttons
 	}
 }
 
@@ -1012,12 +989,58 @@ function loadHubSelect(airports: Array<Airport>) {
 	hubRow.appendChild(hubLabel)
 	hubRow.appendChild(hubSelect)
 }
-function loadGameHeader() {
+function loadGameScreen(airline: Airline) {
 	const homeHeader = document.getElementById("homeHeader")
 	const gameHeader = document.getElementById("gameHeader")
 	hideElement(homeHeader)
 	gameHeader.style.display = "flex"
+	// I think topMenu is better, but leaving sideMenu here incase we change our minds
+	const buttons = gameEngine.createTopMenu() // gameEngine.createSideMenu(airline)
+	loadMenuButtons(buttons)
+	airline.updateTitle()
+	airline.updateStats()
 }
+
+function loadMenuButtons(buttons: HTMLButtonElement[]) {
+	const setScreen = (buttonId: string) => {
+		buttons.forEach(b => {
+			if (b.id === buttonId) {
+				b.classList.add("light")
+			} else {
+				b.classList.remove("light")
+			}
+		})
+		switch (buttonId) {
+			case "viewCompany":
+				gameEngine.displaySummaryTab()
+				break;
+			case "viewFleet":
+				gameEngine.displayFleetTab()
+				break;
+			case "viewRoutes":
+				gameEngine.displayRoutesTab()
+				break;
+			case "viewUpgrades":
+				gameEngine.displayUpgradesTab()
+				break;
+			case "viewReputation":
+				gameEngine.displayReputationTab()
+				break;
+			case "viewFinance":
+				gameEngine.displayFinanceTab()
+				break;
+			case "viewAccidents":
+				gameEngine.displayAccidentsTab()
+				break;
+			default:
+				console.error("Unexpected buttonId:", buttonId)
+		}
+	}
+	buttons.forEach(b => {
+		b.addEventListener("click", () => setScreen(b.id))
+	})
+}
+
 const renderSignupForm = () => {
 	// Creating form to enter business name and to choose hub
 	const form = <HTMLFormElement>document.getElementById("SignUp")
@@ -1074,10 +1097,7 @@ const renderSignupForm = () => {
 				var airline = new Airline(JSON.parse(response))
 				displayInfo(airline.name + " joins the aviation industry!")
 				gameEngine.registerAirline(airline)
-				loadGameHeader()
-				gameEngine.createSideMenu()
-				airline.updateTitle()
-				airline.updateStats()
+				loadGameScreen(airline)
 				$("#logo").show()
 			}
 		})
@@ -1136,10 +1156,7 @@ const renderLoginForm = () => {
 				var airline = new Airline(JSON.parse(response))
 				displayInfo( "Welcome back " + airline.name + "!")
 				gameEngine.registerAirline(airline)
-				loadGameHeader()
-				gameEngine.createSideMenu()
-				airline.updateTitle()
-				airline.updateStats()
+				loadGameScreen(airline)
 				$("#logo").show()
 			}
 		})
