@@ -11,7 +11,7 @@ from flask import abort, request, send_from_directory, Flask
 from app.db import get_db
 from app.airline import Airline
 from app.airport import Airport
-from app.config import PLANE_FIX_COST, PLANE_SCRAP_VALUE, NUM_OFFERS, pretty_price
+from app.config import PLANE_FIX_COST, PLANE_SCRAP_VALUE, NUM_OFFERS, PLANE_STARTING_HEALTH, pretty_price
 from app.plane import Plane
 from app.route import Route
 
@@ -65,6 +65,7 @@ class ComplexEncoder(json.JSONEncoder):
 		if isinstance(obj, Plane):
 			d = obj.__dict__.copy()
 			d["status"] = obj.status
+			d["requires_fix"] = obj.requires_fix
 			return d
 		return json.JSONEncoder.default(self, obj)
 
@@ -303,7 +304,7 @@ def fix_plane():
 	airline = airline_from_request(request)
 	plane = Plane.get_by_id(DB, int(request.form["plane_id"]))
 	assert airline.cash >= PLANE_FIX_COST, f"Airline cannot afford to fix - requires ${pretty_price(PLANE_FIX_COST)}"
-	plane.health = 100
+	plane.health = PLANE_STARTING_HEALTH
 	DB.save_plane(plane)
 	airline.cash -= PLANE_FIX_COST
 	DB.save_airline(airline)

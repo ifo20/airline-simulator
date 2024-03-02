@@ -426,13 +426,15 @@ var Route = (function () {
 }());
 var Plane = (function () {
     function Plane(data) {
-        var id = data.id, name = data.name, status = data.status, health = data.health, max_distance = data.max_distance, cost = data.cost;
+        var id = data.id, name = data.name, status = data.status, health = data.health, max_distance = data.max_distance, cost = data.cost, requires_fix = data.requires_fix, fix_cost = data.fix_cost;
         this.id = id;
         this.name = name;
         this.status = status;
         this.health = health;
         this.maxDistance = max_distance;
         this.cost = cost;
+        this.requiresFix = requires_fix;
+        this.fixCost = fix_cost;
     }
     Plane.prototype.purchasedCardHtml = function () {
         var tr = createElement("tr", { class: "bgw" });
@@ -442,28 +444,17 @@ var Plane = (function () {
         tr.appendChild(createElement("td", { innerHTML: this.status }));
         tr.appendChild(createElement("td", { innerHTML: this.health.toLocaleString("en-gb") }));
         var td = createElement("td", {});
-        if (this.status.indexOf("aintenance") > -1) {
+        if (this.requiresFix) {
             td.appendChild(this.maintenanceHtml());
         }
         tr.appendChild(td);
         return tr;
     };
-    Plane.prototype.displayHtml = function () {
-        var div = document.createElement("div");
-        div.className = "flex";
-        div.appendChild(dataLabels([
-            ["id", String(this.id)],
-            ["name", this.name],
-            ["health", String(this.health)],
-            ["maxDistance", String(this.maxDistance)],
-        ]));
-        return div;
-    };
     Plane.prototype.maintenanceHtml = function () {
         var _this = this;
         var airline = gameEngine.airline;
-        var div = this.displayHtml();
-        var btn = createElement("button", { innerText: "Fix for $100,000" });
+        var div = createElement("div", { class: "flex" });
+        var btn = createElement("button", { innerText: "Fix for ".concat(prettyCashString(this.fixCost)) });
         div.appendChild(btn);
         function onFixSuccess(response) {
             var jresponse = JSON.parse(response);

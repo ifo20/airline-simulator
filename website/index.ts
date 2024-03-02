@@ -496,14 +496,18 @@ class Plane {
 	health: number
 	maxDistance: number
 	cost: number
-	constructor(data: { id: any; name: any; status: any; health: any; max_distance: any; cost: any; }) {
-		const { id, name, status, health, max_distance, cost } = data
+	requiresFix: boolean
+	fixCost?: number
+	constructor(data: { id: any; name: any; status: any; health: any; max_distance: any; cost: any; requires_fix: boolean; fix_cost?: number }) {
+		const { id, name, status, health, max_distance, cost, requires_fix, fix_cost } = data
 		this.id = id
 		this.name = name
 		this.status = status
 		this.health = health
 		this.maxDistance = max_distance
 		this.cost = cost
+		this.requiresFix = requires_fix
+		this.fixCost = fix_cost
 	}
 	purchasedCardHtml(): HTMLElement {
 		var tr = createElement("tr", {class: "bgw"})
@@ -513,29 +517,17 @@ class Plane {
 		tr.appendChild(createElement("td", {innerHTML: this.status}))
 		tr.appendChild(createElement("td", {innerHTML: this.health.toLocaleString("en-gb")}))
 		var td = createElement("td", {})
-		if (this.status.indexOf("aintenance") > -1) {
+		if (this.requiresFix) {
 			td.appendChild(this.maintenanceHtml())
 		}
 		tr.appendChild(td)
 		return tr
 
 	}
-	displayHtml(): HTMLElement {
-		var div = document.createElement("div")
-		div.className = "flex"
-		div.appendChild(dataLabels([
-			["id", String(this.id)],
-			["name", this.name],
-			["health", String(this.health)],
-			["maxDistance", String(this.maxDistance)],
-		]))
-		return div
-	}
-	// TODO iain: costs etc should all be from server
 	maintenanceHtml(): HTMLElement {
 		var airline = <Airline>gameEngine.airline
-		var div = this.displayHtml()
-		var btn = <HTMLButtonElement>createElement("button", {innerText: "Fix for $100,000"})
+		var div = createElement("div", {class: "flex"})
+		var btn = <HTMLButtonElement>createElement("button", {innerText: `Fix for ${prettyCashString(this.fixCost)}`})
 		div.appendChild(btn)
 		function onFixSuccess(response: string) {
 			var jresponse = JSON.parse(response)

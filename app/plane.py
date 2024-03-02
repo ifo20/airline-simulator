@@ -5,7 +5,7 @@ import random
 from typing import List
 
 import pytz
-from app.config import PLANE_COST, PLANE_MINIMUM_FLYING_HEALTH, PLANE_RANGE, PLANE_STARTING_HEALTH
+from app.config import PLANE_COST, PLANE_FIX_COST, PLANE_MINIMUM_FLYING_HEALTH, PLANE_RANGE, PLANE_STARTING_HEALTH
 from app.route import Route
 
 
@@ -86,6 +86,7 @@ class Plane:
 		# TODO justin: add passenger capacity as a new attribute of a plane
 		self.max_distance = max_distance
 		self.cost = cost
+		self.fix_cost = PLANE_FIX_COST
 		self.offered_at = offered_at
 		self.purchased_at = purchased_at
 		self.health = health
@@ -154,6 +155,7 @@ class Plane:
 
 	@property
 	def status(self):
+		self.requires_fix = False
 		if self.purchased_at is None:
 			return "Available for purchase"
 		if self.route_id:
@@ -162,6 +164,7 @@ class Plane:
 			else:
 				raise RuntimeError("Plane's route was not loaded")
 		if self.health < PLANE_MINIMUM_FLYING_HEALTH:
+			self.requires_fix = True
 			return "Requires maintenance"
 		return "Available"
 
