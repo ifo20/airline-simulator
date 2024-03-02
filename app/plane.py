@@ -5,7 +5,7 @@ import random
 from typing import List
 
 import pytz
-from app.config import PLANE_COST, PLANE_FIX_COST, PLANE_MINIMUM_FLYING_HEALTH, PLANE_RANGE, PLANE_STARTING_HEALTH
+from app.config import PLANE_COST, PLANE_FIX_COST, PLANE_MINIMUM_FLYING_HEALTH, PLANE_RANGE, PLANE_SCRAP_VALUE, PLANE_STARTING_HEALTH
 from app.route import Route
 
 
@@ -87,6 +87,7 @@ class Plane:
 		self.max_distance = max_distance
 		self.cost = cost
 		self.fix_cost = PLANE_FIX_COST
+		self.scrap_value = PLANE_SCRAP_VALUE
 		self.offered_at = offered_at
 		self.purchased_at = purchased_at
 		self.health = health

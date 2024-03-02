@@ -426,7 +426,7 @@ var Route = (function () {
 }());
 var Plane = (function () {
     function Plane(data) {
-        var id = data.id, name = data.name, status = data.status, health = data.health, max_distance = data.max_distance, cost = data.cost, requires_fix = data.requires_fix, fix_cost = data.fix_cost;
+        var id = data.id, name = data.name, status = data.status, health = data.health, max_distance = data.max_distance, cost = data.cost, requires_fix = data.requires_fix, fix_cost = data.fix_cost, scrap_value = data.scrap_value;
         this.id = id;
         this.name = name;
         this.status = status;
@@ -435,6 +435,7 @@ var Plane = (function () {
         this.cost = cost;
         this.requiresFix = requires_fix;
         this.fixCost = fix_cost;
+        this.scrapValue = scrap_value;
     }
     Plane.prototype.purchasedCardHtml = function () {
         var tr = createElement("tr", { class: "bgw" });
@@ -468,7 +469,7 @@ var Plane = (function () {
         makeClickable(btn, function (ev) {
             client.fixPlane(airline.id, _this.id, onFixSuccess, defaultErrHandler(btn));
         });
-        var btn = createElement("button", { innerText: "Sell to  Mojave scrapyard for $10,000" });
+        var btn = createElement("button", { innerText: "Sell to  Mojave scrapyard for ".concat(prettyCashString(this.scrapValue)) });
         div.appendChild(btn);
         function onScrapSuccess(response) {
             var jresponse = JSON.parse(response);

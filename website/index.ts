@@ -498,8 +498,9 @@ class Plane {
 	cost: number
 	requiresFix: boolean
 	fixCost?: number
-	constructor(data: { id: any; name: any; status: any; health: any; max_distance: any; cost: any; requires_fix: boolean; fix_cost?: number }) {
-		const { id, name, status, health, max_distance, cost, requires_fix, fix_cost } = data
+	scrapValue: number
+	constructor(data: { id: any; name: any; status: any; health: any; max_distance: any; cost: any; requires_fix: boolean; fix_cost?: number; scrap_value: number }) {
+		const { id, name, status, health, max_distance, cost, requires_fix, fix_cost, scrap_value } = data
 		this.id = id
 		this.name = name
 		this.status = status
@@ -508,6 +509,7 @@ class Plane {
 		this.cost = cost
 		this.requiresFix = requires_fix
 		this.fixCost = fix_cost
+		this.scrapValue = scrap_value
 	}
 	purchasedCardHtml(): HTMLElement {
 		var tr = createElement("tr", {class: "bgw"})
@@ -541,7 +543,7 @@ class Plane {
 		makeClickable(btn, (ev: MouseEvent) => {
 			client.fixPlane(airline.id, this.id, onFixSuccess, defaultErrHandler(btn))
 		})
-		var btn = <HTMLButtonElement>createElement("button", {innerText: "Sell to  Mojave scrapyard for $10,000"})
+		var btn = <HTMLButtonElement>createElement("button", {innerText: `Sell to  Mojave scrapyard for ${prettyCashString(this.scrapValue)}`})
 		div.appendChild(btn)
 		function onScrapSuccess(response: string) {
 			var jresponse = JSON.parse(response)
