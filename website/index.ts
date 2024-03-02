@@ -213,6 +213,7 @@ class OfferedRoute {
 		tr.appendChild(createElement("td", {innerHTML:this.popularity.toLocaleString("en-gb")}))
 		tr.appendChild(createElement("td", {innerHTML:this.purchaseCost.toLocaleString("en-gb")}))
 		tr.appendChild(createElement("td", {}))
+		// TODO iain: ensure all buttons get the same lifecycle behaviour
 		var btn = <HTMLButtonElement>createElement("button", {innerText: "Purchase"})
 		var btnCell = document.createElement("td")
 		var route_id = this.id
@@ -299,6 +300,7 @@ class OfferedRoute {
 		return card
 	}
 }
+// TODO iain: is this class approach worthwhile?
 class Route {
 	id: number
 	distance: number
@@ -756,6 +758,12 @@ class Airline {
 		var heading = createTitle("Reputation and Reviews")
 		div.appendChild(heading)
 
+		// TODO iain and justin: we should delete the below code that checks "this.popularity"
+		// We should add an endpoint that gets the "Reputation and Reviews" info from the server
+		// This would allow us to give more customised information, for example we could display recent media articles
+		// mentioning the airline, it's country and even use the name of the airline's planes
+		// e.g. "Safety concerns raised on Boeing 747"
+
 		var p = createElement("p", {class: "p-3"})
 		var numStars = 0
 		if (this.popularity > 89) {
@@ -903,7 +911,8 @@ class GameEngine {
 		main.appendChild(airline.statsHtml())
 		main.appendChild(airline.getReputationDisplay())
 		main.appendChild(airline.getAccidentsDisplay())
-		// This doesn't work - looks like we can only have one map?
+		// TODO iain: This doesn't work - looks like we can only have one map?
+		// We could make it a show-able thing on every screen, rather than having it belong to Routes tab
 		airline.getMap()
 	}
 	displayFleetTab(): void {
@@ -1195,6 +1204,7 @@ window.onload = () => {
 	gameEngine.loadAirports()
 	gameEngine.hideTabs("")
 	var logoImg = <HTMLImageElement>document.getElementById("logo")
+	// TODO justin: where is this "logo" on the screen? what happens if you click it?
 	logoImg.addEventListener("click", () => {
 		var oldSrc = logoImg.src
 		var newSrc = prompt("Enter URL of your logo", oldSrc)

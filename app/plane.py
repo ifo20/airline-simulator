@@ -62,7 +62,7 @@ def generate_name():
 			"Boeing 787-9 Dreamliner",
 			"Boeing 787-10 Dreamliner",
 
-			#TBD: ADD AIRBUS, ATR AND EMBRAER AIRCRAFT
+			#TODO justin: ADD AIRBUS, ATR AND EMBRAER AIRCRAFT
 		]
 	)
 
@@ -83,6 +83,7 @@ class Plane:
 		self.id = plane_id
 		self.airline_id = airline_id
 		self.name = name
+		# TODO justin: add passenger capacity as a new attribute of a plane
 		self.max_distance = max_distance
 		self.cost = cost
 		self.offered_at = offered_at
