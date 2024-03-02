@@ -1,10 +1,13 @@
 //////// HELPING FUNCTIONS
-function errHandler(err: JQuery.jqXHR<any>, button?: HTMLButtonElement) {
-	unsetLoader()
-	displayError(err.responseText)
-	if (button) {
-		button.removeAttribute("disabled");
+function defaultErrHandler(btn?: HTMLButtonElement) {
+	function handler(err: JQuery.jqXHR<any>) {
+		unsetLoader()
+		displayError(err.responseText)
+		if (btn) {
+			btn.removeAttribute("disabled")
+		}
 	}
+	return handler
 }
 function randomBusinessName(): string {
 	var adjectives: Array<string> = ["Easy", "Budget", "Trusty", "Speedy", "Enigmatic", "Fly", "Golden", "Sturdy", "Graceful", "Rapid", "Robust", "American", "British", "Asian", "European", "Indian", "Italian", "Australian", "Chinese", "Russian", "Nordic", "Southern", "Northern", "Southwest", "Paper", "Malaysian", "Thai", "Smile", ""]
@@ -113,18 +116,14 @@ function unsetLoader() {
 		$("#loader").hide()
 	}
 }
-function makeClickWrapper(btn: HTMLButtonElement, handler: (ev:MouseEvent)=>any) {
-	// disable, show spinner until response
-	console.log('buttonClickWrapper ', btn, handler)
-	function completeHandler(this: void, ev: MouseEvent) {
-		console.log('completeHandler enter', this, ev)
+function makeClickable(btn: HTMLButtonElement, onClick: (ev: MouseEvent)=> any) {
+	function listener(this: void, ev: MouseEvent) {
 		btn.setAttribute("disabled", "")
-		btn.innerHTML = '...'
-		handler(ev)
-		console.log('completeHandler exit', this, ev)
+		btn.innerHTML = "..."
+		onClick(ev)
 		return this
 	}
-	return completeHandler
+	btn.addEventListener("click", listener);
 }
 function addPolylineToMap(map: H.Map, startinglat: number, startinglon: number, endinglat: number, endinglon: number) {
     var lineString = new H.geo.LineString();
@@ -136,11 +135,74 @@ function addPolylineToMap(map: H.Map, startinglat: number, startinglon: number, 
       lineString, { style: { lineWidth: 4 }}
     ));
 }
-//////// A request client? A typescript version of client/__init__.py
+//////// A request client: A typescript version of client/__init__.py
 class RequestClient {
 	engine: GameEngine
 	constructor(engine: GameEngine) {
 		this.engine = engine
+	}
+	purchaseRoute(
+		airline_id: number,
+		route_id: number,
+		onSuccess : JQuery.Ajax.SuccessCallback<any>,
+		onError: JQuery.Ajax.ErrorCallback<any>) {
+			console.log('PR ajaxing', onSuccess)
+		$.ajax({
+			method: "POST",
+			url: "/purchase_route",
+			data: {
+				airline_id,
+				route_id,
+			},
+			success: onSuccess,
+			error: onError,
+		})
+	}
+	purchasePlane(
+		airline_id: number,
+		plane_id: number,
+		onSuccess : JQuery.Ajax.SuccessCallback<any>,
+		onError: JQuery.Ajax.ErrorCallback<any>,
+	) {
+		$.ajax({
+			method: "POST",
+			url: "purchase_plane",
+			data: {
+				airline_id,
+				plane_id,
+			},
+			success: onSuccess,
+			error: onError,
+		})
+	}
+	fixPlane(
+		airline_id: number,
+		plane_id: number,
+		onSuccess : JQuery.Ajax.SuccessCallback<any>,
+		onError: JQuery.Ajax.ErrorCallback<any>,
+	) {
+		$.ajax({
+			method: "POST",
+			url: "/plane/fix",
+			data: {
+				airline_id,
+				plane_id,
+			},
+			success: onSuccess,
+			error: onError,
+		})
+	}
+	scrapPlane(airline_id: number, plane_id: number, onSuccess: JQuery.Ajax.SuccessCallback<any>, onError: JQuery.Ajax.ErrorCallback<any>) {
+		$.ajax({
+			method: "POST",
+			url: "/plane/scrap",
+			data: {
+				airline_id,
+				plane_id,
+			},
+			success: onSuccess,
+			error: onError,
+		})
 	}
 	// TODO iain: many things result in the cash/header bar being out-of-date.
 	// maybe all responses that involve a transaction should return the same shape;
@@ -154,10 +216,10 @@ class RequestClient {
 				airline_id,
 				from_level,
 			},
-			error: (x) => errHandler(x),
 			success: function(response) {
 				engine.displayUpgradesTab()
-			}
+			},
+			error: defaultErrHandler(),
 		})
 	}
 }
@@ -179,13 +241,6 @@ class Airport {
 		this.lat = lat
 		this.lon = lon
 		this.popularity = popularity
-	}
-	cardHtml(): HTMLElement {
-		return dataLabels([
-			["IATA code", this.code],
-			["Country", this.country],
-			["Popularity", String(this.popularity)],
-		])
 	}
 }
 
@@ -213,91 +268,31 @@ class OfferedRoute {
 		tr.appendChild(createElement("td", {innerHTML:this.popularity.toLocaleString("en-gb")}))
 		tr.appendChild(createElement("td", {innerHTML:this.purchaseCost.toLocaleString("en-gb")}))
 		tr.appendChild(createElement("td", {}))
-		// TODO iain: ensure all buttons get the same lifecycle behaviour
 		var btn = <HTMLButtonElement>createElement("button", {innerText: "Purchase"})
 		var btnCell = document.createElement("td")
 		var route_id = this.id
-		btn.addEventListener("click", makeClickWrapper(btn, (ev:MouseEvent) => {
+		var onSuccess = (response: any) => {
+			var airline = <Airline>gameEngine.airline
+			unsetLoader()
+			var jresponse = JSON.parse(response)
+			var route = new Route(jresponse.route)
+			airline.routes.push(route)
+			airline.cash = jresponse.cash
+			airline.addTransaction(jresponse.transaction)
+			displayInfo(jresponse.msg)
+			airline.getRoutesDisplay()
+			airline.updateStats()
+			gameEngine.displayRoutesTab()
+		}
+		function onClick(ev: MouseEvent) {
 			var airline = <Airline>gameEngine.airline
 			setLoader()
-			$.ajax({
-				method: "POST",
-				url: "/purchase_route",
-				data: {
-					airline_id: airline.id,
-					route_id,
-				},
-				error: (x) => errHandler(x, btn),
-				success: function(response) {
-					unsetLoader()
-					var jresponse = JSON.parse(response)
-					var route = new Route(jresponse.route)
-					airline.routes.push(route)
-					airline.cash = jresponse.cash
-					airline.addTransaction(jresponse.transaction)
-					displayInfo(jresponse.msg)
-					airline.getRoutesDisplay()
-					airline.updateStats()
-					gameEngine.displayRoutesTab()
-
-				}
-			})
-		}))
+			client.purchaseRoute(airline.id, route_id, onSuccess, defaultErrHandler(btn))
+		}
+		makeClickable(btn, onClick)
 		btnCell.appendChild(btn)
 		tr.appendChild(btnCell)
 		return tr
-	}
-	buttonHtml(): HTMLButtonElement {
-		var btn = document.createElement("button")
-		btn.setAttribute("style", "background-color:#ddcc44aa")
-		btn.setAttribute("class", "flex-grow")
-		btn.appendChild(this.cardHtml())
-		const route_id = this.id
-		btn.addEventListener("click", makeClickWrapper(btn, (ev:MouseEvent) => {
-			var airline = <Airline>gameEngine.airline
-			setLoader()
-			$.ajax({
-				method: "POST",
-				url: "/purchase_route",
-				data: {
-					airline_id: airline.id,
-					route_id,
-				},
-				error: (x) => errHandler(x, btn),
-				success: function(response) {
-					unsetLoader()
-					var jresponse = JSON.parse(response)
-					var route = new Route(jresponse.route)
-					airline.routes.push(route)
-					airline.cash = jresponse.cash
-					airline.addTransaction(jresponse.transaction)
-					displayInfo(jresponse.msg)
-					airline.getRoutesDisplay()
-					airline.updateStats()
-				}
-			})
-		}))
-		return btn
-	}
-	cardHtml(): HTMLElement {
-		var dl = dataLabels([
-			["Distance", `${this.distance.toLocaleString("en-gb", { maximumFractionDigits: 0 })}km`],
-			["Popularity", this.popularity.toLocaleString("en-gb")],
-			["Cost", `$${this.purchaseCost.toLocaleString("en-gb")}`],
-		])
-		var card = createElement("div", {
-			class: "flex flex-column justify-content-between",
-			innerHTML: `<h3>${this.fromAirport.code} <-> ${this.toAirport.code}</h3>`
-		})
-		card.appendChild(dl)
-		var footer = document.createElement("div")
-		var fromAirport = createElement("h5", {innerHTML: this.fromAirport.name})
-		footer.appendChild(fromAirport)
-		footer.appendChild(document.createElement("hr"))
-		var toAirport = createElement("h5", {innerHTML: this.toAirport.name})
-		footer.appendChild(toAirport)
-		card.appendChild(footer)
-		return card
 	}
 }
 // TODO iain: is this class approach worthwhile?
@@ -348,7 +343,7 @@ class Route {
 				route_id: this.id,
 			},
 			error: (x) => {
-				errHandler(x, btn)
+				defaultErrHandler(btn)(x)
 				route.updatePurchasedCardContent()
 			},
 			success: function(response) {
@@ -377,7 +372,7 @@ class Route {
 				route_id: this.id,
 			},
 			error: (x) => {
-				errHandler(x, btn)
+				defaultErrHandler(btn)(x)
 				route.updatePurchasedCardContent()
 			},
 			success: function(response) {
@@ -432,11 +427,11 @@ class Route {
 			setTimeout(() => this.updatePurchasedCardContent(), 1000)
 		} else if (this.status === "ready") {
 			statusText = "Ready to run!"
-			actionButton.addEventListener("click", makeClickWrapper(actionButton, (ev:MouseEvent) => this.run(actionButton)))
+			makeClickable(actionButton, (ev:MouseEvent) => this.run(actionButton))
 			actionButton.innerHTML = "Run Route"
 		} else if (this.status === "landed") {
 			statusText = `Landed at ${this.toAirport.code}!`
-			actionButton.addEventListener("click", makeClickWrapper(actionButton, (ev:MouseEvent) => this.getResults(actionButton)))
+			makeClickable(actionButton, (ev:MouseEvent) => this.getResults(actionButton))
 			actionButton.innerHTML = "Collect Route"
 			actionButton.classList.add("collectable")
 		} else {
@@ -447,7 +442,7 @@ class Route {
 				method: "GET",
 				url: `/route/${this.id}`,
 				data: {},
-				error: (x) => errHandler(x),
+				error: defaultErrHandler(actionButton),
 				success: function(response) {
 					var jresponse = JSON.parse(response)
 					route.status = jresponse.status
@@ -491,28 +486,6 @@ class Route {
 
 		setTimeout(() => this.updatePurchasedCardContent(), 100)
 		return tr
-	}
-	cardHtml(): HTMLElement {
-		var dl = dataLabels([
-			["Distance", `${this.distance.toLocaleString("en-gb", { maximumFractionDigits: 0 })}km`],
-			["Popularity", this.popularity.toLocaleString("en-gb")],
-			["Cost", `$${this.purchaseCost.toLocaleString("en-gb")}`],
-		])
-		var card = createElement("div", {
-			class: "flex flex-column justify-content-between",
-			innerHTML: `<h3>${this.fromAirport.code} <-> ${this.toAirport.code}</h3>`
-		})
-		card.appendChild(dl)
-		var footer = document.createElement("div")
-		var fromAirport = document.createElement("h5")
-		fromAirport.innerHTML = this.fromAirport.name
-		footer.appendChild(fromAirport)
-		footer.appendChild(document.createElement("hr"))
-		var toAirport = document.createElement("h5")
-		toAirport.innerHTML = this.toAirport.name
-		footer.appendChild(toAirport)
-		card.appendChild(footer)
-		return card
 	}
 }
 
@@ -564,48 +537,32 @@ class Plane {
 		var div = this.displayHtml()
 		var btn = <HTMLButtonElement>createElement("button", {innerText: "Fix for $100,000"})
 		div.appendChild(btn)
-		btn.addEventListener("click", makeClickWrapper(btn, (ev:MouseEvent) => {
-			$.ajax({
-				method: "POST",
-				url: "/plane/fix",
-				data: {
-					airline_id: airline.id,
-					plane_id: this.id
-				},
-				error: (x) => errHandler(x, btn),
-				success: function(response) {
-					var jresponse = JSON.parse(response)
-					airline.planes = jresponse.planes.map((p: any) => new Plane(p))
-					airline.cash = jresponse.cash
-					airline.addTransaction(jresponse.transaction)
-					displayInfo(jresponse.msg)
-					gameEngine.displayFleetTab()
-					airline.updateStats()
-				}
-			})
-		}))
+		function onFixSuccess(response: string) {
+			var jresponse = JSON.parse(response)
+			airline.planes = jresponse.planes.map((p: any) => new Plane(p))
+			airline.cash = jresponse.cash
+			airline.addTransaction(jresponse.transaction)
+			displayInfo(jresponse.msg)
+			gameEngine.displayFleetTab()
+			airline.updateStats()
+		}
+		makeClickable(btn, (ev: MouseEvent) => {
+			client.fixPlane(airline.id, this.id, onFixSuccess, defaultErrHandler(btn))
+		})
 		var btn = <HTMLButtonElement>createElement("button", {innerText: "Sell to  Mojave scrapyard for $10,000"})
 		div.appendChild(btn)
-		btn.addEventListener("click", makeClickWrapper(btn, (ev:MouseEvent) => {
-			$.ajax({
-				method: "POST",
-				url: "/plane/scrap",
-				data: {
-					airline_id: airline.id,
-					plane_id: this.id
-				},
-				error: (x) => errHandler(x, btn),
-				success: function(response) {
-					var jresponse = JSON.parse(response)
-					airline.planes = jresponse.planes.map((p: any) => new Plane(p))
-					airline.addTransaction(jresponse.transaction)
-					airline.cash = jresponse.cash
-					displayInfo(jresponse.msg)
-					gameEngine.displayFleetTab()
-					airline.updateStats()
-				}
-			})
-		}))
+		function onScrapSuccess(response: string) {
+			var jresponse = JSON.parse(response)
+			airline.planes = jresponse.planes.map((p: any) => new Plane(p))
+			airline.addTransaction(jresponse.transaction)
+			airline.cash = jresponse.cash
+			displayInfo(jresponse.msg)
+			gameEngine.displayFleetTab()
+			airline.updateStats()
+		}
+		makeClickable(btn, (ev: MouseEvent) => {
+			client.scrapPlane(airline.id, this.id, onScrapSuccess, defaultErrHandler(btn))
+		})
 		return div
 	}
 }
@@ -693,40 +650,25 @@ class Airline {
 			data: {
 				airline_id: airline.id
 			},
-			error: (x) => errHandler(x),
 			success: function(response) {
 				JSON.parse(response).map((p: any) => {
 					unsetLoader()
 					var tr = createElement("tr", {class: "bg-offered"})
 					var plane = new Plane(p)
-					var button = document.createElement("button")
-					button.setAttribute("style", "margin: 0.5rem")
+					var btn = document.createElement("button")
+					btn.setAttribute("style", "margin: 0.5rem")
 					const airplaneCost = plane.cost
-					button.innerHTML = `Buy plane for ${prettyCashString(airplaneCost).toLocaleString()}`
-					button.addEventListener("click", () => {
-						var confirmed = confirm(`Are you sure you want to buy ${plane.name}?\nThis will cost ${prettyCashString(airplaneCost).toLocaleString()}`)
-						if (!confirmed) {
-							return
-						}
-						button.setAttribute("disabled", "")
-						button.innerHTML = "..."
-						$.ajax({
-							method: "POST",
-							url: "/purchase_plane",
-							data: {
-								airline_id: airline.id,
-								plane_id: plane.id,
-							},
-							error: (x) => errHandler(x),
-							success: function(response) {
-								var r = JSON.parse(response)
-								displayInfo(r.msg)
-								airline.addTransaction(r.transaction)
-								airline.planes.push(new Plane(r.plane))
-								airline.updateStats(r.cash)
-								gameEngine.displayFleetTab()
-							}
-						})
+					btn.innerHTML = `Buy plane for ${prettyCashString(airplaneCost).toLocaleString()}`
+					function onSuccess(response: string) {
+						var r = JSON.parse(response)
+						displayInfo(r.msg)
+						airline.addTransaction(r.transaction)
+						airline.planes.push(new Plane(r.plane))
+						airline.updateStats(r.cash)
+						gameEngine.displayFleetTab()
+					}
+					makeClickable(btn, (ev: MouseEvent) => {
+						client.purchasePlane(airline.id, plane.id, onSuccess, defaultErrHandler(btn))
 					})
 					tr.appendChild(createElement("td", {innerHTML: plane.name}))
 					const maxDistanceString = plane.maxDistance.toLocaleString("en-gb", { maximumFractionDigits: 0 }) + "km"
@@ -735,11 +677,12 @@ class Airline {
 					tr.appendChild(createElement("td", {innerHTML: ""})) // status: n/a
 					tr.appendChild(createElement("td", {innerHTML: ""})) // health: n/a
 					var td = createElement("td", {})
-					td.appendChild(button)
+					td.appendChild(btn)
 					tr.appendChild(td)
 					offered_tbody.appendChild(tr)
 				})
-			}
+			},
+			error: defaultErrHandler()
 		})
 	}
 	getRoutesDisplay(): HTMLElement {
@@ -882,13 +825,13 @@ class GameEngine {
 			setLoader()
 			$.ajax({
 				url: "/airports",
-				error: (x) => errHandler(x),
 				success: function(response) {
 					unsetLoader()
 					airs = JSON.parse(response).map((a: any) => new Airport(a))
 					ge.airports = airs
 					loadHubSelect(airs)
-				}
+				},
+				error: defaultErrHandler()
 			})
 		}
 	}
@@ -932,13 +875,13 @@ class GameEngine {
 			data: {
 				airline_id: airline.id,
 			},
-			error: (x) => errHandler(x),
 			success: function(response) {
 				unsetLoader()
 				offered.innerHTML = ""
 				var routesToDisplay = JSON.parse(response).map((r: any) => new OfferedRoute(r))
 				routesToDisplay.forEach((r: OfferedRoute) => offered.appendChild(r.trHtml()))
-			}
+			},
+			error: defaultErrHandler(),
 		})
 	}
 	displayUpgradesTab(): void {
@@ -953,7 +896,6 @@ class GameEngine {
 			data: {
 				airline_id: airline.id,
 			},
-			error: (x) => errHandler(x),
 			success: function(response) {
 				unsetLoader()
 				const parentContainer = createElement("div", {class: ""})
@@ -980,7 +922,8 @@ class GameEngine {
 					parentContainer.appendChild(categoryContainer)
 				})
 				main.appendChild(parentContainer)
-			}
+			},
+			error: defaultErrHandler()
 		})
 	}
 	displayReputationTab(): void {
@@ -1121,7 +1064,7 @@ const renderSignupForm = () => {
 				hub: hubSelect.value,
 				password: passwordinput.value,
 			},
-			error: (x) => errHandler(x),
+			error: defaultErrHandler(),
 			success: function(response) {
 				hideElement(<HTMLFormElement>document.getElementById("Login"))
 				hideElement(<HTMLFormElement>document.getElementById("SignUp"))
@@ -1177,7 +1120,7 @@ const renderLoginForm = () => {
 				businessName: nameInput.value,
 				password: passwordinput.value,
 			},
-			error: (x) => errHandler(x),
+			error: defaultErrHandler(),
 			success: function(response) {
 				hideElement(<HTMLFormElement>document.getElementById("Login"))
 				hideElement(<HTMLFormElement>document.getElementById("SignUp"))

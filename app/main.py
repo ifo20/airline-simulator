@@ -244,7 +244,7 @@ def upgrade_fuel_efficiency():
 	upgrade_cost = 10000
 	if airline.cash < upgrade_cost:
 		raise AssertionError("You do not have enough to cash to purchase this upgrade")
-	# TODO jusin: we need to update the airline's cash,
+	# TODO justin: we need to update the airline's cash,
 	# and also check that we're not going above the max upgrade level
 	airline.fuel_efficiency_level += 1
 	DB.save_airline(airline)
