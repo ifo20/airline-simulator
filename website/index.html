@@ -6,37 +6,39 @@
 	<meta charset="utf-8">
 	<meta name="viewport"
 		content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale-1, user-scalable-0" />
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Junge&display=swap" rel="stylesheet">
 	<script type="text/javascript" src="https://js.api.here.com/v3/3.1/mapsjs-core.js"></script>
 	<script type="text/javascript" src="https://js.api.here.com/v3/3.1/mapsjs-service.js"></script>
 	<script type="text/javascript" src="https://js.api.here.com/v3/3.1/mapsjs-ui.js"></script>
 	<script type="text/javascript" src="https://js.api.here.com/v3/3.1/mapsjs-mapevents.js"></script>
 	<link rel="stylesheet" type="text/css" href="https://js.api.here.com/v3/3.1/mapsjs-ui.css" />
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+	
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 	<script src="static/index.js"></script>
 	<link rel="stylesheet" href="static/index.css">
 </head>
 
 <body>
-	<header class="flex flex-column justify-content-center" style="text-align: center;background-color:#ffffffdd;">
+	<header id="homeHeader" class="bgwf">
+		<div id="brand"><h1>Justin's Airline Simulator</h1></div>
+	</header>
+	<header id="gameHeader" class="flex justify-content-between aic text-center bgwf" style="display:none;">
 		<div id="brand">
-			<h2>
-				Welcome to JIAS
-				<strong>JI's Airline Simulator</strong>
-			</h2>
+			<img id="logo" style="display:none;max-width:100px;max-height:50px" src="https://mir-s3-cdn-cf.behance.net/project_modules/disp/546a0366417875.5b15a78197ca7.png" />
+			<span class="junge-regular">Justin's Airline Simulator</span>
 		</div>
-		<img id="logo" style="display:none;max-width:100px;max-height:50px" src="https://mir-s3-cdn-cf.behance.net/project_modules/disp/546a0366417875.5b15a78197ca7.png" />
-		<div class="flex-grow">
-			<div id="airlineTitle">
-			</div>
-			<div id="loader" style="width:100%;display:none;">Loading ... </div>
-		</div>
+		<div id="airlineTitle"></div>
 		<div id="airlineStats" class="flex"></div>
 	</header>
-	<form id="SignUp" class="flex flex-column justify-content-center p-3" style="text-align: center;"">
+	<!-- <header class="flex flex-column justify-content-center" style="text-align:center;background-color:#ffffffdd;">
+	</header> -->
+	<form id="SignUp" class="flex flex-column justify-content-center p-3 primary-card">
 		<span class="spinner">loading...</span>
 	</form>
-	<form id="Login" class="flex flex-column justify-content-center p-3" style="text-align: center;"">
+	<form id="Login" class="flex flex-column justify-content-center p-3 primary-card">
 		<h3>Played before?</h3>
 		<span class="spinner">loading...</span>
 	</form>

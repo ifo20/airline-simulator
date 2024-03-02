@@ -93,13 +93,8 @@ function createElement(elementType: string, options: createElementOptions) {
 	}
 	return e
 }
-function createTitle(innerHTML: string, elementType: string = "h1"): HTMLElement {
-	return createElement(elementType, {innerHTML})
-}
-function createParagraph(text: string): HTMLParagraphElement {
-	var p = document.createElement("p")
-	p.innerText = text
-	return p
+function createTitleBanner(innerHTML: string, elementType: string = "h1"): HTMLElement {
+	return createElement(elementType, {innerHTML, class: "bgwf p-2"})
 }
 function hideElement(elem: HTMLElement): void {
 	elem.style.display = 'none'
@@ -590,7 +585,8 @@ class Airline {
 	}
 	updateTitle(): void {
 		var div = <HTMLElement>document.getElementById("airlineTitle")
-		div.appendChild(this.titleHtml())
+		div.appendChild(createElement("h2", {innerText: this.name}))
+		div.appendChild(createElement("h4", {innerText: `Hub: ${this.hub.code}`}))
 
 	}
 	updateStats(cash: number =null): void {
@@ -607,13 +603,8 @@ class Airline {
 	addTransaction(msg: string): void {
 		this.transactions.push(`${new Date()} ${prettyCashString(this.cash)} ${msg}`)
 	}
-	titleHtml(): HTMLElement {
-		return createTitle(
-			`${this.name}<strong>Hub: ${this.hub.code}</strong>`,
-			"h2",
-		)
-	}
 	statsHtml(): HTMLElement {
+		var div = createElement("div", {class: "m-2 p-3 bgwf secondary-card"})
 		var dl = dataLabels([
 			["Cash", prettyCashString(this.cash)],
 			["Planes", String(this.planes.length)],
@@ -622,7 +613,8 @@ class Airline {
 			["Rank", this.rank],
 			["Joined", this.joined.toLocaleDateString()],
 		])
-		return dl
+		div.appendChild(dl)
+		return div
 	}
 	getFleetDisplay(): void {
 		var header = <HTMLElement>document.getElementById("fleet-header")
@@ -631,11 +623,12 @@ class Airline {
 		var offered_tbody = <HTMLElement>document.getElementById("offered-planes")
 		owned_tbody.innerHTML = ""
 		offered_tbody.innerHTML = ""
-		header.appendChild(createTitle("Your Fleet"))
+		header.appendChild(createTitleBanner("Your Fleet"))
 		this.planes.forEach(plane => {
 			owned_tbody.appendChild(plane.purchasedCardHtml())
 		})
-		header.appendChild(createParagraph(`You have ${this.planes.length} planes in your fleet`))
+
+		header.appendChild(createElement("p", {innerText: `You have ${this.planes.length} planes in your fleet`, class:"m-2 p-3 bgwf secondary-card"}))
 		var airline = this
 		setLoader()
 		$.ajax({
@@ -691,9 +684,9 @@ class Airline {
 		return routesContainer
 	}
 	getReputationDisplay(): HTMLElement {
-		var div = document.createElement("div")
-		var heading = createTitle("Reputation and Reviews")
-		div.appendChild(heading)
+		var container = document.createElement("div")
+		var heading = createTitleBanner("Reputation and Reviews")
+		container.appendChild(heading)
 
 		// TODO iain and justin: we should delete the below code that checks "this.popularity"
 		// We should add an endpoint that gets the "Reputation and Reviews" info from the server
@@ -701,7 +694,8 @@ class Airline {
 		// mentioning the airline, it's country and even use the name of the airline's planes
 		// e.g. "Safety concerns raised on Boeing 747"
 
-		var p = createElement("p", {class: "p-3"})
+		var div = createElement("div", {class: "m-2 p-3 bgwf secondary-card"})
+		var p = createElement("p", {class: ""})
 		var numStars = 0
 		if (this.popularity > 89) {
 			p.innerText = `Customers favorite airline in ${this.hub.country}!`
@@ -728,11 +722,12 @@ class Airline {
 			div.appendChild(span)
 		}
 		div.appendChild(p)
-		return div
+		container.appendChild(div)
+		return container
 	}
 	getFinanceDisplay(): HTMLElement {
 		var div = document.createElement("div")
-		var heading = createTitle("Finances")
+		var heading = createTitleBanner("Finances")
 		div.appendChild(heading)
 		var tbl = createElement("table", {})
 		var tbody = createElement("tbody", {})
@@ -748,7 +743,7 @@ class Airline {
 	}
 	getAccidentsDisplay(): HTMLElement {
 		var div = document.createElement("div")
-		var heading = createTitle("Accidents")
+		var heading = createTitleBanner("Accidents")
 		div.appendChild(heading)
 		var tbl = createElement("table", {})
 		var tbody = createElement("tbody", {})
@@ -843,7 +838,7 @@ class GameEngine {
 		const main = <HTMLElement>document.getElementById("main-overview")
 		main.innerHTML = ""
 		var airline = <Airline>this.airline
-		var heading = createTitle(airline.name)
+		var heading = createTitleBanner(airline.name)
 		main.appendChild(heading)
 		main.appendChild(airline.statsHtml())
 		main.appendChild(airline.getReputationDisplay())
@@ -894,14 +889,12 @@ class GameEngine {
 				unsetLoader()
 				const parentContainer = createElement("div", {class: ""})
 				const upgradeCategories = JSON.parse(response).forEach((category: { [x: string]: any; }) => {
-					const categoryContainer = createElement("div", {class: "bg-light border-box p-3"})
-					categoryContainer.appendChild(createElement("h4", {innerText: category["title"], class:"mb-1"}))
-					categoryContainer.appendChild(listLabels([
-						["Current Level", category["current_level"]],
-						["Upgrade Cost", category["upgrade_cost"]],
-					]))
+					const categoryContainer = createElement("div", {class: "m-2 p-3 bgwf secondary-card"})
+					categoryContainer.appendChild(createElement("h2", {innerText: category["title"], class:"mb-1"}))
+					categoryContainer.appendChild(createElement("p", {innerText: `Current Level: ${category["current_level"]}`}))
+					categoryContainer.appendChild(createElement("p", {innerText: `Next Level: Costs ${prettyCashString(category["upgrade_cost"])} (TODO iain and justin: we should add a description of the benefits of the next level)`}))
 					const btn_class = category["upgrade_enabled"] ? "" : "disabled"
-					const btn = createElement("button", {innerText: "Upgrade", class: btn_class})
+					const btn = createElement("button", {innerText: `Upgrade: ${prettyCashString(category['upgrade_cost'])}`, class: btn_class})
 
 					if (category["upgrade_enabled"]) {
 						btn.addEventListener("click", () => {
@@ -1019,12 +1012,19 @@ function loadHubSelect(airports: Array<Airport>) {
 	hubRow.appendChild(hubLabel)
 	hubRow.appendChild(hubSelect)
 }
-
+function loadGameHeader() {
+	const homeHeader = document.getElementById("homeHeader")
+	const gameHeader = document.getElementById("gameHeader")
+	hideElement(homeHeader)
+	gameHeader.style.display = "flex"
+}
 const renderSignupForm = () => {
 	// Creating form to enter business name and to choose hub
 	const form = <HTMLFormElement>document.getElementById("SignUp")
+
+
 	var nameRow = document.createElement("div")
-	var nameLabel = createElement("label", {innerText: "What do you want your airline to be called?"})
+	var nameLabel = createElement("label", {innerText: "Airline name"})
 	nameLabel.setAttribute("for", "businessName")
 	var nameInput: HTMLInputElement = document.createElement("input")
 	nameInput.setAttribute("type", "text")
@@ -1032,17 +1032,26 @@ const renderSignupForm = () => {
 	nameInput.setAttribute("required", "")
 	nameRow.appendChild(nameLabel)
 	nameRow.appendChild(nameInput)
+
+	var passwordRow = createElement("div", {})
+	var passwordLabel = createElement("label", {innerText: "Password"})
+	passwordLabel.setAttribute("for", "password")
 	var passwordinput: HTMLInputElement = document.createElement("input")
 	// TODO justin: what happens if we change the type below from "text" to "password"?
 	passwordinput.setAttribute("type", "text")
 	passwordinput.setAttribute("name", "password")
 	passwordinput.setAttribute("required", "")
+	passwordRow.appendChild(passwordLabel)
+	passwordRow.appendChild(passwordinput)
+
 	var hubRow = createElement("div", {id: "hubRow"})
 	var playBtn = createElement("button", {class: "primary", innerText: "Create"})
 	playBtn.setAttribute("type", "submit")
 	form.innerHTML = ""
+	form.appendChild(createElement("h3", {innerText: "Sign Up", class: "text-center"}))
+	form.appendChild(createElement("p", {innerText: "Create your airline", class: ""}))
 	form.appendChild(nameRow)
-	form.appendChild(passwordinput)
+	form.appendChild(passwordRow)
 	form.appendChild(hubRow)
 	form.appendChild(playBtn)
 	nameInput.setAttribute("value", randomBusinessName())
@@ -1066,10 +1075,7 @@ const renderSignupForm = () => {
 				var airline = new Airline(JSON.parse(response))
 				displayInfo(airline.name + " joins the aviation industry!")
 				gameEngine.registerAirline(airline)
-				const header = document.getElementsByTagName("header")[0]
-				header?.classList.remove("justify-content-center")
-				header?.classList.remove("flex-column")
-				header?.classList.add("justify-content-between")
+				loadGameHeader()
 				gameEngine.createSideMenu()
 				airline.updateTitle()
 				airline.updateStats()
@@ -1091,16 +1097,26 @@ const renderLoginForm = () => {
 	nameInput.setAttribute("required", "")
 	nameRow.appendChild(nameLabel)
 	nameRow.appendChild(nameInput)
+
+	var passwordRow = createElement("div", {})
+	var passwordLabel = createElement("label", {innerText: "Password"})
+	passwordLabel.setAttribute("for", "password")
+
 	var passwordinput: HTMLInputElement = document.createElement("input")
 	// TODO justin: what happens if we change the type below from "text" to "password"?
 	passwordinput.setAttribute("type", "text")
 	passwordinput.setAttribute("name", "password")
 	passwordinput.setAttribute("required", "")
+	passwordRow.appendChild(passwordLabel)
+	passwordRow.appendChild(passwordinput)
 	var playBtn = createElement("button", {class: "primary", innerText: "Login"})
 	playBtn.setAttribute("type", "submit")
 	form.innerHTML = ""
+	var heading = createElement("h3", {innerText: "Log In", class:"text-center"})
+	form.appendChild(heading)
+	form.appendChild(createElement("p", {innerText: "Welcome back!"}))
 	form.appendChild(nameRow)
-	form.appendChild(passwordinput)
+	form.appendChild(passwordRow)
 	form.appendChild(playBtn)
 	nameInput.setAttribute("value", randomBusinessName())
 	form.addEventListener("submit", (e) => {
@@ -1122,10 +1138,7 @@ const renderLoginForm = () => {
 				var airline = new Airline(JSON.parse(response))
 				displayInfo( "Welcome back " + airline.name + "!")
 				gameEngine.registerAirline(airline)
-				const header = document.getElementsByTagName("header")[0]
-				header?.classList.remove("justify-content-center")
-				header?.classList.remove("flex-column")
-				header?.classList.add("justify-content-between")
+				loadGameHeader()
 				gameEngine.createSideMenu()
 				airline.updateTitle()
 				airline.updateStats()

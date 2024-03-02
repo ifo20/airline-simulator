@@ -86,14 +86,9 @@ function createElement(elementType, options) {
     }
     return e;
 }
-function createTitle(innerHTML, elementType) {
+function createTitleBanner(innerHTML, elementType) {
     if (elementType === void 0) { elementType = "h1"; }
-    return createElement(elementType, { innerHTML: innerHTML });
-}
-function createParagraph(text) {
-    var p = document.createElement("p");
-    p.innerText = text;
-    return p;
+    return createElement(elementType, { innerHTML: innerHTML, class: "bgwf p-2" });
 }
 function hideElement(elem) {
     elem.style.display = 'none';
@@ -509,7 +504,8 @@ var Airline = (function () {
     }
     Airline.prototype.updateTitle = function () {
         var div = document.getElementById("airlineTitle");
-        div.appendChild(this.titleHtml());
+        div.appendChild(createElement("h2", { innerText: this.name }));
+        div.appendChild(createElement("h4", { innerText: "Hub: ".concat(this.hub.code) }));
     };
     Airline.prototype.updateStats = function (cash) {
         if (cash === void 0) { cash = null; }
@@ -526,10 +522,8 @@ var Airline = (function () {
     Airline.prototype.addTransaction = function (msg) {
         this.transactions.push("".concat(new Date(), " ").concat(prettyCashString(this.cash), " ").concat(msg));
     };
-    Airline.prototype.titleHtml = function () {
-        return createTitle("".concat(this.name, "<strong>Hub: ").concat(this.hub.code, "</strong>"), "h2");
-    };
     Airline.prototype.statsHtml = function () {
+        var div = createElement("div", { class: "m-2 p-3 bgwf secondary-card" });
         var dl = dataLabels([
             ["Cash", prettyCashString(this.cash)],
             ["Planes", String(this.planes.length)],
@@ -538,7 +532,8 @@ var Airline = (function () {
             ["Rank", this.rank],
             ["Joined", this.joined.toLocaleDateString()],
         ]);
-        return dl;
+        div.appendChild(dl);
+        return div;
     };
     Airline.prototype.getFleetDisplay = function () {
         var header = document.getElementById("fleet-header");
@@ -547,11 +542,11 @@ var Airline = (function () {
         var offered_tbody = document.getElementById("offered-planes");
         owned_tbody.innerHTML = "";
         offered_tbody.innerHTML = "";
-        header.appendChild(createTitle("Your Fleet"));
+        header.appendChild(createTitleBanner("Your Fleet"));
         this.planes.forEach(function (plane) {
             owned_tbody.appendChild(plane.purchasedCardHtml());
         });
-        header.appendChild(createParagraph("You have ".concat(this.planes.length, " planes in your fleet")));
+        header.appendChild(createElement("p", { innerText: "You have ".concat(this.planes.length, " planes in your fleet"), class: "m-2 p-3 bgwf secondary-card" }));
         var airline = this;
         setLoader();
         $.ajax({
@@ -607,10 +602,11 @@ var Airline = (function () {
         return routesContainer;
     };
     Airline.prototype.getReputationDisplay = function () {
-        var div = document.createElement("div");
-        var heading = createTitle("Reputation and Reviews");
-        div.appendChild(heading);
-        var p = createElement("p", { class: "p-3" });
+        var container = document.createElement("div");
+        var heading = createTitleBanner("Reputation and Reviews");
+        container.appendChild(heading);
+        var div = createElement("div", { class: "m-2 p-3 bgwf secondary-card" });
+        var p = createElement("p", { class: "" });
         var numStars = 0;
         if (this.popularity > 89) {
             p.innerText = "Customers favorite airline in ".concat(this.hub.country, "!");
@@ -641,11 +637,12 @@ var Airline = (function () {
             div.appendChild(span);
         }
         div.appendChild(p);
-        return div;
+        container.appendChild(div);
+        return container;
     };
     Airline.prototype.getFinanceDisplay = function () {
         var div = document.createElement("div");
-        var heading = createTitle("Finances");
+        var heading = createTitleBanner("Finances");
         div.appendChild(heading);
         var tbl = createElement("table", {});
         var tbody = createElement("tbody", {});
@@ -661,7 +658,7 @@ var Airline = (function () {
     };
     Airline.prototype.getAccidentsDisplay = function () {
         var div = document.createElement("div");
-        var heading = createTitle("Accidents");
+        var heading = createTitleBanner("Accidents");
         div.appendChild(heading);
         var tbl = createElement("table", {});
         var tbody = createElement("tbody", {});
@@ -749,7 +746,7 @@ var GameEngine = (function () {
         var main = document.getElementById("main-overview");
         main.innerHTML = "";
         var airline = this.airline;
-        var heading = createTitle(airline.name);
+        var heading = createTitleBanner(airline.name);
         main.appendChild(heading);
         main.appendChild(airline.statsHtml());
         main.appendChild(airline.getReputationDisplay());
@@ -798,14 +795,12 @@ var GameEngine = (function () {
                 unsetLoader();
                 var parentContainer = createElement("div", { class: "" });
                 var upgradeCategories = JSON.parse(response).forEach(function (category) {
-                    var categoryContainer = createElement("div", { class: "bg-light border-box p-3" });
-                    categoryContainer.appendChild(createElement("h4", { innerText: category["title"], class: "mb-1" }));
-                    categoryContainer.appendChild(listLabels([
-                        ["Current Level", category["current_level"]],
-                        ["Upgrade Cost", category["upgrade_cost"]],
-                    ]));
+                    var categoryContainer = createElement("div", { class: "m-2 p-3 bgwf secondary-card" });
+                    categoryContainer.appendChild(createElement("h2", { innerText: category["title"], class: "mb-1" }));
+                    categoryContainer.appendChild(createElement("p", { innerText: "Current Level: ".concat(category["current_level"]) }));
+                    categoryContainer.appendChild(createElement("p", { innerText: "Next Level: Costs ".concat(prettyCashString(category["upgrade_cost"]), " (TODO iain and justin: we should add a description of the benefits of the next level)") }));
                     var btn_class = category["upgrade_enabled"] ? "" : "disabled";
-                    var btn = createElement("button", { innerText: "Upgrade", class: btn_class });
+                    var btn = createElement("button", { innerText: "Upgrade: ".concat(prettyCashString(category['upgrade_cost'])), class: btn_class });
                     if (category["upgrade_enabled"]) {
                         btn.addEventListener("click", function () {
                             btn.setAttribute("disabled", "");
@@ -855,10 +850,6 @@ var GameEngine = (function () {
             createElement("button", { id: "viewCompany", class: "flex-grow dark", innerText: "Overview of ".concat(this.airline.name) }),
             createElement("button", { id: "viewFleet", class: "flex-grow dark", innerText: "Overview of Fleet" }),
             createElement("button", { id: "viewRoutes", class: "flex-grow dark", innerText: "Overview of Routes" }),
-            createElement("button", { id: "viewUpgrades", class: "flex-grow dark", innerText: "Overview of Upgrades" }),
-            createElement("button", { id: "viewReputation", class: "flex-grow dark", innerText: "Overview of Reputation" }),
-            createElement("button", { id: "viewFinance", class: "flex-grow dark", innerText: "Overview of Finance" }),
-            createElement("button", { id: "viewAccidents", class: "flex-grow dark", innerText: "Overview of Accidents" }),
         ];
         var setScreen = function (buttonId) {
             buttons.forEach(function (b) {
@@ -922,10 +913,16 @@ function loadHubSelect(airports) {
     hubRow.appendChild(hubLabel);
     hubRow.appendChild(hubSelect);
 }
+function loadGameHeader() {
+    var homeHeader = document.getElementById("homeHeader");
+    var gameHeader = document.getElementById("gameHeader");
+    hideElement(homeHeader);
+    gameHeader.style.display = "flex";
+}
 var renderSignupForm = function () {
     var form = document.getElementById("SignUp");
     var nameRow = document.createElement("div");
-    var nameLabel = createElement("label", { innerText: "What do you want your airline to be called?" });
+    var nameLabel = createElement("label", { innerText: "Airline name" });
     nameLabel.setAttribute("for", "businessName");
     var nameInput = document.createElement("input");
     nameInput.setAttribute("type", "text");
@@ -933,16 +930,23 @@ var renderSignupForm = function () {
     nameInput.setAttribute("required", "");
     nameRow.appendChild(nameLabel);
     nameRow.appendChild(nameInput);
+    var passwordRow = createElement("div", {});
+    var passwordLabel = createElement("label", { innerText: "Password" });
+    passwordLabel.setAttribute("for", "password");
     var passwordinput = document.createElement("input");
     passwordinput.setAttribute("type", "text");
     passwordinput.setAttribute("name", "password");
     passwordinput.setAttribute("required", "");
+    passwordRow.appendChild(passwordLabel);
+    passwordRow.appendChild(passwordinput);
     var hubRow = createElement("div", { id: "hubRow" });
     var playBtn = createElement("button", { class: "primary", innerText: "Create" });
     playBtn.setAttribute("type", "submit");
     form.innerHTML = "";
+    form.appendChild(createElement("h3", { innerText: "Sign Up", class: "text-center" }));
+    form.appendChild(createElement("p", { innerText: "Create your airline", class: "" }));
     form.appendChild(nameRow);
-    form.appendChild(passwordinput);
+    form.appendChild(passwordRow);
     form.appendChild(hubRow);
     form.appendChild(playBtn);
     nameInput.setAttribute("value", randomBusinessName());
@@ -966,10 +970,7 @@ var renderSignupForm = function () {
                 var airline = new Airline(JSON.parse(response));
                 displayInfo(airline.name + " joins the aviation industry!");
                 gameEngine.registerAirline(airline);
-                var header = document.getElementsByTagName("header")[0];
-                header === null || header === void 0 ? void 0 : header.classList.remove("justify-content-center");
-                header === null || header === void 0 ? void 0 : header.classList.remove("flex-column");
-                header === null || header === void 0 ? void 0 : header.classList.add("justify-content-between");
+                loadGameHeader();
                 gameEngine.createSideMenu();
                 airline.updateTitle();
                 airline.updateStats();
@@ -989,15 +990,23 @@ var renderLoginForm = function () {
     nameInput.setAttribute("required", "");
     nameRow.appendChild(nameLabel);
     nameRow.appendChild(nameInput);
+    var passwordRow = createElement("div", {});
+    var passwordLabel = createElement("label", { innerText: "Password" });
+    passwordLabel.setAttribute("for", "password");
     var passwordinput = document.createElement("input");
     passwordinput.setAttribute("type", "text");
     passwordinput.setAttribute("name", "password");
     passwordinput.setAttribute("required", "");
+    passwordRow.appendChild(passwordLabel);
+    passwordRow.appendChild(passwordinput);
     var playBtn = createElement("button", { class: "primary", innerText: "Login" });
     playBtn.setAttribute("type", "submit");
     form.innerHTML = "";
+    var heading = createElement("h3", { innerText: "Log In", class: "text-center" });
+    form.appendChild(heading);
+    form.appendChild(createElement("p", { innerText: "Welcome back!" }));
     form.appendChild(nameRow);
-    form.appendChild(passwordinput);
+    form.appendChild(passwordRow);
     form.appendChild(playBtn);
     nameInput.setAttribute("value", randomBusinessName());
     form.addEventListener("submit", function (e) {
@@ -1019,10 +1028,7 @@ var renderLoginForm = function () {
                 var airline = new Airline(JSON.parse(response));
                 displayInfo("Welcome back " + airline.name + "!");
                 gameEngine.registerAirline(airline);
-                var header = document.getElementsByTagName("header")[0];
-                header === null || header === void 0 ? void 0 : header.classList.remove("justify-content-center");
-                header === null || header === void 0 ? void 0 : header.classList.remove("flex-column");
-                header === null || header === void 0 ? void 0 : header.classList.add("justify-content-between");
+                loadGameHeader();
                 gameEngine.createSideMenu();
                 airline.updateTitle();
                 airline.updateStats();

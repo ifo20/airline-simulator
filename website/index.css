@@ -109,7 +109,7 @@ th, td {
         transform: translate(0px, 500px)
     }
 }
-#main > * {
+.bgwf {
     background-color: #ffffffaa;
 }
 .bg-light {
@@ -150,21 +150,19 @@ th, td {
 .checked {
     color: orange;
 }
-
-h1 {
-    padding: 1rem;
-    text-align: center;
-    background-color: #ededffdd;
+.junge-regular {
+    font-family: "Junge", cursive;
+    font-weight: 400;
+    font-style: normal;
+}
+h1,h2 {
+    font-family: "Junge", cursive;
     color: #03038a;
-    border-top: medium solid #03038a;
+    text-align: center;
+}
+header {
     border-bottom: medium solid #03038a;
 }
-h2 strong {
-    display: block;
-    font-size: 75%;
-    opacity: 0.75;
-}
-
 input,
 select,
 option,
@@ -187,14 +185,18 @@ form {
     margin: 0.6rem auto;
     font-size: larger;
 }
-.p-3 {
-    padding: 1rem;
-}
+.m-1{margin: 0.2rem;}
+.m-2{margin: 0.5rem;}
+.m-3{margin: 1rem;}
+.p-1{padding: 0.2rem;}
+.p-2{padding: 0.5rem;}
+.p-3{padding: 1rem;}
 form>div {
     display: flex;
     flex-direction: column;
     align-items: stretch;
 }
+.aic{align-items: center;}
 
 button {
     display: inline-block;
@@ -205,7 +207,7 @@ button {
         inset 0 0 3px 0 rgba(0,0,0,.4),
         inset 0 0 3px 5px rgba(0,0,0,.05),
         2px 2px 4px 0 rgba(0,0,0,.25);
-    border-radius: 4px;
+    border-radius: 2%;
     padding: 8px 16px;;
     font-size: 12px;
     line-height: 14px;
@@ -269,6 +271,7 @@ dd {
 .w-100 {
     width: 100%;
 }
+.text-center{text-align: center;}
 .text-left {text-align: left;}
 #info, #error {
     position: absolute;
@@ -317,7 +320,10 @@ dd {
     height: 450px;
     background: grey;
 }
+#brand{padding: 5px 10px;}
 .mb-1{margin-bottom:1rem;}
 .bgw{background-color: white;}
 .bg-offered{background-color:#ddcc44aa;}
 .collectable{background-color: rgb(255, 255, 255);}
+.primary-card{border-radius: 3%;background-color: #ffffffaa;box-shadow: #999 2px 2px 5px; width: 75%;}  
+.secondary-card{border: 1px solid #03038a; border-radius: 25px;}
