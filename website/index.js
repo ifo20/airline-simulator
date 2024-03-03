@@ -332,6 +332,7 @@ var Route = (function () {
                     displayInfo(jresponse.incident);
                     airline.incidents.push(jresponse.incident);
                 }
+                airline.addTransaction(jresponse.transaction);
                 route.status = jresponse.status;
                 airline.planes = jresponse.planes.map(function (p) { return new Plane(p); });
                 airline.popularity = jresponse.popularity;
@@ -526,8 +527,8 @@ var Airline = (function () {
             ["Popularity", String(this.popularity)],
         ]));
     };
-    Airline.prototype.addTransaction = function (msg) {
-        this.transactions.push("".concat(new Date(), " ").concat(prettyCashString(this.cash), " ").concat(msg));
+    Airline.prototype.addTransaction = function (t) {
+        this.transactions.push(t);
     };
     Airline.prototype.statsHtml = function () {
         var div = createElement("div", { class: "m-2 p-3 bgwf secondary-card" });
@@ -635,11 +636,28 @@ var Airline = (function () {
         var div = document.createElement("div");
         var heading = createTitleBanner("Finances");
         div.appendChild(heading);
-        var tbl = createElement("table", {});
+        var tbl = createElement("table", { class: "table w-100" });
+        var thead = createElement("thead", {});
+        var theadrow = createElement("tr", {});
+        theadrow.appendChild(createElement("th", { innerText: "Time" }));
+        theadrow.appendChild(createElement("th", { innerText: "Cash Balance" }));
+        theadrow.appendChild(createElement("th", { innerText: "Cash in" }));
+        theadrow.appendChild(createElement("th", { innerText: "Cash out" }));
+        theadrow.appendChild(createElement("th", { innerText: "Description" }));
+        thead.appendChild(theadrow);
+        tbl.appendChild(thead);
         var tbody = createElement("tbody", {});
         this.transactions.forEach(function (t) {
             var tr = createElement("tr", { class: "bgw" });
-            var td = createElement("td", { innerText: t, class: "text-left" });
+            var td = createElement("td", { innerText: t.ts, class: "text-left" });
+            tr.appendChild(td);
+            var td = createElement("td", { innerText: prettyCashString(t.starting_cash), class: "text-right" });
+            tr.appendChild(td);
+            var td = createElement("td", { innerText: t.amount > 0 ? prettyCashString(t.amount) : "", class: "text-right" });
+            tr.appendChild(td);
+            var td = createElement("td", { innerText: t.amount > 0 ? "" : prettyCashString(t.amount), class: "text-right" });
+            tr.appendChild(td);
+            var td = createElement("td", { innerText: t.description, class: "text-left" });
             tr.appendChild(td);
             tbody.appendChild(tr);
         });

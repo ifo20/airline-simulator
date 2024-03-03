@@ -1,12 +1,4 @@
-from ctypes import Union
 from datetime import datetime
-import logging
-import random
-from typing import List
-
-import pytz
-from app.config import PLANE_COST, PLANE_FIX_COST, PLANE_MINIMUM_FLYING_HEALTH, PLANE_RANGE, PLANE_SCRAP_VALUE, PLANE_STARTING_HEALTH
-from app.route import Route
 
 
 class Transaction:
@@ -31,8 +23,15 @@ class Transaction:
 
 	@classmethod
 	def create(cls, db, airline, amount, description):
-		db.save_transaction(airline, amount, description)
+		return cls(*db.save_transaction(airline, amount, description))
 
 	@classmethod
 	def from_db_row(cls, db_row):
 		return cls(*db_row)
+
+	@staticmethod
+	def list(db, airline_id):
+		return [
+			Transaction.from_db_row(db_row)
+			for db_row in db.get_transactions(airline_id)
+		]

@@ -3,6 +3,7 @@ This module only saves state in-memory, so if the server is restarted, all state
 
 So it is not really a database - hence the name 'mock'
 """
+from datetime import datetime
 import logging
 import json
 from typing import List, Optional
@@ -120,3 +121,13 @@ class MockDatabase:
 
 	def delete_plane(self, plane_id: int):
 		del self.planes[plane_id]
+
+
+	def save_flight(self, route_id, plane_id, departed_at, arrived_at, num_passengers, income, cost, plane_health_cost):
+		pass
+
+	def get_transactions(self, airline_id):
+		return []
+
+	def save_transaction(self, airline, amount, description):
+		return [1, datetime.now(), airline, amount, description]

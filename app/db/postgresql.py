@@ -207,9 +207,12 @@ VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
 			route_id, plane_id, departed_at, arrived_at, num_passengers, income, cost, plane_health_cost,
 		)
 
+	def get_transactions(self, airline_id):
+		return self.fetch_all("SELECT * FROM transactions WHERE airline_id=%s ORDER BY ts ASC", airline_id)
+
 	def save_transaction(self, airline, amount, description):
-		return self.execute(
-			"INSERT INTO transactions (airline_id, starting_balance, amount, description) VALUES (%s, %s, %s, %s)",
+		return self.fetch_one(
+			"INSERT INTO transactions (airline_id, starting_balance, amount, description) VALUES (%s, %s, %s, %s) RETURNING *",
 			airline.id, airline.cash, amount, description,
 		)
 # Sometimes it is convenient to be able to inject a lot of airports into a database:

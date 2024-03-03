@@ -14,6 +14,7 @@ from app.db import get_db
 from app.airline import Airline
 from app.airport import Airport
 from app.config import NUM_OFFERS, PLANE_STARTING_HEALTH, pretty_price
+from app.flight import Flight
 from app.plane import Plane
 from app.route import Route
 from app.transaction import Transaction
@@ -51,7 +52,7 @@ class ComplexEncoder(json.JSONEncoder):
 		time.sleep(0.01)
 		if isinstance(obj, datetime):
 			return obj.isoformat()
-		if isinstance(obj, (Airport, Airline, Route)):
+		if isinstance(obj, (Airport, Airline, Route, Transaction, Flight)):
 			return obj.__dict__
 		if isinstance(obj, Plane):
 			d = obj.__dict__.copy()
@@ -155,6 +156,7 @@ def login():
 	j: Dict = json.loads(jsonify(airline))
 	j["routes"] = Route.list_owned(DB, airline.id)
 	j["planes"] = Plane.list_owned(DB, airline.id)
+	j["transactions"] = Transaction.list(DB, airline.id)
 	all_airlines = Airline.leaderboard(DB)
 	n = len(all_airlines)
 	for idx, leaderboard_airline in enumerate(all_airlines, start=1):
@@ -239,7 +241,7 @@ def purchase_route():
 	if airline.cash < route.cost:
 		return "Cannot afford route", 400
 	description = f"Purchased route {route.identifier} for ${route.cost}!"
-	Transaction.create(DB, airline, route.cost, description)
+	transaction = Transaction.create(DB, airline, -route.cost, description)
 	airline.cash -= route.cost
 	DB.save_airline(airline)
 	route.purchase(DB)
@@ -248,7 +250,7 @@ def purchase_route():
 			"route": route,
 			"cash": airline.cash,
 			"msg": description,
-			"transaction": description,
+			"transaction": transaction,
 		}
 	)
 
@@ -279,14 +281,14 @@ def upgrade_fuel_efficiency():
 	if airline.fuel_efficiency_level >= 5:
 		raise AssertionError("You already have the maximum level of fuel effiency!")
 	description = f"Upgraded fuel efficiency from {airline.fuel_efficiency_level - 1} to {airline.fuel_efficiency_level} for {pretty_price(upgrade_cost)}"
-	Transaction.create(DB, airline, upgrade_cost, description)
+	transaction = Transaction.create(DB, airline, -upgrade_cost, description)
 	airline.cash -= upgrade_cost
 	airline.fuel_efficiency_level += 1
 	DB.save_airline(airline)
 	return jsonify({
 			"title": "Fuel Efficiency",
 			"cash": airline.cash,
-			"transaction": description,
+			"transaction": transaction,
 			"current_level": airline.fuel_efficiency_level,
 			"upgrade_cost": upgrade_cost,
 			"upgrade_enabled": airline.fuel_efficiency_level < 5 and airline.cash > upgrade_cost,
@@ -336,7 +338,7 @@ def purchase_plane():
 	if airline.cash < plane.cost:
 		return "you cannot afford that plane", 400
 	description = f"Purchased plane {plane.name} for ${plane.cost}"
-	Transaction.create(DB, airline, plane.cost, description)
+	transaction = Transaction.create(DB, airline, -plane.cost, description)
 	airline.cash -= plane.cost
 	DB.save_airline(airline)
 	plane.purchase(DB)
@@ -345,7 +347,7 @@ def purchase_plane():
 			"plane": plane,
 			"cash": airline.cash,
 			"msg": f"Purchased {plane.name}!",
-			"transaction": description,
+			"transaction": transaction,
 		}
 	)
 
@@ -358,7 +360,7 @@ def fix_plane():
 	plane.health = PLANE_STARTING_HEALTH
 	DB.save_plane(plane)
 	description = f"Fixed {plane.name} for {pretty_price(plane.fix_cost)}"
-	Transaction.create(DB, airline, plane.fix_cost, description)
+	transaction = Transaction.create(DB, airline, -plane.fix_cost, description)
 	airline.cash -= plane.fix_cost
 	DB.save_airline(airline)
 	planes = Plane.list_owned(DB, airline.id)
@@ -367,9 +369,7 @@ def fix_plane():
 			"planes": planes,
 			"cash": airline.cash,
 			"msg": f"Plane {plane.name} fixed for {pretty_price(plane.fix_cost)}!",
-			# TODO iain and justin: this response includes a transaction that can be seen on the Finance page
-			# If you refresh and log back in, can you see your old transactions?
-			"transaction": description,
+			"transaction": transaction,
 		}
 	)
 
@@ -380,7 +380,7 @@ def scrap_plane():
 	plane = Plane.get_by_id(DB, int(request.form["plane_id"]))
 	assert plane.airline_id == airline.id, f"Airline does not have that plane"
 	description = f"Sold {plane.name} to scrapyard for {pretty_price(plane.scrap_value)}"
-	Transaction.create(DB, airline, plane.scrap_value, description)
+	transaction = Transaction.create(DB, airline, +plane.scrap_value, description)
 	airline.cash += plane.scrap_value
 	DB.save_airline(airline)
 	DB.delete_plane(plane.id)
@@ -390,7 +390,7 @@ def scrap_plane():
 			"planes": planes,
 			"cash": airline.cash,
 			"msg": f"Plane {plane.name} sold to Mojave scrapyard for {pretty_price(plane.scrap_value)}!",
-			"transaction": description,
+			"transaction": transaction,
 		}
 	)
 
@@ -425,6 +425,7 @@ def collect_route():
 	num_passengers, income, cost, popularity_change, plane_health_cost, incident, msg = route.collect(DB, airline)
 	DB.save_route(route)
 	cash_change = income - cost
+	transaction = Transaction.create(DB, airline, +cash_change, msg)
 	airline.cash += cash_change
 	airline.popularity += popularity_change
 	DB.save_airline(airline)
@@ -441,6 +442,7 @@ def collect_route():
 			"cash": airline.cash,
 			"popularity": airline.popularity,
 			"incident": incident,
+			"transaction": transaction,
 			"planes": planes,
 			"status": "ready",
 		}

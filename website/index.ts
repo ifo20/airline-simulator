@@ -301,7 +301,6 @@ class OfferedRoute {
 		return tr
 	}
 }
-// TODO iain: is this class approach worthwhile?
 class Route {
 	id: number
 	distance: number
@@ -385,6 +384,7 @@ class Route {
 					displayInfo(jresponse.incident)
 					airline.incidents.push(jresponse.incident)
 				}
+				airline.addTransaction(jresponse.transaction)
 				route.status = jresponse.status
 				airline.planes = jresponse.planes.map((p: any) => new Plane(p))
 				airline.popularity = jresponse.popularity
@@ -562,6 +562,12 @@ class Plane {
 		return div
 	}
 }
+type Transaction = {
+	ts: string
+	starting_cash: number
+	amount: number
+	description: string
+}
 class Airline {
 	id: number
 	name: string
@@ -572,7 +578,7 @@ class Airline {
 	planes: Array<Plane> = []
 	routes: Array<Route> = []
 	popularity: number
-	transactions: Array<string> = []
+	transactions: Array<Transaction> = []
 	incidents: Array<string> = []
 	constructor(data: any) {
 		const { id, name, hub, joined_at, cash, rank, planes, routes, popularity, transactions, incidents } = data
@@ -606,8 +612,8 @@ class Airline {
 			["Popularity", String(this.popularity)],
 		]))
 	}
-	addTransaction(msg: string): void {
-		this.transactions.push(`${new Date()} ${prettyCashString(this.cash)} ${msg}`)
+	addTransaction(t: Transaction): void {
+		this.transactions.push(t)
 	}
 	statsHtml(): HTMLElement {
 		var div = createElement("div", {class: "m-2 p-3 bgwf secondary-card"})
@@ -716,11 +722,28 @@ class Airline {
 		var div = document.createElement("div")
 		var heading = createTitleBanner("Finances")
 		div.appendChild(heading)
-		var tbl = createElement("table", {})
+		var tbl = createElement("table", {class: "table w-100"})
+		var thead = createElement("thead", {})
+		var theadrow = createElement("tr", {})
+		theadrow.appendChild(createElement("th", {innerText: "Time"}))
+		theadrow.appendChild(createElement("th", {innerText: "Cash Balance"}))
+		theadrow.appendChild(createElement("th", {innerText: "Cash in"}))
+		theadrow.appendChild(createElement("th", {innerText: "Cash out"}))
+		theadrow.appendChild(createElement("th", {innerText: "Description"}))
+		thead.appendChild(theadrow)
+		tbl.appendChild(thead)
 		var tbody = createElement("tbody", {})
 		this.transactions.forEach(t => {
 			var tr = createElement("tr", {class: "bgw"})
-			var td = createElement("td", {innerText: t, class: "text-left"})
+			var td = createElement("td", {innerText: t.ts, class: "text-left"})
+			tr.appendChild(td)
+			var td = createElement("td", {innerText: prettyCashString(t.starting_cash), class: "text-right"})
+			tr.appendChild(td)
+			var td = createElement("td", {innerText: t.amount > 0 ? prettyCashString(t.amount) : "", class: "text-right"})
+			tr.appendChild(td)
+			var td = createElement("td", {innerText: t.amount > 0 ? "" : prettyCashString(t.amount), class: "text-right"})
+			tr.appendChild(td)
+			var td = createElement("td", {innerText: t.description, class: "text-left"})
 			tr.appendChild(td)
 			tbody.appendChild(tr)
 		})

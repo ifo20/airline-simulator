@@ -278,6 +278,7 @@ dd {
 }
 .text-center{text-align: center;}
 .text-left {text-align: left;}
+.text-right {text-align: right;}
 #info, #error {
     position: absolute;
     bottom: 0;
