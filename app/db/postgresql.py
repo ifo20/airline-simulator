@@ -6,6 +6,7 @@ import logging
 import os
 from typing import Any, List
 import timeit
+from flask import request
 
 import psycopg2
 import psycopg2.extras
@@ -19,41 +20,42 @@ from app.plane import Plane
 class PostgresqlDatabase:
 	def __init__(self):
 		logging.info("Using a postgresql database")
-		self.conn = None
-		self.open()
+		self.__conn = None
 
-	def open(self):
-		start_ts = timeit.default_timer()
-		self.conn = psycopg2.connect(os.environ["DATABASE_URL"], sslmode="disable")
-		logging.debug("TIMER DB connection took %s", timeit.default_timer() - start_ts)
+	def conn(self):
+		if self.__conn is None:
+			self.__conn = psycopg2.connect(os.environ["DATABASE_URL"], sslmode="disable")
+		return self.__conn
 
 	def close(self):
-		logging.debug("Closing DB connection")
-		self.conn.commit()
-		self.conn.close()
+		logging.debug("Closing DB connection %s", request)
+		if self.__conn:
+			self.__conn.commit()
+			self.__conn.close()
 
 	def execute(self, query: str, *args) -> None:
 		logging.debug("executing %s with args %s", query, tuple(args))
-		with self.conn.cursor() as cur:
+		with self.conn().cursor() as cur:
 			cur.execute(query, tuple(args))
 
 	def fetch_one(self, query: str, *args) -> Any:
 		logging.debug("fetch_one executing %s with args %s", query, tuple(args))
-		with self.conn.cursor() as cur:
+		with self.conn().cursor() as cur:
 			cur.execute(query, tuple(args))
 			result = cur.fetchone()
 		return result
 
 	def fetch_all(self, query: str, *args) -> List[Any]:
 		logging.debug("fetch_all executing %s with args %s", query, tuple(args))
-		with self.conn.cursor() as cur:
+		with self.conn().cursor() as cur:
 			cur.execute(query, tuple(args))
 			result = cur.fetchall()
+			logging.debug("fetch_all result %s", result)
 		return result
 
 	def migrate(self):
 		with open("001_initial.sql", "r") as f:
-			self.conn.cursor().execute(f.read())
+			self.conn().cursor().execute(f.read())
 
 	def get_airports(self) -> List[List[Any]]:
 		return [

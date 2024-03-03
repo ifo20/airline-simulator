@@ -1,7 +1,7 @@
 //////// HELPING FUNCTIONS
 function defaultErrHandler(btn?: HTMLButtonElement) {
 	function handler(err: JQuery.jqXHR<any>) {
-		unsetLoader()
+		console.log("Default error handler was called", err)
 		displayError(err.responseText)
 		if (btn) {
 			btn.removeAttribute("disabled")
@@ -93,28 +93,22 @@ function createElement(elementType: string, options: createElementOptions) {
 	}
 	return e
 }
+function createSpinner(parent: HTMLElement): HTMLElement {
+	var spinner = createElement("div", {class:"spinner"})
+	parent.appendChild(spinner)
+	return spinner
+}
 function createTitleBanner(innerHTML: string, elementType: string = "h1"): HTMLElement {
 	return createElement(elementType, {innerHTML, class: "bgwf p-2 mb-1"})
 }
 function hideElement(elem: HTMLElement): void {
 	elem.style.display = 'none'
 }
-var inflight = 0
-function setLoader() {
-	inflight += 1
-	$("#loader").show()
-}
-function unsetLoader() {
-	$("#loader").hide()
-	inflight -= 1
-	if (inflight === 0) {
-		$("#loader").hide()
-	}
-}
 function makeClickable(btn: HTMLButtonElement, onClick: (ev: MouseEvent)=> any) {
 	function listener(this: void, ev: MouseEvent) {
 		btn.setAttribute("disabled", "")
-		btn.innerHTML = "..."
+		btn.innerText = ""
+		createSpinner(btn)
 		onClick(ev)
 		return this
 	}
@@ -130,11 +124,29 @@ function addPolylineToMap(map: H.Map, startinglat: number, startinglon: number, 
       lineString, { style: { lineWidth: 4 }}
     ));
 }
+
+type AirlineReputationResponse = { airline_reputation: string, num_stars: number }
 //////// A request client: A typescript version of client/__init__.py
 class RequestClient {
 	engine: GameEngine
 	constructor(engine: GameEngine) {
 		this.engine = engine
+	}
+	getAirports(callback: (arg0: Airport[]) => any) {
+		$.ajax({
+			method: "GET",
+			url: "/airports",
+			success: (response: string) => callback(<Airport[]>JSON.parse(response)),
+			error: defaultErrHandler(),
+		})
+	}
+	getReputation(airline_id: number, callback: (arg0:AirlineReputationResponse) => any) {
+		$.ajax({
+			method: "GET",
+			url: `/reputation/${airline_id}`,
+			success: (response: string) => callback(<AirlineReputationResponse>JSON.parse(response)),
+			error: defaultErrHandler(),
+		})
 	}
 	purchaseRoute(
 		airline_id: number,
@@ -268,7 +280,6 @@ class OfferedRoute {
 		var route_id = this.id
 		var onSuccess = (response: any) => {
 			var airline = <Airline>gameEngine.airline
-			unsetLoader()
 			var jresponse = JSON.parse(response)
 			var route = new Route(jresponse.route)
 			airline.routes.push(route)
@@ -281,7 +292,6 @@ class OfferedRoute {
 		}
 		function onClick(ev: MouseEvent) {
 			var airline = <Airline>gameEngine.airline
-			setLoader()
 			client.purchaseRoute(airline.id, route_id, onSuccess, defaultErrHandler(btn))
 		}
 		makeClickable(btn, onClick)
@@ -329,7 +339,6 @@ class Route {
 		var airline = <Airline>gameEngine.airline
 		var route = this
 		console.log("Route.run route=", route)
-		setLoader()
 		$.ajax({
 			method: "POST",
 			url: "/fly_route",
@@ -342,7 +351,6 @@ class Route {
 				route.updatePurchasedCardContent()
 			},
 			success: function(response) {
-				unsetLoader()
 				var jresponse = JSON.parse(response)
 				route.status = jresponse.status
 				route.lastRunAt = new Date(jresponse.last_run_at)
@@ -358,7 +366,6 @@ class Route {
 	getResults(btn: HTMLButtonElement) {
 		var airline = <Airline>gameEngine.airline
 		var route = this
-		setLoader()
 		$.ajax({
 			method: "POST",
 			url: "/collect",
@@ -371,7 +378,6 @@ class Route {
 				route.updatePurchasedCardContent()
 			},
 			success: function(response) {
-				unsetLoader()
 				var jresponse = JSON.parse(response)
 				displayInfo(jresponse.msg)
 				if (jresponse.incident) {
@@ -572,7 +578,6 @@ class Airline {
 		this.id = id
 		this.name = name
 		this.hub = hub
-		console.log('joined', joined_at)
 		this.joined = new Date(joined_at)
 		this.cash = cash
 		this.rank = rank
@@ -630,7 +635,6 @@ class Airline {
 
 		header.appendChild(createElement("p", {innerText: `You have ${this.planes.length} planes in your fleet`, class:"m-2 p-3 bgwf secondary-card"}))
 		var airline = this
-		setLoader()
 		$.ajax({
 			method: "GET",
 			url: "/offered_planes",
@@ -639,7 +643,6 @@ class Airline {
 			},
 			success: function(response) {
 				JSON.parse(response).map((p: any) => {
-					unsetLoader()
 					var tr = createElement("tr", {class: "bg-offered"})
 					var plane = new Plane(p)
 					const airplaneCost = plane.cost
@@ -682,45 +685,30 @@ class Airline {
 		return routesContainer
 	}
 	getReputationDisplay(): HTMLElement {
+		console.log('getReputationDisplay')
 		var container = document.createElement("div")
 		var heading = createTitleBanner("Reputation and Reviews")
 		container.appendChild(heading)
-
-		// TODO iain and justin: we should delete the below code that checks "this.popularity"
-		// We should add an endpoint that gets the "Reputation and Reviews" info from the server
-		// This would allow us to give more customised information, for example we could display recent media articles
-		// mentioning the airline, it's country and even use the name of the airline's planes
-		// e.g. "Safety concerns raised on Boeing 747"
-
 		var div = createElement("div", {class: "m-2 p-3 bgwf secondary-card"})
-		var p = createElement("p", {class: ""})
-		var numStars = 0
-		if (this.popularity > 89) {
-			p.innerText = `Customers favorite airline in ${this.hub.country}!`
-			numStars = 5
-		} else if (this.popularity > 69) {
-			p.innerText = `Very reputable airline`
-			numStars = 4
-		} else if (this.popularity > 49) {
-			p.innerText = `Distinctly average`
-			numStars = 3
-		} else if (this.popularity > 39) {
-			p.innerText = `Poor reputation`
-			numStars = 2
-		} else {
-			p.innerText = `Customers least favorite choice`
-			numStars = 1
-		}
-		for (var i = 0; i < 5; i++) {
-			var span = document.createElement("span")
-			span.className = "fa fa-star"
-			if (i < numStars) {
-				span.classList.add("checked")
+		var airline = this
+		var spinner = createSpinner(div)
+		container.appendChild(div)		
+		const callback = (response: AirlineReputationResponse) => {
+			console.log('getReputationDisplay callback', response)
+			spinner.remove()
+			for (var i = 0; i < 5; i++) {
+				var span = document.createElement("span")
+				span.className = "fa fa-star"
+				if (i < response.num_stars) {
+					span.classList.add("checked")
+				}
+				div.appendChild(span)
 			}
-			div.appendChild(span)
+			var p = createElement("p", {class: "", innerText: response.airline_reputation})
+			div.appendChild(p)
 		}
-		div.appendChild(p)
-		container.appendChild(div)
+		client.getReputation(airline.id, callback)
+		console.log('getReputationDisplay returning container')
 		return container
 	}
 	getFinanceDisplay(): HTMLElement {
@@ -805,23 +793,6 @@ class GameEngine {
 		displayInfo("Please Choose your new route.")
 		this.displayRoutesTab()
 	}
-	loadAirports(): void {
-		if (this.airports.length === 0) {
-			var airs = this.airports
-			var ge = this
-			setLoader()
-			$.ajax({
-				url: "/airports",
-				success: function(response) {
-					unsetLoader()
-					airs = JSON.parse(response).map((a: any) => new Airport(a))
-					ge.airports = airs
-					loadHubSelect(airs)
-				},
-				error: defaultErrHandler()
-			})
-		}
-	}
 	hideTabs(except: string): void {
 		["overview", "fleet", "routes", "reputation", "finance", "accidents","upgrades"].forEach(k => {
 			if (k === except) {
@@ -855,7 +826,6 @@ class GameEngine {
 		var airline = <Airline>this.airline
 		airline.getRoutesDisplay()
 		const offered = <HTMLElement>document.getElementById("offered-routes")
-		setLoader()
 		$.ajax({
 			method: "GET",
 			url: "/offered_routes",
@@ -863,7 +833,6 @@ class GameEngine {
 				airline_id: airline.id,
 			},
 			success: function(response) {
-				unsetLoader()
 				offered.innerHTML = ""
 				var routesToDisplay = JSON.parse(response).map((r: any) => new OfferedRoute(r))
 				routesToDisplay.forEach((r: OfferedRoute) => offered.appendChild(r.trHtml()))
@@ -874,7 +843,6 @@ class GameEngine {
 	displayUpgradesTab(): void {
 		this.hideTabs("upgrades")
 		var airline = <Airline>this.airline
-		setLoader()
 		const main = <HTMLElement>document.getElementById("main-upgrades")
 		main.innerHTML = ""
 		$.ajax({
@@ -884,7 +852,6 @@ class GameEngine {
 				airline_id: airline.id,
 			},
 			success: function(response) {
-				unsetLoader()
 				const parentContainer = createElement("div", {class: ""})
 				const upgradeCategories = JSON.parse(response).forEach((category: { [x: string]: any; }) => {
 					const categoryContainer = createElement("div", {class: "m-2 p-3 bgwf secondary-card"})
@@ -892,12 +859,10 @@ class GameEngine {
 					categoryContainer.appendChild(createElement("p", {innerText: `Current Level: ${category["current_level"]}`}))
 					categoryContainer.appendChild(createElement("p", {innerText: `Next Level: Costs ${prettyCashString(category["upgrade_cost"])} (TODO iain and justin: we should add a description of the benefits of the next level)`}))
 					const btn_class = category["upgrade_enabled"] ? "" : "disabled"
-					const btn = createElement("button", {innerText: `Upgrade: ${prettyCashString(category['upgrade_cost'])}`, class: btn_class})
+					const btn = <HTMLButtonElement>createElement("button", {innerText: `Upgrade: ${prettyCashString(category['upgrade_cost'])}`, class: btn_class})
 
 					if (category["upgrade_enabled"]) {
-						btn.addEventListener("click", () => {
-							btn.setAttribute("disabled", "")
-							btn.innerHTML = "..."
+						makeClickable(btn, (ev) => {
 							client.upgradeFuelEfficiency(airline.id, category["fuel_efficiency_level"])
 						})
 					} else {
@@ -971,24 +936,6 @@ class GameEngine {
 var gameEngine: GameEngine = new GameEngine()
 var client = new RequestClient(gameEngine)
 
-function loadHubSelect(airports: Array<Airport>) {
-	var hubRow = document.getElementById("hubRow")
-	var hubLabel = document.createElement("label")
-	hubLabel.setAttribute("for", "hub")
-	hubLabel.textContent = "Choose your hub"
-	var hubSelect = <HTMLSelectElement>document.createElement("select")
-	hubSelect.setAttribute("id", "hubSelect")
-	hubSelect.setAttribute("name", "hub")
-	airports.map((airport) => {
-		var opt = document.createElement("option")
-		opt.setAttribute("value", airport.code)
-		opt.textContent = `${airport.name} (${airport.code})`
-		hubSelect.appendChild(opt)
-		return opt
-	})
-	hubRow.appendChild(hubLabel)
-	hubRow.appendChild(hubSelect)
-}
 function loadGameScreen(airline: Airline) {
 	const homeHeader = document.getElementById("homeHeader")
 	const gameHeader = document.getElementById("gameHeader")
@@ -1068,8 +1015,17 @@ const renderSignupForm = () => {
 	passwordRow.appendChild(passwordinput)
 
 	var hubRow = createElement("div", {id: "hubRow"})
-	var playBtn = createElement("button", {class: "primary", innerText: "Create"})
+
+	var hubLabel = document.createElement("label")
+	hubLabel.setAttribute("for", "hub")
+	hubLabel.textContent = "Choose your hub"
+	hubRow.appendChild(hubLabel)
+
+
+	var playBtn = createElement("button", {id: "playBtn", class: "primary"})
+	playBtn.setAttribute("disabled", "")
 	playBtn.setAttribute("type", "submit")
+	createSpinner(playBtn)
 	form.innerHTML = ""
 	form.appendChild(createElement("h3", {innerText: "Sign Up", class: "text-center"}))
 	form.appendChild(createElement("p", {innerText: "Create your airline", class: ""}))
@@ -1079,21 +1035,33 @@ const renderSignupForm = () => {
 	form.appendChild(playBtn)
 	nameInput.setAttribute("value", randomBusinessName())
 	form.addEventListener("submit", (e) => {
-		var hubSelect = <HTMLSelectElement>document.getElementById("hubSelect")
 		e.preventDefault()
-		setLoader()
+		var businessName = nameInput.value
+		if (!businessName) {
+			displayError("Please provide a name for your airline")
+			return
+		}
+		var hub = (<HTMLSelectElement>document.getElementById("hubSelect")).value
+		if (!hub) {
+			displayError("Please select a hub for your airline")
+			return
+		}
+		var password = passwordinput.value
+		if (!password) {
+			displayError("Please provide a password")
+			return
+		}
 		$.ajax({
 			method: "POST",
 			url: "/signup",
 			data: {
-				businessName: nameInput.value,
-				hub: hubSelect.value,
-				password: passwordinput.value,
+				businessName,
+				hub,
+				password,
 			},
 			error: defaultErrHandler(),
 			success: function(response) {
 				hideElement(<HTMLFormElement>document.getElementById("landing"))
-				unsetLoader()
 				var airline = new Airline(JSON.parse(response))
 				displayInfo(airline.name + " joins the aviation industry!")
 				gameEngine.registerAirline(airline)
@@ -1141,7 +1109,6 @@ const renderLoginForm = () => {
 	form.addEventListener("submit", (e) => {
 		var hubSelect = <HTMLSelectElement>document.getElementById("hubSelect")
 		e.preventDefault()
-		setLoader()
 		$.ajax({
 			method: "POST",
 			url: "/login",
@@ -1152,7 +1119,6 @@ const renderLoginForm = () => {
 			error: defaultErrHandler(),
 			success: function(response) {
 				hideElement(<HTMLFormElement>document.getElementById("landing"))
-				unsetLoader()
 				var airline = new Airline(JSON.parse(response))
 				displayInfo( "Welcome back " + airline.name + "!")
 				gameEngine.registerAirline(airline)
@@ -1166,7 +1132,21 @@ const renderLoginForm = () => {
 window.onload = () => {
 	renderSignupForm()
 	renderLoginForm()
-	gameEngine.loadAirports()
+	client.getAirports((airports) => {
+		console.log('callback', airports)
+		var hubSelect = <HTMLSelectElement>createElement("select", {id: "hubSelect"})
+		hubSelect.setAttribute("name", "hub")
+		airports.forEach((airport) => {
+			var opt = createElement("option", {innerText: `${airport.name} (${airport.code})`})
+			opt.setAttribute("value", airport.code)
+			hubSelect.appendChild(opt)
+		})
+		var hubRow = document.getElementById("hubRow")
+		hubRow.appendChild(hubSelect)
+		var playBtn = document.getElementById("playBtn")
+		playBtn.removeAttribute("disabled")
+		playBtn.innerHTML = "Create Airline"
+	})
 	gameEngine.hideTabs("")
 	var logoImg = <HTMLImageElement>document.getElementById("logo")
 	// TODO justin: where is this "logo" on the screen? what happens if you click it?

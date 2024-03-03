@@ -1,6 +1,6 @@
 function defaultErrHandler(btn) {
     function handler(err) {
-        unsetLoader();
+        console.log("Default error handler was called", err);
         displayError(err.responseText);
         if (btn) {
             btn.removeAttribute("disabled");
@@ -86,6 +86,11 @@ function createElement(elementType, options) {
     }
     return e;
 }
+function createSpinner(parent) {
+    var spinner = createElement("div", { class: "spinner" });
+    parent.appendChild(spinner);
+    return spinner;
+}
 function createTitleBanner(innerHTML, elementType) {
     if (elementType === void 0) { elementType = "h1"; }
     return createElement(elementType, { innerHTML: innerHTML, class: "bgwf p-2 mb-1" });
@@ -93,22 +98,11 @@ function createTitleBanner(innerHTML, elementType) {
 function hideElement(elem) {
     elem.style.display = 'none';
 }
-var inflight = 0;
-function setLoader() {
-    inflight += 1;
-    $("#loader").show();
-}
-function unsetLoader() {
-    $("#loader").hide();
-    inflight -= 1;
-    if (inflight === 0) {
-        $("#loader").hide();
-    }
-}
 function makeClickable(btn, onClick) {
     function listener(ev) {
         btn.setAttribute("disabled", "");
-        btn.innerHTML = "...";
+        btn.innerText = "";
+        createSpinner(btn);
         onClick(ev);
         return this;
     }
@@ -124,6 +118,22 @@ var RequestClient = (function () {
     function RequestClient(engine) {
         this.engine = engine;
     }
+    RequestClient.prototype.getAirports = function (callback) {
+        $.ajax({
+            method: "GET",
+            url: "/airports",
+            success: function (response) { return callback(JSON.parse(response)); },
+            error: defaultErrHandler(),
+        });
+    };
+    RequestClient.prototype.getReputation = function (airline_id, callback) {
+        $.ajax({
+            method: "GET",
+            url: "/reputation/".concat(airline_id),
+            success: function (response) { return callback(JSON.parse(response)); },
+            error: defaultErrHandler(),
+        });
+    };
     RequestClient.prototype.purchaseRoute = function (airline_id, route_id, onSuccess, onError) {
         console.log('PR ajaxing', onSuccess);
         $.ajax({
@@ -224,7 +234,6 @@ var OfferedRoute = (function () {
         var route_id = this.id;
         var onSuccess = function (response) {
             var airline = gameEngine.airline;
-            unsetLoader();
             var jresponse = JSON.parse(response);
             var route = new Route(jresponse.route);
             airline.routes.push(route);
@@ -237,7 +246,6 @@ var OfferedRoute = (function () {
         };
         function onClick(ev) {
             var airline = gameEngine.airline;
-            setLoader();
             client.purchaseRoute(airline.id, route_id, onSuccess, defaultErrHandler(btn));
         }
         makeClickable(btn, onClick);
@@ -275,7 +283,6 @@ var Route = (function () {
         var airline = gameEngine.airline;
         var route = this;
         console.log("Route.run route=", route);
-        setLoader();
         $.ajax({
             method: "POST",
             url: "/fly_route",
@@ -288,7 +295,6 @@ var Route = (function () {
                 route.updatePurchasedCardContent();
             },
             success: function (response) {
-                unsetLoader();
                 var jresponse = JSON.parse(response);
                 route.status = jresponse.status;
                 route.lastRunAt = new Date(jresponse.last_run_at);
@@ -304,7 +310,6 @@ var Route = (function () {
     Route.prototype.getResults = function (btn) {
         var airline = gameEngine.airline;
         var route = this;
-        setLoader();
         $.ajax({
             method: "POST",
             url: "/collect",
@@ -317,7 +322,6 @@ var Route = (function () {
                 route.updatePurchasedCardContent();
             },
             success: function (response) {
-                unsetLoader();
                 var jresponse = JSON.parse(response);
                 displayInfo(jresponse.msg);
                 if (jresponse.incident) {
@@ -492,7 +496,6 @@ var Airline = (function () {
         this.id = id;
         this.name = name;
         this.hub = hub;
-        console.log('joined', joined_at);
         this.joined = new Date(joined_at);
         this.cash = cash;
         this.rank = rank;
@@ -548,7 +551,6 @@ var Airline = (function () {
         });
         header.appendChild(createElement("p", { innerText: "You have ".concat(this.planes.length, " planes in your fleet"), class: "m-2 p-3 bgwf secondary-card" }));
         var airline = this;
-        setLoader();
         $.ajax({
             method: "GET",
             url: "/offered_planes",
@@ -557,7 +559,6 @@ var Airline = (function () {
             },
             success: function (response) {
                 JSON.parse(response).map(function (p) {
-                    unsetLoader();
                     var tr = createElement("tr", { class: "bg-offered" });
                     var plane = new Plane(p);
                     var airplaneCost = plane.cost;
@@ -600,42 +601,30 @@ var Airline = (function () {
         return routesContainer;
     };
     Airline.prototype.getReputationDisplay = function () {
+        console.log('getReputationDisplay');
         var container = document.createElement("div");
         var heading = createTitleBanner("Reputation and Reviews");
         container.appendChild(heading);
         var div = createElement("div", { class: "m-2 p-3 bgwf secondary-card" });
-        var p = createElement("p", { class: "" });
-        var numStars = 0;
-        if (this.popularity > 89) {
-            p.innerText = "Customers favorite airline in ".concat(this.hub.country, "!");
-            numStars = 5;
-        }
-        else if (this.popularity > 69) {
-            p.innerText = "Very reputable airline";
-            numStars = 4;
-        }
-        else if (this.popularity > 49) {
-            p.innerText = "Distinctly average";
-            numStars = 3;
-        }
-        else if (this.popularity > 39) {
-            p.innerText = "Poor reputation";
-            numStars = 2;
-        }
-        else {
-            p.innerText = "Customers least favorite choice";
-            numStars = 1;
-        }
-        for (var i = 0; i < 5; i++) {
-            var span = document.createElement("span");
-            span.className = "fa fa-star";
-            if (i < numStars) {
-                span.classList.add("checked");
-            }
-            div.appendChild(span);
-        }
-        div.appendChild(p);
+        var airline = this;
+        var spinner = createSpinner(div);
         container.appendChild(div);
+        var callback = function (response) {
+            console.log('getReputationDisplay callback', response);
+            spinner.remove();
+            for (var i = 0; i < 5; i++) {
+                var span = document.createElement("span");
+                span.className = "fa fa-star";
+                if (i < response.num_stars) {
+                    span.classList.add("checked");
+                }
+                div.appendChild(span);
+            }
+            var p = createElement("p", { class: "", innerText: response.airline_reputation });
+            div.appendChild(p);
+        };
+        client.getReputation(airline.id, callback);
+        console.log('getReputationDisplay returning container');
         return container;
     };
     Airline.prototype.getFinanceDisplay = function () {
@@ -712,23 +701,6 @@ var GameEngine = (function () {
         displayInfo("Please Choose your new route.");
         this.displayRoutesTab();
     };
-    GameEngine.prototype.loadAirports = function () {
-        if (this.airports.length === 0) {
-            var airs = this.airports;
-            var ge = this;
-            setLoader();
-            $.ajax({
-                url: "/airports",
-                success: function (response) {
-                    unsetLoader();
-                    airs = JSON.parse(response).map(function (a) { return new Airport(a); });
-                    ge.airports = airs;
-                    loadHubSelect(airs);
-                },
-                error: defaultErrHandler()
-            });
-        }
-    };
     GameEngine.prototype.hideTabs = function (except) {
         ["overview", "fleet", "routes", "reputation", "finance", "accidents", "upgrades"].forEach(function (k) {
             if (k === except) {
@@ -761,7 +733,6 @@ var GameEngine = (function () {
         var airline = this.airline;
         airline.getRoutesDisplay();
         var offered = document.getElementById("offered-routes");
-        setLoader();
         $.ajax({
             method: "GET",
             url: "/offered_routes",
@@ -769,7 +740,6 @@ var GameEngine = (function () {
                 airline_id: airline.id,
             },
             success: function (response) {
-                unsetLoader();
                 offered.innerHTML = "";
                 var routesToDisplay = JSON.parse(response).map(function (r) { return new OfferedRoute(r); });
                 routesToDisplay.forEach(function (r) { return offered.appendChild(r.trHtml()); });
@@ -780,7 +750,6 @@ var GameEngine = (function () {
     GameEngine.prototype.displayUpgradesTab = function () {
         this.hideTabs("upgrades");
         var airline = this.airline;
-        setLoader();
         var main = document.getElementById("main-upgrades");
         main.innerHTML = "";
         $.ajax({
@@ -790,7 +759,6 @@ var GameEngine = (function () {
                 airline_id: airline.id,
             },
             success: function (response) {
-                unsetLoader();
                 var parentContainer = createElement("div", { class: "" });
                 var upgradeCategories = JSON.parse(response).forEach(function (category) {
                     var categoryContainer = createElement("div", { class: "m-2 p-3 bgwf secondary-card" });
@@ -800,9 +768,7 @@ var GameEngine = (function () {
                     var btn_class = category["upgrade_enabled"] ? "" : "disabled";
                     var btn = createElement("button", { innerText: "Upgrade: ".concat(prettyCashString(category['upgrade_cost'])), class: btn_class });
                     if (category["upgrade_enabled"]) {
-                        btn.addEventListener("click", function () {
-                            btn.setAttribute("disabled", "");
-                            btn.innerHTML = "...";
+                        makeClickable(btn, function (ev) {
                             client.upgradeFuelEfficiency(airline.id, category["fuel_efficiency_level"]);
                         });
                     }
@@ -874,24 +840,6 @@ var GameEngine = (function () {
 }());
 var gameEngine = new GameEngine();
 var client = new RequestClient(gameEngine);
-function loadHubSelect(airports) {
-    var hubRow = document.getElementById("hubRow");
-    var hubLabel = document.createElement("label");
-    hubLabel.setAttribute("for", "hub");
-    hubLabel.textContent = "Choose your hub";
-    var hubSelect = document.createElement("select");
-    hubSelect.setAttribute("id", "hubSelect");
-    hubSelect.setAttribute("name", "hub");
-    airports.map(function (airport) {
-        var opt = document.createElement("option");
-        opt.setAttribute("value", airport.code);
-        opt.textContent = "".concat(airport.name, " (").concat(airport.code, ")");
-        hubSelect.appendChild(opt);
-        return opt;
-    });
-    hubRow.appendChild(hubLabel);
-    hubRow.appendChild(hubSelect);
-}
 function loadGameScreen(airline) {
     var homeHeader = document.getElementById("homeHeader");
     var gameHeader = document.getElementById("gameHeader");
@@ -963,8 +911,14 @@ var renderSignupForm = function () {
     passwordRow.appendChild(passwordLabel);
     passwordRow.appendChild(passwordinput);
     var hubRow = createElement("div", { id: "hubRow" });
-    var playBtn = createElement("button", { class: "primary", innerText: "Create" });
+    var hubLabel = document.createElement("label");
+    hubLabel.setAttribute("for", "hub");
+    hubLabel.textContent = "Choose your hub";
+    hubRow.appendChild(hubLabel);
+    var playBtn = createElement("button", { id: "playBtn", class: "primary" });
+    playBtn.setAttribute("disabled", "");
     playBtn.setAttribute("type", "submit");
+    createSpinner(playBtn);
     form.innerHTML = "";
     form.appendChild(createElement("h3", { innerText: "Sign Up", class: "text-center" }));
     form.appendChild(createElement("p", { innerText: "Create your airline", class: "" }));
@@ -974,21 +928,33 @@ var renderSignupForm = function () {
     form.appendChild(playBtn);
     nameInput.setAttribute("value", randomBusinessName());
     form.addEventListener("submit", function (e) {
-        var hubSelect = document.getElementById("hubSelect");
         e.preventDefault();
-        setLoader();
+        var businessName = nameInput.value;
+        if (!businessName) {
+            displayError("Please provide a name for your airline");
+            return;
+        }
+        var hub = document.getElementById("hubSelect").value;
+        if (!hub) {
+            displayError("Please select a hub for your airline");
+            return;
+        }
+        var password = passwordinput.value;
+        if (!password) {
+            displayError("Please provide a password");
+            return;
+        }
         $.ajax({
             method: "POST",
             url: "/signup",
             data: {
-                businessName: nameInput.value,
-                hub: hubSelect.value,
-                password: passwordinput.value,
+                businessName: businessName,
+                hub: hub,
+                password: password,
             },
             error: defaultErrHandler(),
             success: function (response) {
                 hideElement(document.getElementById("landing"));
-                unsetLoader();
                 var airline = new Airline(JSON.parse(response));
                 displayInfo(airline.name + " joins the aviation industry!");
                 gameEngine.registerAirline(airline);
@@ -1031,7 +997,6 @@ var renderLoginForm = function () {
     form.addEventListener("submit", function (e) {
         var hubSelect = document.getElementById("hubSelect");
         e.preventDefault();
-        setLoader();
         $.ajax({
             method: "POST",
             url: "/login",
@@ -1042,7 +1007,6 @@ var renderLoginForm = function () {
             error: defaultErrHandler(),
             success: function (response) {
                 hideElement(document.getElementById("landing"));
-                unsetLoader();
                 var airline = new Airline(JSON.parse(response));
                 displayInfo("Welcome back " + airline.name + "!");
                 gameEngine.registerAirline(airline);
@@ -1055,7 +1019,21 @@ var renderLoginForm = function () {
 window.onload = function () {
     renderSignupForm();
     renderLoginForm();
-    gameEngine.loadAirports();
+    client.getAirports(function (airports) {
+        console.log('callback', airports);
+        var hubSelect = createElement("select", { id: "hubSelect" });
+        hubSelect.setAttribute("name", "hub");
+        airports.forEach(function (airport) {
+            var opt = createElement("option", { innerText: "".concat(airport.name, " (").concat(airport.code, ")") });
+            opt.setAttribute("value", airport.code);
+            hubSelect.appendChild(opt);
+        });
+        var hubRow = document.getElementById("hubRow");
+        hubRow.appendChild(hubSelect);
+        var playBtn = document.getElementById("playBtn");
+        playBtn.removeAttribute("disabled");
+        playBtn.innerHTML = "Create Airline";
+    });
     gameEngine.hideTabs("");
     var logoImg = document.getElementById("logo");
     logoImg.addEventListener("click", function () {

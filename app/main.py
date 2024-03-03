@@ -5,6 +5,7 @@ import os
 import pathlib
 from typing import Dict
 import timeit
+import time
 
 from flask import abort, request, send_from_directory, Flask
 import pytz
@@ -21,18 +22,6 @@ logging.basicConfig(level=logging.INFO)
 WEBSITE_ROOT = os.path.join(pathlib.Path(__file__).resolve().parent.parent, "website")
 app = Flask(__name__, static_folder=WEBSITE_ROOT)
 DB = get_db()
-
-@app.before_request
-def before_request_func():
-	DB.open()
-
-
-@app.teardown_request
-def teardown_request_func(error=None):
-	try:
-		DB.close()
-	except:
-		pass
 
 def airline_id_from_request(request):
 	try:
@@ -58,7 +47,7 @@ def airline_from_request(request):
 
 class ComplexEncoder(json.JSONEncoder):
 	def default(self, obj):
-		logging.debug("default: %s", obj)
+		time.sleep(0.01)
 		if isinstance(obj, datetime):
 			return obj.isoformat()
 		if isinstance(obj, (Airport, Airline, Route)):
@@ -215,10 +204,11 @@ def get_route(route_id):
 
 @app.route("/reputation/<int:airline_id>", methods=["GET"])
 def airline_reputation(airline_id):
+	time.sleep(0.2)
 	airline = Airline.get_by_id(DB, airline_id)
 	if airline:
 		if airline.popularity > 89:
-			airline_reputation = "Customers favorite airline in ${airline.hub.country}!"
+			airline_reputation = f"Customers favorite airline in {airline.hub.country}!"
 			num_stars = 5
 		elif airline.popularity > 69:
 			airline_reputation = "Very reputable airline"
@@ -313,7 +303,7 @@ def get_upgraded():
 			"upgrade_cost": 10000,
 			"upgrade_enabled": airline.cash > 10000,
 		}
-	] + [placeholder_upgrade] * 5
+	] + [placeholder_upgrade] * 2
 	return jsonify(upgrades)
 
 @app.route("/purchase_plane", methods=["POST"])
