@@ -211,6 +211,32 @@ def get_route(route_id):
 		route.update_status()
 	return jsonify(route)
 
+#TODO: Justin - add more instresting things into here.
+
+@app.route("/reputation/<int:airline_id>", methods=["GET"])
+def airline_reputation(airline_id):
+	airline = Airline.get_by_id(DB, airline_id)
+	if airline:
+		if airline.popularity > 89:
+			airline_reputation = "Customers favorite airline in ${airline.hub.country}!"
+			num_stars = 5
+		elif airline.popularity > 69:
+			airline_reputation = "Very reputable airline"
+			num_stars = 4
+		elif airline.popularity > 49:
+			airline_reputation = "Distinctly average"
+			num_stars = 3
+		elif airline.popularity > 39:
+			airline_reputation = "Poor airline Reputation"
+			num_stars = 2
+		else:
+			airline_reputation = "Customers least favorite choice"
+			num_stars = 1
+   
+		return jsonify({
+			"airline_reputation":airline_reputation,
+			"num_stars":num_stars
+		})
 
 @app.route("/purchase_route", methods=["POST"])
 def purchase_route():
