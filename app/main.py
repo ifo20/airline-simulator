@@ -200,8 +200,7 @@ def get_route(route_id):
 		route.update_status()
 	return jsonify(route)
 
-#TODO: Justin - add more instresting things into here.
-
+#TODO: Justin - add more interesting things into here.
 @app.route("/reputation/<int:airline_id>", methods=["GET"])
 def airline_reputation(airline_id):
 	time.sleep(0.2)
@@ -276,15 +275,18 @@ def upgrade_fuel_efficiency():
 	upgrade_cost = 10000
 	if airline.cash < upgrade_cost:
 		raise AssertionError("You do not have enough to cash to purchase this upgrade")
-	# TODO justin: we need to update the airline's cash,
-	# and also check that we're not going above the max upgrade level
+	if airline.fuel_efficiency_level >= 5:
+		raise AssertionError("You already have the maximum level of fuel effiency!")
+	airline.cash -= upgrade_cost
 	airline.fuel_efficiency_level += 1
 	DB.save_airline(airline)
 	return jsonify({
 			"title": "Fuel Efficiency",
+			"cash": airline.cash,
+			"transaction": f"Upgraded fuel efficiency from {airline.fuel_efficiency_level - 1} to {airline.fuel_efficiency_level} for {pretty_price(upgrade_cost)}",
 			"current_level": airline.fuel_efficiency_level,
 			"upgrade_cost": upgrade_cost,
-			"upgrade_enabled": airline.cash > upgrade_cost,
+			"upgrade_enabled": airline.fuel_efficiency_level < 5 and airline.cash > upgrade_cost,
 		})
 
 @app.route("/upgrades", methods=["GET"])
@@ -295,13 +297,26 @@ def get_upgraded():
 		"current_level": 0,
 		"upgrade_cost": 0,
 		"upgrade_enabled": False,
+		"button_text": "TODO",
+		"description": "TODO: describe the current level of the upgrade",
+		"upgrade_description": "TODO: describe the next level of upgrade",
 	}
+	upgrade_cost = 10000
+	if airline.fuel_efficiency_level >= 5:
+		upgrade_enabled = False
+		button_text = "Maxed out"
+	else:
+		upgrade_enabled = True
+		button_text = f"Upgrade for {pretty_price(upgrade_cost)}"
 	upgrades = [
 		{
 			"title": "Fuel Efficiency",
 			"current_level": airline.fuel_efficiency_level,
-			"upgrade_cost": 10000,
-			"upgrade_enabled": airline.cash > 10000,
+			"upgrade_cost": upgrade_cost,
+			"upgrade_enabled": upgrade_enabled,
+			"button_text": button_text,
+			"description": "TODO: describe the current level of the upgrade",
+			"upgrade_description": "TODO: describe the next level of upgrade",
 		}
 	] + [placeholder_upgrade] * 2
 	return jsonify(upgrades)

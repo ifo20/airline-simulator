@@ -193,6 +193,10 @@ var RequestClient = (function () {
                 from_level: from_level,
             },
             success: function (response) {
+                var _a = JSON.parse(response), cash = _a.cash, transaction = _a.transaction;
+                gameEngine.airline.cash = cash;
+                gameEngine.airline.addTransaction(transaction);
+                gameEngine.airline.updateStats();
                 engine.displayUpgradesTab();
             },
             error: defaultErrHandler(),
@@ -763,10 +767,11 @@ var GameEngine = (function () {
                 var upgradeCategories = JSON.parse(response).forEach(function (category) {
                     var categoryContainer = createElement("div", { class: "m-2 p-3 bgwf secondary-card" });
                     categoryContainer.appendChild(createElement("h2", { innerText: category["title"], class: "mb-1" }));
-                    categoryContainer.appendChild(createElement("p", { innerText: "Current Level: ".concat(category["current_level"]) }));
-                    categoryContainer.appendChild(createElement("p", { innerText: "Next Level: Costs ".concat(prettyCashString(category["upgrade_cost"]), " (TODO iain and justin: we should add a description of the benefits of the next level)") }));
+                    categoryContainer.appendChild(createElement("p", { innerText: "Level ".concat(category["current_level"]) }));
+                    categoryContainer.appendChild(createElement("p", { innerText: category["description"] }));
+                    categoryContainer.appendChild(createElement("p", { innerText: category["upgrade_description"] }));
                     var btn_class = category["upgrade_enabled"] ? "" : "disabled";
-                    var btn = createElement("button", { innerText: "Upgrade: ".concat(prettyCashString(category['upgrade_cost'])), class: btn_class });
+                    var btn = createElement("button", { innerText: category["button_text"], class: btn_class });
                     if (category["upgrade_enabled"]) {
                         makeClickable(btn, function (ev) {
                             client.upgradeFuelEfficiency(airline.id, category["fuel_efficiency_level"]);

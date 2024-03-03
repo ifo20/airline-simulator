@@ -211,9 +211,6 @@ class RequestClient {
 			error: onError,
 		})
 	}
-	// TODO iain: many things result in the cash/header bar being out-of-date.
-	// maybe all responses that involve a transaction should return the same shape;
-	// and then we call updateStats() on each of the responses?
 	upgradeFuelEfficiency(airline_id: number, from_level: number) {
 		var engine = this.engine;
 		$.ajax({
@@ -224,6 +221,10 @@ class RequestClient {
 				from_level,
 			},
 			success: function(response) {
+				const { cash, transaction } = JSON.parse(response)
+				gameEngine.airline.cash = cash
+				gameEngine.airline.addTransaction(transaction)
+				gameEngine.airline.updateStats()
 				engine.displayUpgradesTab()
 			},
 			error: defaultErrHandler(),
@@ -856,10 +857,11 @@ class GameEngine {
 				const upgradeCategories = JSON.parse(response).forEach((category: { [x: string]: any; }) => {
 					const categoryContainer = createElement("div", {class: "m-2 p-3 bgwf secondary-card"})
 					categoryContainer.appendChild(createElement("h2", {innerText: category["title"], class:"mb-1"}))
-					categoryContainer.appendChild(createElement("p", {innerText: `Current Level: ${category["current_level"]}`}))
-					categoryContainer.appendChild(createElement("p", {innerText: `Next Level: Costs ${prettyCashString(category["upgrade_cost"])} (TODO iain and justin: we should add a description of the benefits of the next level)`}))
+					categoryContainer.appendChild(createElement("p", {innerText: `Level ${category["current_level"]}`}))
+					categoryContainer.appendChild(createElement("p", {innerText: category["description"]}))
+					categoryContainer.appendChild(createElement("p", {innerText: category["upgrade_description"]}))
 					const btn_class = category["upgrade_enabled"] ? "" : "disabled"
-					const btn = <HTMLButtonElement>createElement("button", {innerText: `Upgrade: ${prettyCashString(category['upgrade_cost'])}`, class: btn_class})
+					const btn = <HTMLButtonElement>createElement("button", {innerText: category["button_text"], class: btn_class})
 
 					if (category["upgrade_enabled"]) {
 						makeClickable(btn, (ev) => {
