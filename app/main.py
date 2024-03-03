@@ -422,10 +422,9 @@ def run_route():
 def collect_route():
 	airline = airline_from_request(request)
 	route = Route.get_by_id(DB, request.form["route_id"])
-	cash_change, popularity_change, plane_health_cost, incident, msg = route.collect(
-		airline
-	)
+	num_passengers, income, cost, popularity_change, plane_health_cost, incident, msg = route.collect(DB, airline)
 	DB.save_route(route)
+	cash_change = income - cost
 	airline.cash += cash_change
 	airline.popularity += popularity_change
 	DB.save_airline(airline)
@@ -434,6 +433,7 @@ def collect_route():
 			plane.health -= plane_health_cost
 			plane.free()
 			DB.save_plane(plane)
+			DB.save_flight(route.id, plane.id, route.last_run_at, route.next_available_at, num_passengers, income, cost, plane_health_cost)
 	planes = Plane.list_owned(DB, airline.id)
 	return jsonify(
 		{

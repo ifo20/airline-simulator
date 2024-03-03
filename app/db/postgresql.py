@@ -199,6 +199,14 @@ WHERE id=%s""",
 	def delete_plane(self, plane_id):
 		return self.execute("DELETE FROM planes WHERE id=%s", plane_id)
 
+	def save_flight(self, route_id, plane_id, departed_at, arrived_at, num_passengers, income, cost, plane_health_cost):
+		return self.execute(
+			"""
+INSERT INTO flights (route_id, plane_id, departed_at, arrived_at, num_passengers, income, cost, plane_health_cost)
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
+			route_id, plane_id, departed_at, arrived_at, num_passengers, income, cost, plane_health_cost,
+		)
+
 	def save_transaction(self, airline, amount, description):
 		return self.execute(
 			"INSERT INTO transactions (airline_id, starting_balance, amount, description) VALUES (%s, %s, %s, %s)",

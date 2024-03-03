@@ -22,8 +22,8 @@ def calculate_fuel_cost(distance, num_passengers, fuel_efficiency_level):
 
 def route_logic(airline_name, distance, fuel_efficiency_level=0):
     num_passengers = random.randint(100, 350)
-    price_per_passenger = 75 + distance/13
-    income = price_per_passenger * num_passengers
+    price_per_passenger = int(75 + distance/13)
+    income = int(price_per_passenger * num_passengers) + FLIGHT_PROFIT_HACK
 
     if "Golden" in airline_name:
         income *= 3
@@ -31,7 +31,7 @@ def route_logic(airline_name, distance, fuel_efficiency_level=0):
     catering_cost_per_passenger = 40
     catering_cost = num_passengers * catering_cost_per_passenger
     random_adjustment = random.randint(0, 1000)
-    cost = fuel_cost + catering_cost + random_adjustment
+    cost = int(fuel_cost + catering_cost + random_adjustment)
     if "Sturdy" in airline_name or "Robust" in airline_name:
         plane_health_cost = 0
         fire_prob = 0.000001
@@ -76,5 +76,4 @@ def route_logic(airline_name, distance, fuel_efficiency_level=0):
         )
         
     plane_health_cost *= DAMAGE_MULTIPLIER
-    cash_change += FLIGHT_PROFIT_HACK
-    return cash_change, popularity_change, plane_health_cost, incident, msg
+    return num_passengers, income, cost, popularity_change, plane_health_cost, incident, msg

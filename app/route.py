@@ -181,7 +181,7 @@ class Route:
 		duration = timedelta(seconds=onboarding_time_seconds + travelling_time_seconds)
 		return duration
 
-	def collect(self, airline):
+	def collect(self, db, airline):
 		assert self.next_available_at and self.next_available_at < datetime.now(
 			pytz.UTC
 		), "This route has not finished yet!"
@@ -191,7 +191,7 @@ class Route:
 		), "These results have already been collected!"
 
 		self.last_resulted_at = datetime.now(pytz.UTC)
-		return route_logic(airline.name,self.distance, airline.fuel_efficiency_level)
+		return route_logic(airline.name, self.distance, airline.fuel_efficiency_level)
 
 	def calculate_distance(self) -> float:
 		def deg2rad(deg):

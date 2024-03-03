@@ -102,17 +102,17 @@ CREATE TABLE IF NOT EXISTS transactions (
     amount INTEGER NOT NULL,
     description TEXT NOT NULL
 );
--- CREATE TABLE IF NOT EXISTS flights (
---     id SERIAL PRIMARY KEY,
---     route_id INTEGER NOT NULL,
---     plane_id INTEGER NOT NULL,
---     departed_at TIMESTAMP WITH TIME ZONE NOT NULL,
---     arrived_at TIMESTAMP WITH TIME ZONE NOT NULL,
---     num_passengers INTEGER NOT NULL,
---     income INTEGER NOT NULL,
---     cost INTEGER NOT NULL,
---     plane_health_cost INTEGER NOT NULL,
---     CONSTRAINT fk_route_id FOREIGN KEY (route_id) REFERENCES routes(id),
---     CONSTRAINT fk_plane_id FOREIGN KEY (plane_id) REFERENCES planes(id),
--- );
+CREATE TABLE IF NOT EXISTS flights (
+    id SERIAL PRIMARY KEY,
+    route_id INTEGER NOT NULL,
+    plane_id INTEGER NOT NULL,
+    departed_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    arrived_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    num_passengers INTEGER NOT NULL,
+    income INTEGER NOT NULL,
+    cost INTEGER NOT NULL,
+    plane_health_cost INTEGER NOT NULL,
+    CONSTRAINT fk_route_id FOREIGN KEY (route_id) REFERENCES routes(id),
+    CONSTRAINT fk_plane_id FOREIGN KEY (plane_id) REFERENCES planes(id)
+);
 COMMIT;
