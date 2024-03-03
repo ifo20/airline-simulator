@@ -1077,4 +1077,20 @@ window.onload = function () {
         },
         error: defaultErrHandler(),
     });
+    $.ajax({
+        method: "GET",
+        url: "/news",
+        success: function (response) {
+            var articles = JSON.parse(response);
+            var div = document.getElementById("news");
+            articles.forEach(function (article) {
+                var p = createElement("div", { class: "bgwf secondary-card p-2 text-center w-100" });
+                var anchor = createElement("a", { innerText: article["title"] });
+                anchor.setAttribute("href", article["url"]);
+                p.appendChild(anchor);
+                div.appendChild(p);
+            });
+        },
+        error: defaultErrHandler(),
+    });
 };

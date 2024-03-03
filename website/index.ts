@@ -699,7 +699,7 @@ class Airline {
 		var div = createElement("div", {class: "m-2 p-3 bgwf secondary-card"})
 		var airline = this
 		var spinner = createSpinner(div)
-		container.appendChild(div)		
+		container.appendChild(div)
 		const callback = (response: AirlineReputationResponse) => {
 			console.log('getReputationDisplay callback', response)
 			spinner.remove()
@@ -1191,6 +1191,23 @@ window.onload = () => {
 			const div = <HTMLElement>document.getElementById("placeholder")
 			div.appendChild(createElement("p", {innerText: `Compete with ${total} other airlines!`}))
 			div.appendChild(createElement("p", {innerText: `${online} players currently online!`}))
+		},
+		error: defaultErrHandler(),
+	})
+
+	$.ajax({
+		method: "GET",
+		url: "/news",
+		success: function(response) {
+			const articles = JSON.parse(response)
+			const div = <HTMLElement>document.getElementById("news")
+			articles.forEach((article: { [x: string]: string }) => {
+				var p = createElement("div", {class: "bgwf secondary-card p-2 text-center w-100"})
+				var anchor = createElement("a", {innerText: article["title"]})
+				anchor.setAttribute("href", article["url"])
+				p.appendChild(anchor)
+				div.appendChild(p)
+			})
 		},
 		error: defaultErrHandler(),
 	})

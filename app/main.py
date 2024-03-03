@@ -15,6 +15,7 @@ from app.airline import Airline
 from app.airport import Airport
 from app.config import NUM_OFFERS, PLANE_STARTING_HEALTH, pretty_price
 from app.flight import Flight
+from app.news import search_news
 from app.plane import Plane
 from app.route import Route
 from app.transaction import Transaction
@@ -447,6 +448,10 @@ def collect_route():
 			"status": "ready",
 		}
 	)
+
+@app.route("/news", methods=["GET"])
+def news():
+	return jsonify(search_news("airline simulator planes")[:10])
 
 
 if __name__ == "__main__":
