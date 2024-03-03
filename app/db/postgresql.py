@@ -199,6 +199,11 @@ WHERE id=%s""",
 	def delete_plane(self, plane_id):
 		return self.execute("DELETE FROM planes WHERE id=%s", plane_id)
 
+	def save_transaction(self, airline, amount, description):
+		return self.execute(
+			"INSERT INTO transactions (airline_id, starting_balance, amount, description) VALUES (%s, %s, %s, %s)",
+			airline.id, airline.cash, amount, description,
+		)
 # Sometimes it is convenient to be able to inject a lot of airports into a database:
 # DATABASE_URL="host=localhost user=postgres password=postgres sslmode=disable" PYTHONPATH=. python -c "from app.db.postgresql import inject_airports;inject_airports()"
 def inject_airports(filename="data/airports_full.json"):
@@ -213,7 +218,7 @@ def inject_airports(filename="data/airports_full.json"):
 			# currently we are not providing popularity in that big JSON
 			code, name, country, lat, lon = airport
 			popularity = 50.0
-			
+
 		rows.append(f"('{code}', '{name}', '{country}', {lat}, {lon}, {popularity})")
 
 	# This is slightly risky. What might go wrong if we are not in control of the JSON file?

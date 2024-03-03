@@ -13,9 +13,10 @@ import pytz
 from app.db import get_db
 from app.airline import Airline
 from app.airport import Airport
-from app.config import PLANE_FIX_COST, PLANE_SCRAP_VALUE, NUM_OFFERS, PLANE_STARTING_HEALTH, pretty_price
+from app.config import NUM_OFFERS, PLANE_STARTING_HEALTH, pretty_price
 from app.plane import Plane
 from app.route import Route
+from app.transaction import Transaction
 
 
 logging.basicConfig(level=logging.INFO)
@@ -221,7 +222,7 @@ def airline_reputation(airline_id):
 		else:
 			airline_reputation = "Customers least favorite choice"
 			num_stars = 1
-   
+
 		return jsonify({
 			"airline_reputation":airline_reputation,
 			"num_stars":num_stars
@@ -229,7 +230,6 @@ def airline_reputation(airline_id):
 
 @app.route("/purchase_route", methods=["POST"])
 def purchase_route():
-	start_ts = timeit.default_timer()
 	airline = airline_from_request(request)
 	route = Route.get_by_id(DB, int(request.form["route_id"]))
 	if route.airline_id != airline.id:
@@ -238,16 +238,17 @@ def purchase_route():
 		return "that route is already purchased", 400
 	if airline.cash < route.cost:
 		return "Cannot afford route", 400
+	description = f"Purchased route {route.identifier} for ${route.cost}!"
+	Transaction.create(DB, airline, route.cost, description)
 	airline.cash -= route.cost
 	DB.save_airline(airline)
 	route.purchase(DB)
-	logging.debug("TIMER purchase_route took %s", timeit.default_timer() - start_ts)
 	return jsonify(
 		{
 			"route": route,
 			"cash": airline.cash,
-			"msg": f"Purchased route {route.identifier} for ${route.cost}!",
-			"transaction": f"Purchased route {route.identifier} for ${route.cost}!",
+			"msg": description,
+			"transaction": description,
 		}
 	)
 
@@ -277,13 +278,15 @@ def upgrade_fuel_efficiency():
 		raise AssertionError("You do not have enough to cash to purchase this upgrade")
 	if airline.fuel_efficiency_level >= 5:
 		raise AssertionError("You already have the maximum level of fuel effiency!")
+	description = f"Upgraded fuel efficiency from {airline.fuel_efficiency_level - 1} to {airline.fuel_efficiency_level} for {pretty_price(upgrade_cost)}"
+	Transaction.create(DB, airline, upgrade_cost, description)
 	airline.cash -= upgrade_cost
 	airline.fuel_efficiency_level += 1
 	DB.save_airline(airline)
 	return jsonify({
 			"title": "Fuel Efficiency",
 			"cash": airline.cash,
-			"transaction": f"Upgraded fuel efficiency from {airline.fuel_efficiency_level - 1} to {airline.fuel_efficiency_level} for {pretty_price(upgrade_cost)}",
+			"transaction": description,
 			"current_level": airline.fuel_efficiency_level,
 			"upgrade_cost": upgrade_cost,
 			"upgrade_enabled": airline.fuel_efficiency_level < 5 and airline.cash > upgrade_cost,
@@ -332,6 +335,8 @@ def purchase_plane():
 		return "that plane is already purchased", 400
 	if airline.cash < plane.cost:
 		return "you cannot afford that plane", 400
+	description = f"Purchased plane {plane.name} for ${plane.cost}"
+	Transaction.create(DB, airline, plane.cost, description)
 	airline.cash -= plane.cost
 	DB.save_airline(airline)
 	plane.purchase(DB)
@@ -340,7 +345,7 @@ def purchase_plane():
 			"plane": plane,
 			"cash": airline.cash,
 			"msg": f"Purchased {plane.name}!",
-			"transaction": f"Purchased plane {plane.name} for ${plane.cost}",
+			"transaction": description,
 		}
 	)
 
@@ -349,20 +354,22 @@ def purchase_plane():
 def fix_plane():
 	airline = airline_from_request(request)
 	plane = Plane.get_by_id(DB, int(request.form["plane_id"]))
-	assert airline.cash >= PLANE_FIX_COST, f"Airline cannot afford to fix - requires ${pretty_price(PLANE_FIX_COST)}"
+	assert airline.cash >= plane.fix_cost, f"Airline cannot afford to fix - requires ${pretty_price(plane.fix_cost)}"
 	plane.health = PLANE_STARTING_HEALTH
 	DB.save_plane(plane)
-	airline.cash -= PLANE_FIX_COST
+	description = f"Fixed {plane.name} for {pretty_price(plane.fix_cost)}"
+	Transaction.create(DB, airline, plane.fix_cost, description)
+	airline.cash -= plane.fix_cost
 	DB.save_airline(airline)
 	planes = Plane.list_owned(DB, airline.id)
 	return jsonify(
 		{
 			"planes": planes,
 			"cash": airline.cash,
-			"msg": f"Plane {plane.name} fixed for {pretty_price(PLANE_FIX_COST)}!",
+			"msg": f"Plane {plane.name} fixed for {pretty_price(plane.fix_cost)}!",
 			# TODO iain and justin: this response includes a transaction that can be seen on the Finance page
 			# If you refresh and log back in, can you see your old transactions?
-			"transaction": f"Fixed {plane.name} for {pretty_price(PLANE_FIX_COST)}",
+			"transaction": description,
 		}
 	)
 
@@ -372,7 +379,9 @@ def scrap_plane():
 	airline = airline_from_request(request)
 	plane = Plane.get_by_id(DB, int(request.form["plane_id"]))
 	assert plane.airline_id == airline.id, f"Airline does not have that plane"
-	airline.cash += PLANE_SCRAP_VALUE
+	description = f"Sold {plane.name} to scrapyard for {pretty_price(plane.scrap_value)}"
+	Transaction.create(DB, airline, plane.scrap_value, description)
+	airline.cash += plane.scrap_value
 	DB.save_airline(airline)
 	DB.delete_plane(plane.id)
 	planes = [p for p in Plane.list_owned(DB, airline.id) if p.id != plane.id]
@@ -380,8 +389,8 @@ def scrap_plane():
 		{
 			"planes": planes,
 			"cash": airline.cash,
-			"msg": f"Plane {plane.name} sold to Mojave scrapyard for {pretty_price(PLANE_SCRAP_VALUE)}!",
-			"transaction": f"Sold {plane.name} to scrapyard for {pretty_price(PLANE_SCRAP_VALUE)}",
+			"msg": f"Plane {plane.name} sold to Mojave scrapyard for {pretty_price(plane.scrap_value)}!",
+			"transaction": description,
 		}
 	)
 

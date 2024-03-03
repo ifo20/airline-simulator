@@ -94,4 +94,25 @@ CREATE TABLE IF NOT EXISTS planes (
 );
 ALTER TABLE airlines ADD COLUMN IF NOT EXISTS fuel_efficiency_level INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE airlines ADD COLUMN IF NOT EXISTS password TEXT NOT NULL DEFAULT 'password';
+CREATE TABLE IF NOT EXISTS transactions (
+    id SERIAL PRIMARY KEY,
+    ts TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    airline_id INTEGER NOT NULL,
+    starting_balance INTEGER NOT NULL,
+    amount INTEGER NOT NULL,
+    description TEXT NOT NULL
+);
+-- CREATE TABLE IF NOT EXISTS flights (
+--     id SERIAL PRIMARY KEY,
+--     route_id INTEGER NOT NULL,
+--     plane_id INTEGER NOT NULL,
+--     departed_at TIMESTAMP WITH TIME ZONE NOT NULL,
+--     arrived_at TIMESTAMP WITH TIME ZONE NOT NULL,
+--     num_passengers INTEGER NOT NULL,
+--     income INTEGER NOT NULL,
+--     cost INTEGER NOT NULL,
+--     plane_health_cost INTEGER NOT NULL,
+--     CONSTRAINT fk_route_id FOREIGN KEY (route_id) REFERENCES routes(id),
+--     CONSTRAINT fk_plane_id FOREIGN KEY (plane_id) REFERENCES planes(id),
+-- );
 COMMIT;
